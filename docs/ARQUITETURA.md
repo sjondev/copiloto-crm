@@ -99,14 +99,63 @@ isolada atrás de uma interface se e quando doer.
 
 ## 7. PII e LGPD
 
-Conversa com cliente é dado pessoal. Enviar para um modelo de terceiro é transferência de
-dado pessoal.
+> Este projeto trata dado pessoal de três grupos distintos e o assunto tem milestone
+> próprio (**M8**). O que segue é a parte de engenharia; a análise de conformidade está
+> em `docs/LGPD.md`. **Nada disso substitui parecer jurídico.**
 
-- **PII Shield**: CPF, telefone, e-mail e endereço são substituídos por marcadores
-  (`[CPF_1]`) antes da saída da rede, e remontados na volta.
-- Teste automatizado **falha o build** se PII aparecer em log ou payload de saída.
-- Retenção configurável: conversa antiga vira resumo ou é expurgada.
-- Exclusão em cascata: apagar um Lead apaga conversa, dossiê e sugestões.
+### 7.1 Os três grupos de titulares
+
+| Titular | O que tratamos |
+|---|---|
+| **Lead / cliente** | nome, telefone, conversa integral, e as **inferências da IA** sobre ele |
+| **Parceiro** | contato comercial, condições negociadas, histórico |
+| **Vendedor** | identificação e métricas de desempenho |
+
+Os dois últimos costumam ser esquecidos. O contato numa empresa parceira é uma pessoa
+física mesmo numa relação B2B; e métrica de desempenho de vendedor — que o painel de
+ROI produz — é dado pessoal do vendedor.
+
+### 7.2 A inferência também é dado pessoal
+
+Quando o dossiê conclui que um cliente é "sensível a preço" ou está "esfriando", isso é
+**dado pessoal novo, criado por nós**, sobre alguém que nunca nos forneceu aquilo. O
+titular tem direito de acessar e contestar essa classificação.
+
+É o ponto que mais escapa em produto de IA: protege-se o dado que entrou e esquece-se
+o que o sistema produziu.
+
+### 7.3 Pseudonimização não é anonimização
+
+O PII Shield substitui `João Silva, 11 98765-4321` por `[NOME_1], [TEL_1]` **mantendo o
+vínculo com o Lead**. Isso é pseudonimização: reversível por quem tem a tabela, e
+portanto **ainda é dado pessoal, sob a LGPD**.
+
+A distinção não é acadêmica. Quem acredita ter anonimizado tende a concluir que pode
+reter para sempre, indexar à vontade e dispensar controle de acesso. Nenhuma das três
+coisas é verdade aqui — e isso vale especialmente para o índice de embeddings do RAG,
+que é uma base de dados pessoais como qualquer outra.
+
+### 7.4 Controles de engenharia
+
+- **PII Shield** mascarando antes da saída da rede, com teste que **falha o build** se
+  vazar em log ou payload.
+- **Dado sensível** (saúde, religião, origem racial) chega sozinho em conversa livre.
+  Nunca entra no índice, nunca vira inferência de perfil, nunca calibra técnica de
+  persuasão.
+- **Retenção** configurável por finalidade; conversa antiga vira resumo ou é expurgada.
+- **Exclusão em cascata**, incluindo os embeddings — apagar o Lead sem apagar o vetor
+  deixa o dado vivo depois de o titular pedir exclusão.
+- **Isolamento de parceiros**: conversa com parceiro fora da base de precedentes de
+  venda. Sem isso, o RAG pode recuperar uma negociação de fornecimento — com margem e
+  custo — enquanto o vendedor atende um comprador.
+
+### 7.5 A transferência internacional
+
+A conversa sai do país na primeira invocação, se o provedor processa fora do Brasil.
+Isso é transferência internacional de dados pessoais e precisa estar mapeado: onde o
+provedor processa, se usa os dados para treinar modelo, e por quanto tempo retém.
+
+Verificado na documentação do fornecedor, com data e link — não presumido.
 
 ---
 

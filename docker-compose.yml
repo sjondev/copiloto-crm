@@ -1,6 +1,9 @@
 services:
   db:
-    image: postgres:16-alpine
+    # pgvector/pgvector traz o Postgres 16 com a extensao vector disponivel.
+    # Usamos o mesmo banco para dados relacionais e busca por similaridade —
+    # nao ha banco vetorial dedicado neste projeto (ver docs/ARQUITETURA.md).
+    image: pgvector/pgvector:pg16
     container_name: copiloto-db
     restart: unless-stopped
     environment:

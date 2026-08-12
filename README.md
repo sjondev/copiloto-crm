@@ -129,6 +129,29 @@ arquivo, JSON Schema de saída e teste com resposta gravada:
 | A5 | Conselheiro de plano | Só sob demanda, no botão `[sugerir]` | forte |
 | A6 | Vigia | Job agendado: conversa esfriando, proposta vencendo | barato |
 
+## MCP e RAG
+
+**MCP entra nos dois sentidos.** O CRM **é** um servidor MCP — dossiê, negócios
+parados e histórico viram ferramentas que qualquer cliente MCP consome, então o CRM
+deixa de ser um destino e vira capacidade componível. E o orquestrador **consome**
+ferramentas MCP para buscar estoque, preço vigente e prazo real.
+
+O segundo uso é o que justifica MCP aqui: a regra de ancoragem abaixo deixa de ser
+uma instrução no prompt — que um modelo pode ignorar — e vira propriedade da
+arquitetura. Se a ferramenta não devolveu o dado, ele não está no contexto, e não há
+o que inventar.
+
+**RAG entra em um lugar só, de propósito:** recuperar como objeções semelhantes foram
+convertidas *nesta empresa*, a partir de conversas encerradas com desfecho conhecido —
+inclusive as que foram perdidas. É a diferença entre um conselho que serve para
+qualquer negócio e um que só faz sentido neste.
+
+Onde RAG **não** entra, e por quê: no playbook (são ~800 tokens, cabem inteiros no
+contexto — indexar o que já cabe é custo e latência para resolver um problema
+inexistente) e em banco vetorial dedicado (`pgvector` roda no Postgres que já está
+aqui, com o mesmo backup e a mesma transação). E o RAG só fica se provar que melhora
+o dossiê contra o baseline sem ele. Detalhes em [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
+
 ### Regra de ancoragem
 
 Escassez, prova social, desconto e prazo **só viram sugestão de fala se existir dado no

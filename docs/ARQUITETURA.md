@@ -140,7 +140,106 @@ controlado**, há viés de seleção, e a ressalva está escrita na própria tel
 
 ---
 
-## 10. O que ficou de fora, de propósito
+## 10. MCP: o CRM como servidor, e as ferramentas de ancoragem
+
+MCP (Model Context Protocol) entra em **dois sentidos opostos**, e cada um resolve
+um problema diferente.
+
+### 10.1 O CRM **é** um servidor MCP
+
+O CRM expõe suas próprias capacidades como ferramentas MCP (`ModelContextProtocol.AspNetCore`):
+consultar o dossiê de um lead, listar negócios parados, ler o playbook, buscar o
+histórico de um cliente.
+
+Consequência: qualquer cliente MCP passa a operar sobre o CRM. O gestor abre um
+assistente e pergunta "quais negócios travaram no preço este mês?" sem que exista
+uma tela para isso. O CRM deixa de ser um destino e vira uma **capacidade
+componível**.
+
+Escopo é obrigatório: ferramenta MCP é superfície de acesso a dado de cliente. O
+servidor exige credencial, respeita o perfil do usuário (vendedor só enxerga os
+próprios leads) e nunca expõe escrita destrutiva.
+
+### 10.2 O agente **consome** ferramentas MCP — e é isso que sustenta a ancoragem
+
+Este é o encaixe que justifica MCP no projeto.
+
+A [regra de ancoragem](#7-pii-e-lgpd) proíbe o agente de afirmar escassez, prazo,
+preço ou prova social sem dado que sustente. A pergunta natural é: **de onde vem
+esse dado?**
+
+Vem de ferramentas. Estoque real, tabela de preço vigente, política de desconto
+ativa, agenda de entrega. Expostas como ferramentas MCP, o agente **busca antes de
+afirmar** — e quando a busca não retorna nada, ele não tem o que afirmar.
+
+Isso muda a natureza do guardrail: a ancoragem deixa de ser uma instrução no prompt
+(que um modelo pode ignorar) e passa a ser uma **propriedade da arquitetura** (não
+existe o dado no contexto, então não há o que inventar). É a diferença entre pedir
+para o modelo se comportar e tornar o mau comportamento impossível.
+
+---
+
+## 11. RAG: onde entra e — mais importante — onde não entra
+
+RAG entra em **um** lugar com força, em um segundo com ressalva, e é recusado em
+dois onde pareceria natural.
+
+### 11.1 Onde entra: precedentes da própria empresa
+
+O vendedor está travado numa objeção de preço. A pergunta útil não é "o que a
+teoria de vendas diz sobre objeção de preço" — é **"como os últimos clientes que
+travaram no preço aqui nesta empresa foram convertidos?"**
+
+Recuperar trechos de conversas passadas que **fecharam** com objeção semelhante dá
+ao agente `A5` precedente real em vez de teoria genérica. É a diferença entre um
+conselho que serve para qualquer negócio e um conselho que só faz sentido neste.
+
+### 11.2 Onde entra com ressalva: catálogo de produto
+
+Fichas técnicas, notas de degustação, origem, torra, moagem recomendada. Vale RAG
+**se** o catálogo for grande o bastante para não caber no contexto. Com poucos
+produtos, é mais barato e mais confiável mandar o catálogo inteiro.
+
+Critério de decisão, não de gosto: se o catálogo cabe no orçamento de tokens, não
+há RAG.
+
+### 11.3 Onde **não** entra, e por quê
+
+**No playbook.** O playbook são ~800 tokens e cabe inteiro na camada C1. Montar
+embedding, índice e recuperação para buscar dentro de um documento que já cabe no
+contexto adiciona latência, custo e um modo de falha novo (recuperar o pedaço
+errado) para resolver um problema que não existe. É o caso de manual de
+overengineering.
+
+**Em banco vetorial dedicado.** Postgres já está no projeto. `pgvector` roda a busca
+por similaridade na mesma instância, com o mesmo backup, a mesma transação e a mesma
+credencial. Trazer Qdrant, Pinecone ou Weaviate significaria um segundo banco para
+operar, monitorar e manter consistente — em troca de nada, nesta escala.
+
+Se um dia a escala exigir, a busca está atrás de uma interface e a troca é local.
+
+### 11.4 O risco que RAG traz para este projeto em específico
+
+Recuperar conversa de um cliente e injetá-la no contexto de outro é **vazamento de
+dado pessoal entre titulares**. É o risco mais sério que o RAG introduz aqui, e ele
+não é hipotético: é o comportamento padrão de uma busca por similaridade mal
+isolada.
+
+Mitigação: o que é indexado passa pelo PII Shield **antes** de virar embedding, e a
+recuperação devolve padrão e técnica, não transcrição literal de terceiros.
+
+### 11.5 RAG precisa provar que serve
+
+Antes de virar padrão, a recuperação é comparada contra o baseline sem RAG nas
+conversas do seed. Se a qualidade do dossiê não melhorar de forma observável, RAG
+sai — porque custa embedding, latência e complexidade.
+
+Adotar RAG por ser esperado, e não por medir melhora, é como o projeto vira caro
+sem ficar melhor.
+
+---
+
+## 12. O que ficou de fora, de propósito
 
 Multi-tenant · importação de planilha · relatórios · permissão granular · transcrição de
 áudio · **envio automático de mensagem ao cliente**.

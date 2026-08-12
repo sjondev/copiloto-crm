@@ -1,0 +1,40 @@
+name: Ideia (garimpo)
+description: Ideia que surgiu durante o trabalho e não pode se perder
+labels: ["ideia"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        O garimpo é matéria-prima. Registre mesmo que a ideia não vá ser feita agora.
+
+  - type: textarea
+    id: ideia
+    attributes:
+      label: A ideia
+    validations:
+      required: true
+
+  - type: textarea
+    id: problema
+    attributes:
+      label: Que problema resolve
+      description: Se não resolve um problema real, provavelmente é YAGNI.
+    validations:
+      required: true
+
+  - type: textarea
+    id: valor
+    attributes:
+      label: Por que vale a pena
+      description: Valor para o vendedor, para o custo, ou para a demonstração técnica.
+
+  - type: dropdown
+    id: esforco
+    attributes:
+      label: Esforço estimado
+      options:
+        - pequeno - até algumas horas
+        - medio - alguns dias
+        - grande - reorganiza alguma coisa
+    validations:
+      required: true

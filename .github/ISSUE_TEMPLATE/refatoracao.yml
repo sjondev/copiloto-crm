@@ -1,0 +1,47 @@
+name: Refatoração / KISS-DRY
+description: Código funciona, mas ficou grande, repetido ou complicado demais
+labels: ["refatoracao"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gatilhos objetivos: arquivo > ~300 linhas · método > ~40 linhas ·
+        mesmo bloco na 3ª aparição · mais de 3 níveis de aninhamento ·
+        interface com uma implementação só e sem teste que a justifique ·
+        abstração criada "por precaução".
+
+  - type: input
+    id: onde
+    attributes:
+      label: Onde
+      placeholder: "arquivo:linha"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: gatilho
+    attributes:
+      label: Qual gatilho disparou
+      options:
+        - arquivo grande demais
+        - metodo grande demais
+        - repeticao na 3a aparicao (DRY)
+        - aninhamento profundo
+        - abstracao prematura (YAGNI)
+        - nome que nao expressa a intencao
+        - outro
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Proposta
+    validations:
+      required: true
+
+  - type: textarea
+    id: risco
+    attributes:
+      label: Risco de não fazer
+      description: Se não houver risco real, talvez a resposta certa seja fechar a issue.

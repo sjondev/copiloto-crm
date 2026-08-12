@@ -1,0 +1,52 @@
+name: Bug
+description: Defeito confirmado ou suspeita de defeito
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bug encontrado de passagem vira issue e **espera**. Não conserte no meio
+        de outra tarefa — o histórico de issues é insumo do projeto.
+
+  - type: textarea
+    id: o-que-acontece
+    attributes:
+      label: O que acontece
+      description: Comportamento observado, com o erro literal se houver.
+    validations:
+      required: true
+
+  - type: textarea
+    id: o-que-deveria
+    attributes:
+      label: O que deveria acontecer
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproducao
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: input
+    id: onde
+    attributes:
+      label: Onde
+      placeholder: "arquivo:linha, endpoint, ou tela"
+
+  - type: dropdown
+    id: prioridade
+    attributes:
+      label: Prioridade
+      options:
+        - p0 - trava a fase atual
+        - p1 - importante
+        - p2 - pode esperar
+    validations:
+      required: true

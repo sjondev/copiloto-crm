@@ -1,3 +1,12 @@
+# Sobe so o Postgres (padrao) — suficiente para desenvolver e para a demo:
+#     docker compose up -d
+#
+# Sobe tambem Redis e RabbitMQ, para rodar em modo distribuido:
+#     docker compose --profile distribuido up -d
+#
+# A aplicacao funciona nos dois modos sem mudar uma linha de dominio. Ver
+# docs/ARQUITETURA.md, secao "Estado compartilhado e durabilidade".
+
 services:
   db:
     # pgvector/pgvector traz o Postgres 16 com a extensao vector disponivel.
@@ -20,5 +29,46 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: copiloto-redis
+    restart: unless-stopped
+    profiles: ["distribuido"]
+    # appendonly garante que idempotencia e deduplicacao sobrevivam a restart.
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env}
+    ports:
+      - "${REDIS_PORT:-6389}:6379"
+    volumes:
+      - copiloto-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: copiloto-rabbitmq
+    restart: unless-stopped
+    profiles: ["distribuido"]
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-copiloto}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?defina RABBITMQ_PASSWORD no .env}
+    ports:
+      - "${RABBITMQ_PORT:-5682}:5672"
+      - "${RABBITMQ_UI_PORT:-15682}:15672"
+    volumes:
+      - copiloto-rabbitdata:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
 volumes:
   copiloto-pgdata:
+  copiloto-redisdata:
+  copiloto-rabbitdata:

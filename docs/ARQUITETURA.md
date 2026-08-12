@@ -239,7 +239,73 @@ sem ficar melhor.
 
 ---
 
-## 12. O que ficou de fora, de propósito
+## 12. Estado compartilhado e durabilidade: Redis e RabbitMQ
+
+### 12.1 A inconsistência que motivou isso
+
+Quatro decisões deste documento assumem, sem dizer, que existe **uma única instância
+da aplicação**:
+
+| Mecanismo | O que quebra com duas instâncias |
+|---|---|
+| Idempotência do webhook | Cada instância tem seu próprio registro de mensagens vistas. A reentrega cai na outra instância e é processada de novo — **e cobrada de novo**. |
+| Circuit breaker | Três instâncias, três circuitos independentes. Cada uma precisa falhar N vezes por conta própria antes de proteger. O provedor caído é golpeado 3N vezes. |
+| Rate limit por usuário | O limite vira o limite × número de instâncias. |
+| Cache de análise | Taxa de acerto cai proporcionalmente às instâncias. |
+
+Isso não é um problema de volume — é um problema de **corretude**. Um sistema cuja
+proteção contra gasto duplicado depende de rodar em processo único tem uma restrição
+de implantação não declarada.
+
+### 12.2 A fila em memória perde mensagem
+
+O webhook responde `200` e publica em `Channel<T>`. Se o processo reinicia com a fila
+cheia, aquelas mensagens **somem** — e o WhatsApp não vai reentregar, porque já
+recebeu o `200`.
+
+O resultado é a pior falha possível neste produto: uma conversa que o vendedor viu
+acontecer, e que o dossiê simplesmente ignora, sem erro em lugar nenhum.
+
+O argumento correto para RabbitMQ aqui não é vazão. É **durabilidade**: mensagem
+confirmada só sai da fila depois de processada, e o que falha vai para uma *dead
+letter queue* em vez de evaporar.
+
+### 12.3 Como entram, sem virar peso morto
+
+Ambos entram atrás de interface, seguindo o mesmo padrão dos `Fake*` do projeto:
+
+```
+IDistributedState   ->  InMemoryState   (padrão)  |  RedisState
+IQueue              ->  ChannelQueue    (padrão)  |  RabbitMqQueue
+```
+
+Escolha por configuração (`STATE_BACKEND`, `QUEUE_BACKEND`), e o `docker-compose`
+usa profile: `docker compose up` sobe só o Postgres; `--profile distribuido` sobe
+Redis e RabbitMQ.
+
+Consequência prática, que é o ponto: **a demo continua rodando com um único
+`docker compose up`**, sem broker e sem cache, enquanto o mesmo código roda
+distribuído em produção. Uma demonstração que depende de cinco contêineres no ar tem
+cinco maneiras de falhar ao vivo.
+
+### 12.4 Redis também é backplane do SignalR
+
+Com mais de uma instância, o vendedor conectado à instância A não recebe o evento
+gerado na instância B — o dossiê simplesmente não atualiza, sem erro visível.
+`Microsoft.AspNetCore.SignalR.StackExchangeRedis` resolve, e é o motivo menos citado
+e mais frequentemente descoberto tarde.
+
+### 12.5 O critério honesto
+
+Estas peças precisam ser defendidas uma a uma. "Usei Redis e RabbitMQ" não é
+argumento; "a idempotência do webhook precisa de estado fora do processo, senão a
+reentrega é cobrada duas vezes" é.
+
+Se em algum ponto uma das duas não tiver justificativa nomeada, ela sai.
+
+---
+
+## 13. O que ficou de fora, de propósito
 
 Multi-tenant · importação de planilha · relatórios · permissão granular · transcrição de
 áudio · **envio automático de mensagem ao cliente**.

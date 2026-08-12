@@ -1,0 +1,44 @@
+# Segredos — nada de credencial no repositorio
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+appsettings.Development.json
+appsettings.Local.json
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+artifacts/
+[Dd]ebug/
+[Rr]elease/
+TestResults/
+*.trx
+coverage*.xml
+.vs/
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.vite/
+*.local
+npm-debug.log*
+yarn-error.log*
+
+# Rider / VS Code
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Dados locais
+*.db
+*.sqlite
+backups/

@@ -1,0 +1,57 @@
+# Esteira base: compila e testa. Os gates especializados (segredo #47, KISS/DRY
+# #75) sao workflows proprios e assumem este aqui de pe.
+#
+# Sem Postgres no job de proposito: a suite roda offline por decisao
+# (MODEL_PROVIDER=fake, CONVERSATION_SOURCE=fake). Servico so entra junto com o
+# primeiro teste de integracao que precisar dele.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# O minimo. Workflow com permissao de escrita e superficie de ataque a toa.
+permissions:
+  contents: read
+
+# Push seguido no mesmo PR nao precisa de duas maquinas: a execucao anterior
+# vira resultado velho no instante em que a nova comeca.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-e-teste:
+    name: Build e teste
+    runs-on: ubuntu-latest
+    # Job travado nao pode queimar minuto ate o teto da conta.
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar o SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          # Mesma faixa do desenvolvimento (9.0.203). Esteira compilando com SDK
+          # diferente do da maquina e verde que nao vale nada.
+          dotnet-version: '9.0.x'
+
+      # A chave e o Directory.Packages.props porque e la que a versao mora — o
+      # gerenciamento central de pacote tirou o numero de dentro dos .csproj.
+      - name: Cache de pacote NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restaurar
+        run: dotnet restore
+
+      - name: Compilar
+        run: dotnet build --no-restore --configuration Release --nologo
+
+      - name: Testar
+        run: dotnet test --no-build --configuration Release --nologo

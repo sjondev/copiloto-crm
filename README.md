@@ -174,6 +174,35 @@ o que este projeto existe para mostrar.
 
 ---
 
+## Como rodar
+
+Precisa de **.NET 9 SDK** e **Docker**. Nada além disso — a suíte e a demo rodam
+offline, sem chave de provedor e sem rede.
+
+```bash
+cp .env.example .env        # e preencha POSTGRES_PASSWORD
+docker compose up -d        # sobe só o Postgres
+
+dotnet build
+dotnet test
+dotnet run --project src/Copiloto.Api
+```
+
+A solution tem três projetos, e a divisão é mecânica antes de ser estética:
+
+```
+src/Copiloto.Dominio     POCO puro — ZERO PackageReference, e há teste que confere
+src/Copiloto.Api         Minimal API: EF, SignalR, adaptadores, orquestração
+testes/Copiloto.Testes   xUnit
+```
+
+`Copiloto.Dominio` não tem pacote nenhum de propósito: sem `PackageReference` o
+projeto **não consegue** compilar um `[Table]` ou um `DbContext`. Numa pasta dentro
+da API, "domínio POCO" seria uma promessa que o próximo `using` quebra em silêncio,
+com todos os testes verdes.
+
+---
+
 ## Fontes de conversa
 
 Tudo entra por `IConversationSource`, com três implementações trocáveis por configuração:

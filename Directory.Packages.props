@@ -1,0 +1,23 @@
+<!--
+  Versao de pacote declarada UMA vez, para a solution inteira.
+
+  O motivo e concreto neste projeto: Api e Testes vao referenciar EF Core e
+  Npgsql juntos, e versao divergente entre o projeto e o teste dele produz o
+  pior tipo de falha — o teste passa e a aplicacao quebra.
+
+  Versoes conferidas no terminal (SDK 9.0.203), nao adotadas de memoria.
+-->
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="coverlet.collector" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+</Project>

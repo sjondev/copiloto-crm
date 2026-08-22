@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Copiloto.Dominio\Copiloto.Dominio.csproj" />
+    <ProjectReference Include="..\..\src\Copiloto.Api\Copiloto.Api.csproj" />
+  </ItemGroup>
+
+  <!--
+    A raiz do repositorio chega ao teste como metadado do assembly, resolvida
+    pelo MSBuild em tempo de compilacao.
+
+    O teste precisa ler um .csproj em tempo de execucao, e subir com "../../.."
+    a partir do binario quebra na primeira mudanca de layout (Debug/Release,
+    TargetFramework novo, pasta de saida diferente) — e quebra devolvendo
+    "arquivo nao encontrado", que e facil de confundir com "nao ha pacote".
+  -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>RaizDoRepositorio</_Parameter1>
+      <_Parameter2>$(MSBuildThisFileDirectory)..\..\</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,20 @@
+<!--
+  Propriedades de TODOS os projetos, num lugar so.
+
+  Duplicar TargetFramework em cada .csproj funciona ate o dia em que um deles
+  fica para tras numa atualizacao — e o erro so aparece quando algum tipo novo
+  do framework nao compila num projeto e compila nos outros.
+
+  A politica de analisador e de aviso-como-erro NAO entra aqui ainda: ela e da
+  #75, que define os limiares e a politica de falha. Este arquivo existe para
+  que ela tenha um lugar so onde ligar.
+-->
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,16 @@
+<!--
+  O dominio e POCO puro (#48), e este arquivo e a PROVA disso.
+
+  Sem PackageReference, o projeto nao consegue compilar um [Table], um
+  DbContext ou um JsonPropertyName. Numa pasta dentro da Api, "POCO puro"
+  seria uma promessa que o proximo `using` quebra em silencio, com todos os
+  testes verdes.
+
+  Ha teste que le este arquivo e reprova se um pacote aparecer aqui:
+  testes/Copiloto.Testes/DominioSemPacoteTeste.cs
+
+  A referencia anda num sentido so: Api -> Dominio. O contrario, nunca.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+</Project>

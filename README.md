@@ -217,6 +217,19 @@ O núcleo não sabe nem se importa de onde a mensagem veio.
 
 ---
 
+## Como trabalhamos aqui
+
+KISS e DRY não são slogan neste projeto: são **gatilhos numéricos** (arquivo ~300
+linhas, método ~40, 4 parâmetros, 3 níveis de aninhamento, 3ª repetição) e uma regra
+que diz o que fazer quando um deles dispara — abrir issue e **seguir** o trabalho,
+nunca refatorar no meio de outra tarefa.
+
+Estão em [`CONTRIBUTING.md`](CONTRIBUTING.md), junto com as três coisas que a
+política existe para impedir: abstrair na segunda ocorrência, unificar duplicação
+que só é coincidência, e desduplicar até ninguém mais entender.
+
+---
+
 ## Status
 
 Em construção. Acompanhe pelos [milestones](../../milestones) e pelas

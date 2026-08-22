@@ -10,6 +10,14 @@ body:
         interface com uma implementação só e sem teste que a justifique ·
         abstração criada "por precaução".
 
+        A política completa está em [CONTRIBUTING.md](../../CONTRIBUTING.md) —
+        inclusive a regra dos três, o teste para saber se a duplicação é real, e
+        as exceções que este projeto já abriu de propósito.
+
+        **Bateu um gatilho no meio de outra tarefa? Abra esta issue e SIGA o
+        trabalho.** Refatoração misturada com feature produz um diff que ninguém
+        revisa.
+
   - type: input
     id: onde
     attributes:

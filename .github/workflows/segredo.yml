@@ -1,0 +1,41 @@
+# Varredura de segredo. Repositorio publico: chave commitada esta vazada no
+# segundo seguinte, e apagar o commit nao resolve — quem clonou, clonou.
+#
+# Este gate reprova o PR. Ele nao substitui o .gitignore nem a regra de nunca
+# commitar .env: e a rede embaixo do trapezio, e rede tem furo (ver #47).
+name: Segredo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: segredo-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  varredura:
+    name: Varredura de segredo
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Historico inteiro, nao so o diff. Segredo que entrou ha dez commits
+          # continua vazado hoje, e e exatamente o que uma varredura so do diff
+          # deixa de ver para sempre.
+          fetch-depth: 0
+
+      # Versao fixada, e nao :latest. As regras do gitleaks mudam entre versoes:
+      # com :latest, o gate pode passar a reprovar (ou a deixar passar) sem que
+      # ninguem tenha mudado uma linha deste repositorio.
+      - name: gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" \
+            ghcr.io/gitleaks/gitleaks:v8.30.1 \
+            detect --source /repo --redact --no-banner --verbose

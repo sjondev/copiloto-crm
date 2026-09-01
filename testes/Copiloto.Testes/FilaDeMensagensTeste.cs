@@ -12,7 +12,8 @@ namespace Copiloto.Testes;
 public class FilaDeMensagensTeste
 {
     private static MensagemRecebida Fala(string id = "wamid.1") =>
-        new(id, "+5511999999999", "qual o valor do kg?", DateTimeOffset.UtcNow);
+        new(id, "+5511987654321", "+5511333334444", "qual o valor do kg?",
+            DateTimeOffset.UtcNow);
 
     [Fact]
     public async Task Publicar_entrega_para_quem_le()

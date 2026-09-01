@@ -1,3 +1,6 @@
+using Copiloto.Dominio.Conversas;
+using Copiloto.Dominio.Vendas;
+
 namespace Copiloto.Api.Ingestao;
 
 /// <summary>
@@ -13,11 +16,14 @@ namespace Copiloto.Api.Ingestao;
 public class ProcessadorDeMensagens : BackgroundService
 {
     private readonly FilaDeMensagens _fila;
+    private readonly ResolvedorDeLead _resolvedor;
     private readonly ILogger<ProcessadorDeMensagens> _log;
 
-    public ProcessadorDeMensagens(FilaDeMensagens fila, ILogger<ProcessadorDeMensagens> log)
+    public ProcessadorDeMensagens(
+        FilaDeMensagens fila, ResolvedorDeLead resolvedor, ILogger<ProcessadorDeMensagens> log)
     {
         _fila = fila;
+        _resolvedor = resolvedor;
         _log = log;
     }
 
@@ -41,13 +47,28 @@ public class ProcessadorDeMensagens : BackgroundService
         }
     }
 
-    private Task Processar(MensagemRecebida mensagem)
+    private Task Processar(MensagemRecebida bruta)
     {
-        // O passo de IA entra aqui (#41 em diante). Por ora, o registro prova
-        // que a mensagem atravessou a fila sem passar pelo handler do webhook.
+        var doCliente = _resolvedor.TelefoneDoCliente(bruta);
+        if (doCliente is null)
+        {
+            // Numero irreconhecivel nao derruba o worker nem some: fica no log
+            // com o id do provedor, que e por onde alguem consegue ir atras.
+            _log.LogWarning(
+                "Mensagem {Id} descartada: nem De ({De}) nem Para ({Para}) e telefone valido",
+                bruta.ProviderMessageId, bruta.De, bruta.Para);
+            return Task.CompletedTask;
+        }
+
+        var lead = _resolvedor.Resolver(doCliente, bruta.EnviadaEm);
+        var remetente = Telefone.Normalizar(bruta.De)!;
+        var autor = _resolvedor.QuemFalou(remetente);
+
+        // O passo de IA entra aqui (#41 em diante). Ate la, o registro prova que
+        // a mensagem atravessou a fila sem passar pelo handler do webhook.
         _log.LogInformation(
-            "Mensagem {Id} de {Telefone} processada fora do webhook",
-            mensagem.ProviderMessageId, mensagem.Telefone);
+            "Mensagem {Id} de {Autor} no lead {Lead} processada fora do webhook",
+            bruta.ProviderMessageId, autor, lead.Id);
         return Task.CompletedTask;
     }
 

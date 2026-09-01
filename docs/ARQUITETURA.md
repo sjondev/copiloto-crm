@@ -354,7 +354,104 @@ Se em algum ponto uma das duas não tiver justificativa nomeada, ela sai.
 
 ---
 
-## 13. O que ficou de fora, de propósito
+## 13. A plataforma do WhatsApp, confirmada na fonte
+
+Levantado na #26, e a regra que a motivou é a do projeto: **não arquitetar em
+cima de memória**. Cinco pontos eram entendimento; abaixo está o que a
+documentação oficial diz, com o que foi **confirmado** e o que estava **errado**.
+
+Verificado em 01/09/2026. Detalhe de plataforma muda — o que envelhece aqui é a
+data, e é por isso que ela está escrita.
+
+### 13.1 Cobrança: por MENSAGEM, não por conversa — corrigido
+
+O entendimento anterior falava em "custo por conversa". Está desatualizado:
+
+> *"Conversation-based pricing is deprecated. It was replaced with per-message
+> pricing on July 1, 2025."*
+
+E o que se paga é estreito: *"You are only charged when a template message is
+delivered"*. Dentro de uma janela de atendimento aberta, *"all non-template
+messages are free"*.
+
+**O que isso muda para nós:** o custo do WhatsApp praticamente desaparece do
+modelo, porque o Copiloto **não envia mensagem ao cliente** — quem escreve é o
+vendedor, pelo aplicativo. O custo relevante do produto é o de IA, que a #2 já
+vincula ao Deal. Ter desenhado orçamento em cima de "custo por conversa" teria
+inflado a projeção inteira.
+
+Fonte: [Pricing](https://developers.facebook.com/docs/whatsapp/pricing)
+
+### 13.2 Janela de 24 horas — confirmado, com detalhe novo
+
+Existe. Mensagem do cliente abre uma janela de atendimento, e fora dela só
+template aprovado passa: *"Templates are also the only type of message that can
+be sent to WhatsApp users outside of a customer service window"*.
+
+O detalhe que não estava no entendimento: responder dentro de 24h abre também
+uma **Free Entry Point window**, válida por 72 horas.
+
+**O que isso muda:** nada no fluxo, de novo porque não enviamos. Mas a janela é
+informação **de dossiê** — "esta conversa esfriou e a janela fechou" é diferente
+de "esfriou", e a segunda sozinha esconde que retomar agora custa template.
+
+Fonte: [Pricing](https://developers.facebook.com/docs/whatsapp/pricing) ·
+[Overview](https://developers.facebook.com/docs/whatsapp/cloud-api/overview)
+
+### 13.3 O número sai do app — confirmado, e há uma saída
+
+Confirmado no caminho direto: para usar um número do WhatsApp Business app na
+Cloud API é preciso apagar a conta, **o histórico é perdido**, e o número não
+volta ao app enquanto estiver registrado na API. Número registrado *"cannot be
+used with WhatsApp Messenger"*.
+
+O que **não** estava no entendimento: existe **coexistence**. Onboarding por um
+parceiro que suporte *business app number onboarding* permite usar os dois ao
+mesmo tempo **e preserva o histórico**.
+
+**O que isso muda:** é decisão de negócio, não técnica, e a diferença é grande
+para quem vende — pedir a uma empresa que apague o histórico do WhatsApp dela
+para instalar o produto é um pedido que costuma encerrar a conversa. A #25
+(WahaSource, chip dedicado) deixa de ser a única saída para quem não quer perder
+o número.
+
+Fonte: [Migrate an existing WhatsApp number](https://developers.facebook.com/docs/whatsapp/cloud-api/get-started/migrate-existing-whatsapp-number-to-a-business-account/) ·
+[Onboard WhatsApp Business app users](https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/onboarding-business-app-users/)
+
+### 13.4 Histórico retroativo: não existe — confirmado
+
+A API entrega mensagens **a partir do registro**, por webhook, e não há
+recuperação do que veio antes. Na migração direta o histórico é explicitamente
+perdido; com coexistence ele é preservado **no aplicativo**, o que não é o mesmo
+que estar disponível para nós.
+
+**O que isso muda, e é o ponto mais importante desta seção:** o dossiê de um
+cliente antigo nasce **cego** ao que já foi conversado. Isso não é defeito a
+consertar, é limitação a declarar — e o produto já tem o lugar certo para
+declará-la, que é a seção "ainda não sabemos". Um dossiê que não diz isso
+parece estar afirmando que não houve conversa anterior.
+
+### 13.5 Conta Meta Business verificada — parcialmente errado
+
+Não é exigência para começar. É preciso ter um *business portfolio*, e a
+verificação *"factors into improved functionality"* — ou seja, ela destrava
+limites, não o acesso.
+
+**O que isso muda:** dá para desenvolver e demonstrar antes de a verificação
+sair, o que tira a plataforma do caminho crítico da entrevista.
+
+Fonte: [Overview](https://developers.facebook.com/docs/whatsapp/cloud-api/overview)
+
+### 13.6 O que segue não verificado
+
+Limites de envio por nível (*messaging tiers*) e o custo por país não foram
+conferidos, porque não afetam nenhuma decisão em aberto agora — não enviamos
+mensagem. Ficam explicitamente **fora** do que esta seção afirma, para ninguém
+citá-los como se tivessem sido checados.
+
+---
+
+## 14. O que ficou de fora, de propósito
 
 Multi-tenant · importação de planilha · relatórios · permissão granular · transcrição de
 áudio · **envio automático de mensagem ao cliente**.

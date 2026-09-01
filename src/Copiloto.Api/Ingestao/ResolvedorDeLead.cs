@@ -1,3 +1,4 @@
+using Copiloto.Api.Persistencia;
 using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Vendas;
 
@@ -14,10 +15,14 @@ namespace Copiloto.Api.Ingestao;
 public class ResolvedorDeLead
 {
     private readonly Telefone _numeroDaEmpresa;
-    private readonly Dictionary<string, Lead> _porTelefone = new();
+    private readonly IRepositorioDeLeads _leads;
 
-    public ResolvedorDeLead(string numeroDaEmpresa)
+    public ResolvedorDeLead(string numeroDaEmpresa, IRepositorioDeLeads? leads = null)
     {
+        // Em memoria por padrao: e o que mantem a suite e a demo rodando sem
+        // Postgres, como o CLAUDE.md manda.
+        _leads = leads ?? new LeadsEmMemoria();
+
         _numeroDaEmpresa = Telefone.Normalizar(numeroDaEmpresa)
             ?? throw new ArgumentException(
                 "O numero da empresa precisa ser um telefone brasileiro valido: e "
@@ -53,13 +58,13 @@ public class ResolvedorDeLead
     /// </summary>
     public Lead Resolver(Telefone telefone, DateTimeOffset quando)
     {
-        if (_porTelefone.TryGetValue(telefone.E164, out var existente))
-            return existente;
+        var existente = _leads.PorTelefone(telefone.E164);
+        if (existente is not null) return existente;
 
         var novo = new Lead(Guid.NewGuid(), telefone.E164, quando);
-        _porTelefone[telefone.E164] = novo;
+        _leads.Adicionar(novo);
         return novo;
     }
 
-    public int LeadsConhecidos => _porTelefone.Count;
+    public int LeadsConhecidos => _leads.Quantos;
 }

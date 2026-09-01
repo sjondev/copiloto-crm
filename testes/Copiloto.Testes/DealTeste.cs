@@ -90,11 +90,61 @@ public class DealTeste
     {
         var deal = NovoDeal();
 
-        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), "fake", 0.15m, Agora));
-        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), "fake", 0.25m, Agora));
+        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), "fake", 0.15m, Agora, deal.Id));
+        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), "fake", 0.25m, Agora, deal.Id));
 
         Assert.Equal(0.40m, deal.CustoIaAcumulado);
         Assert.Equal(2, deal.Invocacoes.Count);
+    }
+
+    [Fact]
+    public void O_somatorio_das_invocacoes_bate_com_o_acumulado()
+    {
+        // Criterio de aceite da #2, e a razao dele: o acumulado e um numero
+        // guardado, e numero guardado pode divergir da soma que o originou. O
+        // dia em que divergir, "quanto custou fechar este negocio?" passa a ter
+        // duas respostas e ninguem sabe qual e a certa.
+        var deal = NovoDeal();
+        decimal[] custos = [0.07m, 0.13m, 1.20m, 0.004m];
+
+        foreach (var c in custos)
+            deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), "fake", c, Agora, deal.Id));
+
+        Assert.Equal(deal.Invocacoes.Sum(i => i.CustoEmReais), deal.CustoIaAcumulado);
+        Assert.Equal(custos.Sum(), deal.CustoIaAcumulado);
+    }
+
+    [Fact]
+    public void O_Deal_recusa_custo_que_nao_e_dele()
+    {
+        // Sem isto, "quanto custou este negocio?" responderia com a soma de
+        // outro — e o erro nao apareceria, porque o numero continua com cara
+        // de certo.
+        var deal = NovoDeal();
+        var deOutro = new AiInvocation(Guid.NewGuid(), "fake", 9.99m, Agora, Guid.NewGuid());
+
+        Assert.Throws<ArgumentException>(() => deal.RegistrarInvocacao(deOutro));
+        Assert.Equal(0m, deal.CustoIaAcumulado);
+    }
+
+    [Fact]
+    public void Invocacao_sem_deal_nao_entra_num_deal()
+    {
+        // `DealId` nulo e legitimo (diagnostico, teste de provedor), mas nao
+        // pertence a negocio nenhum.
+        var deal = NovoDeal();
+        var solta = new AiInvocation(Guid.NewGuid(), "fake", 0.50m, Agora);
+
+        Assert.Throws<ArgumentException>(() => deal.RegistrarInvocacao(solta));
+    }
+
+    [Fact]
+    public void Guid_vazio_nao_passa_por_sem_negocio()
+    {
+        // Empty passaria por preenchido e o custo seria somado a um Deal que
+        // nao existe. Para "sem negocio" existe o null.
+        Assert.Throws<ArgumentException>(
+            () => new AiInvocation(Guid.NewGuid(), "fake", 0.10m, Agora, Guid.Empty));
     }
 
     [Fact]

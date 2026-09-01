@@ -1,3 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+  <!--
+    A referencia anda num sentido so: Api -> Dominio. O contrario transformaria
+    o dominio em mais uma camada de aplicacao, e ha teste que reprova se um
+    ProjectReference aparecer no lado de la.
+
+    Mapeamento e persistencia moram AQUI, e nao no dominio, que e POCO puro por
+    decisao (#48) e nao tem pacote para compilar um [Table] nem um DbContext.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Copiloto.Dominio\Copiloto.Dominio.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -3,6 +3,11 @@ using Copiloto.Api.Ingestao;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<FilaDeMensagens>();
+
+// O numero da empresa e o que decide quem falou em cada mensagem, entao ele e
+// configuracao e nao constante: cada instalacao tem o seu.
+builder.Services.AddSingleton(_ => new ResolvedorDeLead(
+    builder.Configuration["WHATSAPP_NUMERO_EMPRESA"] ?? "+55 11 3333-4444"));
 builder.Services.AddHostedService<ProcessadorDeMensagens>();
 
 var app = builder.Build();
@@ -16,6 +21,8 @@ app.MapPost("/webhook/whatsapp", async (
 {
     if (string.IsNullOrWhiteSpace(mensagem.ProviderMessageId))
         return Results.BadRequest(new { erro = "sem ProviderMessageId: a reentrega nao teria como ser reconhecida" });
+    if (string.IsNullOrWhiteSpace(mensagem.De) || string.IsNullOrWhiteSpace(mensagem.Para))
+        return Results.BadRequest(new { erro = "sem De/Para: nao ha como dizer quem falou" });
 
     var enfileirou = await fila.Publicar(mensagem, ct);
 

@@ -1,4 +1,5 @@
 using Copiloto.Dominio.Conversas;
+using Copiloto.Dominio.Fichas;
 using Copiloto.Dominio.Ia;
 using Copiloto.Dominio.Vendas;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,7 @@ public class CopilotoDbContext : DbContext
     public DbSet<AiInvocation> Invocacoes => Set<AiInvocation>();
     public DbSet<Conversa> Conversas => Set<Conversa>();
     public DbSet<Mensagem> Mensagens => Set<Mensagem>();
+    public DbSet<FichaCliente> Fichas => Set<FichaCliente>();
 
     protected override void OnModelCreating(ModelBuilder b) =>
         b.ApplyConfigurationsFromAssembly(typeof(CopilotoDbContext).Assembly);

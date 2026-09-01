@@ -1,0 +1,24 @@
+{
+  "id": "esfria-e-some",
+  "titulo": "Esfria e some: pede proposta, responde 'vou pensar', silencio de dias",
+  "_comentario": [
+    "Dados FICTICIOS. Tem erro de digitacao e um audio de proposito: a #21 pede",
+    "jeito de WhatsApp real, e a #23 trata audio como LACUNA e nao transcreve",
+    "nesta fase — entao ele entra aqui para o dossie ter o que declarar que",
+    "nao sabe."
+  ],
+  "empresa": { "telefone": "+55 11 3333-4444" },
+  "cliente": { "nome": "Cris", "telefone": "+55 11 96666-3333" },
+  "mensagens": [
+    { "de": "cliente",  "offsetSegundos": 0,      "texto": "boa tarde, voces atendem empresa?" },
+    { "de": "cliente",  "offsetSegundos": 12,     "texto": "queria pra um escritorio, uns 30 litros por semana" },
+    { "de": "vendedor", "offsetSegundos": 300,    "texto": "Atendemos sim! Consigo montar um plano mensal" },
+    { "de": "cliente",  "offsetSegundos": 420,    "texto": "manda a proposta pfv" },
+    { "de": "cliente",  "offsetSegundos": 430,    "texto": "no meu emial mesmo" },
+    { "de": "vendedor", "offsetSegundos": 3600,   "texto": "Enviado! Qualquer duvida me chama" },
+    { "de": "cliente",  "offsetSegundos": 7200,   "tipo": "audio", "texto": "[audio de 14s]" },
+    { "de": "vendedor", "offsetSegundos": 10800,  "texto": "Consegue me mandar por escrito? To sem ouvir agora" },
+    { "de": "cliente",  "offsetSegundos": 14400,  "texto": "vou pensar e te falo" },
+    { "de": "cliente",  "offsetSegundos": 14405,  "texto": "obrigado" }
+  ]
+}

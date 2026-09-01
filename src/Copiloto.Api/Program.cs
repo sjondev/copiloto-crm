@@ -1,6 +1,17 @@
 using Copiloto.Api.Ingestao;
+using Copiloto.Api.Persistencia;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Postgres em producao. A cadeia de configuracao segue a do compose, e a
+// ausencia da senha derruba a subida de proposito — banco sem senha e o tipo de
+// "funciona na minha maquina" que vira incidente.
+builder.Services.AddDbContext<CopilotoDbContext>(o =>
+    o.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")
+                ?? "Host=localhost;Database=copiloto;Username=copiloto"));
+
+builder.Services.AddScoped<IRepositorioDeLeads, LeadsNoBanco>();
 
 builder.Services.AddSingleton<FilaDeMensagens>();
 

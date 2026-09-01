@@ -12,4 +12,15 @@
     <ProjectReference Include="..\Copiloto.Dominio\Copiloto.Dominio.csproj" />
   </ItemGroup>
 
+  <!--
+    EF Core mora AQUI, e nao no dominio. O `Copiloto.Dominio` segue sem
+    PackageReference nenhum: sem pacote ele nao consegue compilar um [Table] nem
+    um DbContext, e e essa impossibilidade que sustenta a regra (#48).
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
 </Project>

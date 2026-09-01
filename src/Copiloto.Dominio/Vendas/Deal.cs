@@ -85,6 +85,15 @@ public class Deal
     public void RegistrarInvocacao(AiInvocation invocacao)
     {
         ArgumentNullException.ThrowIfNull(invocacao);
+
+        // O Deal recusa custo que nao e dele. Sem esta checagem, "quanto custou
+        // fechar este negocio?" responderia com a soma de outro — e o erro nao
+        // apareceria em lugar nenhum, porque o numero continua parecendo certo.
+        if (invocacao.DealId != Id)
+            throw new ArgumentException(
+                $"A invocacao aponta para o deal {invocacao.DealId?.ToString() ?? "nenhum"} "
+                + $"e esta sendo registrada em {Id}.", nameof(invocacao));
+
         _invocacoes.Add(invocacao);
         CustoIaAcumulado += invocacao.CustoEmReais;
     }

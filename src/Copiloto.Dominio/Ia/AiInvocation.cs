@@ -11,8 +11,14 @@ namespace Copiloto.Dominio.Ia;
 /// </summary>
 public class AiInvocation
 {
+    /// <param name="dealId">
+    /// O negocio em que a invocacao aconteceu. Nulo so quando nao ha negocio no
+    /// contexto — uma chamada de diagnostico, um teste de provedor. Havendo
+    /// Deal, ele e obrigatorio, e quem cobra isso e o proprio Deal ao registrar.
+    /// </param>
     public AiInvocation(
-        Guid id, string modelo, decimal custoEmReais, DateTimeOffset quando)
+        Guid id, string modelo, decimal custoEmReais, DateTimeOffset quando,
+        Guid? dealId = null)
     {
         if (id == Guid.Empty) throw new ArgumentException("Invocacao sem id.", nameof(id));
         if (string.IsNullOrWhiteSpace(modelo))
@@ -23,13 +29,29 @@ public class AiInvocation
             throw new ArgumentOutOfRangeException(nameof(custoEmReais),
                 "Custo negativo nao existe, e somado ao acumulado ele o faria DIMINUIR.");
 
+        if (dealId == Guid.Empty)
+            throw new ArgumentException(
+                "Guid.Empty nao e 'sem negocio': use null. Empty passaria por "
+                + "preenchido e o custo seria somado a um Deal que nao existe.",
+                nameof(dealId));
+
         Id = id;
+        DealId = dealId;
         Modelo = modelo.Trim();
         CustoEmReais = custoEmReais;
         Quando = quando;
     }
 
     public Guid Id { get; }
+
+    /// <summary>
+    /// O vinculo custo-negocio. E barato agora e caro depois: enxertar rastreio
+    /// num modelo ja povoado exige backfill e adivinhacao, e a resposta ficaria
+    /// sendo estimativa para sempre — justamente na conta que decide se o
+    /// produto se paga.
+    /// </summary>
+    public Guid? DealId { get; }
+
     public string Modelo { get; }
     public decimal CustoEmReais { get; }
     public DateTimeOffset Quando { get; }

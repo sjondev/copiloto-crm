@@ -1,0 +1,26 @@
+{
+  "id": "fecha",
+  "titulo": "Fecha: pergunta, negocia frete, compra",
+  "_comentario": [
+    "Dados FICTICIOS. Nenhum dado real de pessoa — os telefones estao na faixa",
+    "de teste e os nomes sao inventados (LGPD, e a issue #21 pede explicitamente).",
+    "",
+    "As tres conversas do seed sao o teste de qualidade do dossie: se a leitura",
+    "for rasa nelas, o prompt esta ruim e isso e bug, nao 'coisa de IA'."
+  ],
+  "empresa": { "telefone": "+55 11 3333-4444" },
+  "cliente": { "nome": "Marina", "telefone": "+55 11 98888-1111" },
+  "mensagens": [
+    { "de": "cliente",  "offsetSegundos": 0,     "texto": "bom dia" },
+    { "de": "cliente",  "offsetSegundos": 2,     "texto": "vi o cafe de voces no instagram" },
+    { "de": "cliente",  "offsetSegundos": 4,     "texto": "o bourbon amarelo" },
+    { "de": "cliente",  "offsetSegundos": 6,     "texto": "qual o valor do kg?" },
+    { "de": "vendedor", "offsetSegundos": 240,   "texto": "Bom dia! O Bourbon Amarelo sai a R$ 68 o quilo, torra media" },
+    { "de": "cliente",  "offsetSegundos": 320,   "texto": "e o frete pra zona sul?" },
+    { "de": "vendedor", "offsetSegundos": 380,   "texto": "R$ 18. Acima de 2kg fica por nossa conta" },
+    { "de": "cliente",  "offsetSegundos": 460,   "texto": "entao me ve 2kg" },
+    { "de": "cliente",  "offsetSegundos": 465,   "texto": "melhor 3, pra durar" },
+    { "de": "vendedor", "offsetSegundos": 520,   "texto": "Fechado! Mando o pix e o codigo de rastreio hoje mesmo" },
+    { "de": "cliente",  "offsetSegundos": 600,   "texto": "perfeito, obrigada" }
+  ]
+}

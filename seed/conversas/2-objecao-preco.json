@@ -1,0 +1,22 @@
+{
+  "id": "objecao-preco",
+  "titulo": "Objecao de preco: compara com o cafe de supermercado",
+  "_comentario": [
+    "Dados FICTICIOS. A objecao aqui e VELADA no comeco ('puxado hein') e so",
+    "fica explicita depois — e o caso que separa leitura rasa de leitura util."
+  ],
+  "empresa": { "telefone": "+55 11 3333-4444" },
+  "cliente": { "nome": "Rogerio", "telefone": "+55 11 97777-2222" },
+  "mensagens": [
+    { "de": "cliente",  "offsetSegundos": 0,     "texto": "oi, quanto ta o kg do bourbon?" },
+    { "de": "vendedor", "offsetSegundos": 180,   "texto": "Oi! R$ 68 o quilo" },
+    { "de": "cliente",  "offsetSegundos": 260,   "texto": "puxado hein" },
+    { "de": "cliente",  "offsetSegundos": 268,   "texto": "no mercado eu acho a 22" },
+    { "de": "vendedor", "offsetSegundos": 400,   "texto": "Entendo. O de mercado costuma ser blend com robusta e torra escura, esse e 100% arabica de um lote so" },
+    { "de": "cliente",  "offsetSegundos": 520,   "texto": "sim mas 3x o preco e complicado" },
+    { "de": "cliente",  "offsetSegundos": 530,   "texto": "voces fazem algum desconto?" },
+    { "de": "cliente",  "offsetSegundos": 545,   "texto": "pra levar mais quantidade" },
+    { "de": "vendedor", "offsetSegundos": 900,   "texto": "Vou verificar com o time e te falo" },
+    { "de": "cliente",  "offsetSegundos": 960,   "texto": "blz" }
+  ]
+}

@@ -1,5 +1,7 @@
+using Copiloto.Api.Ia;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Persistencia;
+using Copiloto.Dominio.Ia;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,10 @@ builder.Services.AddDbContext<CopilotoDbContext>(o =>
                 ?? "Host=localhost;Database=copiloto;Username=copiloto"));
 
 builder.Services.AddScoped<IRepositorioDeLeads, LeadsNoBanco>();
+
+// O router e a tabela dele: a tabela vem do appsettings, nunca de codigo.
+builder.Services.AddSingleton(_ => new RoteadorDeModelo(
+    TabelaDeModelos.Carregar(builder.Configuration)));
 
 builder.Services.AddSingleton<FilaDeMensagens>();
 

@@ -337,6 +337,18 @@ Consequência prática, que é o ponto: **a demo continua rodando com um único
 distribuído em produção. Uma demonstração que depende de cinco contêineres no ar tem
 cinco maneiras de falhar ao vivo.
 
+**O que já existe (#66):** as duas interfaces, `ChannelQueue` e `InMemoryState`, e a
+escolha por variável de ambiente com `inmemory` como padrão — sem `.env`, a aplicação
+sobe inteira. As implementações distribuídas ficam para #69 e #70, e até lá pedir
+`STATE_BACKEND=redis` **derruba a subida** com o número da issue no erro. É deliberado:
+cair para memória em silêncio daria uma aplicação que *parece* distribuída, roda com duas
+réplicas e perde idempotência sem nenhum sinal.
+
+A suíte é escrita contra o **contrato**, parametrizada pela implementação: `RedisState` e
+`RabbitMqQueue` entram com uma linha cada e passam a responder pelos mesmos testes. É o
+que impede a segunda implementação de nascer com garantias mais fracas que a primeira sem
+ninguém notar.
+
 ### 12.4 Redis também é backplane do SignalR
 
 Com mais de uma instância, o vendedor conectado à instância A não recebe o evento

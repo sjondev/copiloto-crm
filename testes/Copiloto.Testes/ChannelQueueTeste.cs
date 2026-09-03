@@ -1,4 +1,5 @@
 using Copiloto.Api.Ingestao;
+using Copiloto.Api.Infra;
 
 namespace Copiloto.Testes;
 
@@ -9,16 +10,56 @@ namespace Copiloto.Testes;
 /// na origem, timeout vira reentrega, reentrega vira custo DUPLICADO — e o custo
 /// aqui e de dinheiro, nao de CPU.
 /// </summary>
-public class FilaDeMensagensTeste
+public class ChannelQueueTeste
 {
     private static MensagemRecebida Fala(string id = "wamid.1") =>
         new(id, "+5511987654321", "+5511333334444", "qual o valor do kg?",
             DateTimeOffset.UtcNow);
 
+    /// <summary>
+    /// As implementacoes de <see cref="IQueue{T}"/> cobradas pelo contrato.
+    /// RabbitMqQueue (#69) entra aqui com UMA linha e passa a responder pelos
+    /// mesmos testes — e o que impede a segunda implementacao de nascer com
+    /// garantias mais fracas que a primeira sem ninguem notar.
+    /// </summary>
+    public static TheoryData<string, Func<IQueue<MensagemRecebida>>> Implementacoes => new()
+    {
+        { "inmemory", () => new ChannelQueue<MensagemRecebida>() },
+    };
+
+    [Theory]
+    [MemberData(nameof(Implementacoes))]
+    public async Task Contrato_entrega_na_ordem_em_que_publicou(
+        string nome, Func<IQueue<MensagemRecebida>> criar)
+    {
+        var fila = criar();
+        await fila.Publicar(Fala("um"), default);
+        await fila.Publicar(Fala("dois"), default);
+        fila.PararDeAceitar();
+
+        var lidas = new List<string>();
+        await foreach (var m in fila.Ler(default)) lidas.Add(m.ProviderMessageId);
+
+        Assert.Equal(["um", "dois"], lidas);
+        Assert.NotNull(nome);
+    }
+
+    [Theory]
+    [MemberData(nameof(Implementacoes))]
+    public async Task Contrato_depois_de_parar_recusa_trabalho_novo(
+        string nome, Func<IQueue<MensagemRecebida>> criar)
+    {
+        var fila = criar();
+        fila.PararDeAceitar();
+
+        Assert.False(await fila.Publicar(Fala("tarde demais"), default));
+        Assert.NotNull(nome);
+    }
+
     [Fact]
     public async Task Publicar_entrega_para_quem_le()
     {
-        var fila = new FilaDeMensagens();
+        var fila = new ChannelQueue<MensagemRecebida>();
 
         Assert.True(await fila.Publicar(Fala(), CancellationToken.None));
 
@@ -34,12 +75,12 @@ public class FilaDeMensagensTeste
     {
         // Fila sem teto nao para de crescer: consumo mais lento que a chegada faz
         // a memoria subir ate o processo morrer, e ai a perda e de TUDO.
-        var fila = new FilaDeMensagens();
+        var fila = new ChannelQueue<MensagemRecebida>();
 
-        for (var i = 0; i < FilaDeMensagens.Capacidade; i++)
+        for (var i = 0; i < ChannelQueue<MensagemRecebida>.Capacidade; i++)
             await fila.Publicar(Fala($"wamid.{i}"), CancellationToken.None);
 
-        Assert.Equal(FilaDeMensagens.Capacidade, fila.Aguardando);
+        Assert.Equal(ChannelQueue<MensagemRecebida>.Capacidade, fila.Aguardando);
     }
 
     [Fact]
@@ -47,22 +88,22 @@ public class FilaDeMensagensTeste
     {
         // O produtor ESPERA. Descartar em silencio perderia a fala do cliente
         // sem aparecer em lugar nenhum; a espera aparece como latencia.
-        var fila = new FilaDeMensagens();
-        for (var i = 0; i < FilaDeMensagens.Capacidade; i++)
+        var fila = new ChannelQueue<MensagemRecebida>();
+        for (var i = 0; i < ChannelQueue<MensagemRecebida>.Capacidade; i++)
             await fila.Publicar(Fala($"wamid.{i}"), CancellationToken.None);
 
         using var prazo = new CancellationTokenSource(TimeSpan.FromMilliseconds(150));
         var publicou = await fila.Publicar(Fala("estoura"), prazo.Token);
 
         Assert.False(publicou);
-        Assert.Equal(FilaDeMensagens.Capacidade, fila.Aguardando);
+        Assert.Equal(ChannelQueue<MensagemRecebida>.Capacidade, fila.Aguardando);
     }
 
     [Fact]
     public async Task Desligamento_drena_o_que_ja_estava_na_fila()
     {
         // O criterio de aceite: parar de aceitar nao pode descartar o que entrou.
-        var fila = new FilaDeMensagens();
+        var fila = new ChannelQueue<MensagemRecebida>();
         await fila.Publicar(Fala("a"), CancellationToken.None);
         await fila.Publicar(Fala("b"), CancellationToken.None);
 
@@ -78,7 +119,7 @@ public class FilaDeMensagensTeste
     [Fact]
     public async Task Depois_de_parar_nao_aceita_trabalho_novo()
     {
-        var fila = new FilaDeMensagens();
+        var fila = new ChannelQueue<MensagemRecebida>();
         fila.PararDeAceitar();
 
         Assert.False(await fila.Publicar(Fala(), CancellationToken.None));
@@ -89,7 +130,7 @@ public class FilaDeMensagensTeste
     {
         // Sem isto, o desligamento dependeria do timeout do host: o laco ficaria
         // esperando trabalho que nunca chega.
-        var fila = new FilaDeMensagens();
+        var fila = new ChannelQueue<MensagemRecebida>();
         await fila.Publicar(Fala(), CancellationToken.None);
         fila.PararDeAceitar();
 

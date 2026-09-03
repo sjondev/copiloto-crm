@@ -25,6 +25,14 @@ builder.Services.AddSingleton(_ => new RoteadorDeModelo(
 builder.Services.AddSingleton(_ => Backends.Fila<MensagemRecebida>(builder.Configuration));
 builder.Services.AddSingleton(_ => Backends.Estado(builder.Configuration));
 
+// A janela de dedupe e configuravel porque o prazo real de reentrega do webhook
+// nao foi verificado na fonte (#67): conferir muda a variavel, nao o codigo.
+builder.Services.AddSingleton(sp => new GuardaDeReentrega(
+    sp.GetRequiredService<IDistributedState>(),
+    double.TryParse(builder.Configuration["IDEMPOTENCIA_JANELA_HORAS"], out var horas)
+        ? TimeSpan.FromHours(horas)
+        : GuardaDeReentrega.JanelaPadrao));
+
 // O numero da empresa e o que decide quem falou em cada mensagem, entao ele e
 // configuracao e nao constante: cada instalacao tem o seu.
 builder.Services.AddSingleton(_ => new ResolvedorDeLead(

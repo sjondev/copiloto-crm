@@ -319,12 +319,32 @@ da aplicação**:
 |---|---|
 | Idempotência do webhook | Cada instância tem seu próprio registro de mensagens vistas. A reentrega cai na outra instância e é processada de novo — **e cobrada de novo**. |
 | Circuit breaker | Três instâncias, três circuitos independentes. Cada uma precisa falhar N vezes por conta própria antes de proteger. O provedor caído é golpeado 3N vezes. |
-| Rate limit por usuário | O limite vira o limite × número de instâncias. |
-| Cache de análise | Taxa de acerto cai proporcionalmente às instâncias. |
+| Rate limit por usuário | O limite vira o limite × número de instâncias. **Resolvido em #71.** |
+| Cache de análise | Taxa de acerto cai proporcionalmente às instâncias. **Resolvido em #71.** |
 
 Isso não é um problema de volume — é um problema de **corretude**. Um sistema cuja
 proteção contra gasto duplicado depende de rodar em processo único tem uma restrição
 de implantação não declarada.
+
+**Rate limit e cache, agora no estado compartilhado (#71).** O contador do limite vive em
+`IDistributedState`, então três réplicas dividem o mesmo teto em vez de multiplicá-lo —
+limite que se multiplica sozinho não é limite, é sugestão. O contador **continua subindo
+depois do teto**, de propósito: quem insiste além do limite é exatamente quem se quer
+enxergar, e um contador que trava apaga o único sinal de que houve insistência.
+
+O cache de análise é chaveado pelo **estado da conversa** (lead + id da última mensagem +
+versão do prompt), e não pelo texto: guardar por texto faria cada mensagem nova virar uma
+entrada inteira, e guardar só por lead serviria análise velha depois de o cliente falar de
+novo — que é o erro pior, porque a resposta *parece* certa. Trocar a versão do prompt
+também muda a chave, senão a mudança que alguém acabou de fazer ficaria escondida atrás
+de respostas antigas.
+
+E a parte que quebra alto: **o dono é gravado dentro do valor e conferido na leitura**, não
+só embutido na chave. Cache distribuído mal chaveado serve o dossiê de um cliente para
+outro em silêncio — sem erro, sem log, com a tela mostrando um texto plausível sobre a
+pessoa errada. Com a conferência, uma chave colidida vira *miss*, não vazamento. O prefixo
+`analise:<leadId>:` existe para o expurgo por titular (#46) achar o que é dele sem varrer
+o Redis inteiro.
 
 ### 12.2 A fila em memória perde mensagem
 

@@ -5,6 +5,7 @@ using Copiloto.Api.TempoReal;
 using Copiloto.Dominio.Dossies;
 using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Vendas;
+using Copiloto.Api.Infra;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,7 +23,7 @@ namespace Copiloto.Api.Ingestao;
 /// </summary>
 public class ProcessadorDeMensagens : BackgroundService
 {
-    private readonly FilaDeMensagens _fila;
+    private readonly IQueue<MensagemRecebida> _fila;
     private readonly IServiceScopeFactory _escopos;
     private readonly ILogger<ProcessadorDeMensagens> _log;
 
@@ -33,7 +34,7 @@ public class ProcessadorDeMensagens : BackgroundService
     /// deixa entidade suja para a proxima.
     /// </param>
     public ProcessadorDeMensagens(
-        FilaDeMensagens fila, IServiceScopeFactory escopos, ILogger<ProcessadorDeMensagens> log)
+        IQueue<MensagemRecebida> fila, IServiceScopeFactory escopos, ILogger<ProcessadorDeMensagens> log)
     {
         _fila = fila;
         _escopos = escopos;

@@ -73,6 +73,14 @@ builder.Services.AddSingleton(sp => new AgenteDeLeitura(
         "a1-leitura.md")),
     sp.GetRequiredService<ILogger<AgenteDeLeitura>>()));
 
+// A janela de dedupe e configuravel porque o prazo real de reentrega do webhook
+// nao foi verificado na fonte (#67): conferir muda a variavel, nao o codigo.
+builder.Services.AddSingleton(sp => new GuardaDeReentrega(
+    sp.GetRequiredService<IDistributedState>(),
+    double.TryParse(builder.Configuration["IDEMPOTENCIA_JANELA_HORAS"], out var horas)
+        ? TimeSpan.FromHours(horas)
+        : GuardaDeReentrega.JanelaPadrao));
+
 // O numero da empresa e o que decide quem falou em cada mensagem, entao ele e
 // configuracao e nao constante: cada instalacao tem o seu.
 //

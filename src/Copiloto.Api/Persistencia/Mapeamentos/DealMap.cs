@@ -13,6 +13,7 @@ public class DealMap : IEntityTypeConfiguration<Deal>
         e.Property(d => d.LeadId).IsRequired();
         e.Property(d => d.AbertoEm).IsRequired();
         e.Property(d => d.Estagio).HasConversion<string>().HasMaxLength(20).IsRequired();
+        e.Property(d => d.EstagioDesde).IsRequired();
         e.Property(d => d.FechadoEm);
 
         // Dinheiro em `decimal(18,6)`, nunca em ponto flutuante: seis casas

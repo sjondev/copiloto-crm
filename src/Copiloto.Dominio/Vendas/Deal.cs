@@ -25,12 +25,23 @@ public class Deal
         LeadId = leadId;
         AbertoEm = abertoEm;
         Estagio = Estagio.Novo;
+        EstagioDesde = abertoEm;
     }
 
     public Guid Id { get; }
     public Guid LeadId { get; }
     public DateTimeOffset AbertoEm { get; }
     public Estagio Estagio { get; private set; }
+
+    /// <summary>
+    /// Quando o Deal entrou no estagio atual.
+    ///
+    /// Sem isto, "parado ha 12 dias" nao tem como ser dito: `AbertoEm` conta a
+    /// idade do negocio, e negocio de dois meses que andou ontem nao esta
+    /// parado. E o dado que o Vigia cita no alerta (#53).
+    /// </summary>
+    public DateTimeOffset EstagioDesde { get; private set; }
+
     public DateTimeOffset? FechadoEm { get; private set; }
 
     /// <summary>
@@ -71,6 +82,7 @@ public class Deal
                  + "de um em um, e estagio pulado e negocio sem qualificacao.";
 
         Estagio = destino;
+        EstagioDesde = quando;
         if (EstaFechado) FechadoEm = quando;
         return null;
     }

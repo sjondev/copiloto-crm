@@ -1,6 +1,7 @@
 using Copiloto.Api.Ia;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Persistencia;
+using Copiloto.Api.Vigia;
 using Copiloto.Dominio.Ia;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +27,10 @@ builder.Services.AddSingleton<FilaDeMensagens>();
 builder.Services.AddSingleton(_ => new ResolvedorDeLead(
     builder.Configuration["WHATSAPP_NUMERO_EMPRESA"] ?? "+55 11 3333-4444"));
 builder.Services.AddHostedService<ProcessadorDeMensagens>();
+
+// O Vigia roda pelo relogio, e nao por requisicao: negocio esquecido nao gera
+// evento nenhum — ele so fica parado (#53).
+builder.Services.AddHostedService<JobDoVigia>();
 
 var app = builder.Build();
 

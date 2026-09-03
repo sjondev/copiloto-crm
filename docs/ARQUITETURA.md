@@ -169,6 +169,36 @@ não confiável, nunca como instrução. Há teste dedicado com payloads de inje
 
 ---
 
+## 8.5 O Vigia: o trabalho que ninguém pede
+
+Negócio esquecido **não gera evento**. Não abre tela, não chega por webhook, não vira
+requisição — ele só fica parado, e é a forma mais barata de perder venda já qualificada.
+Por isso o agente A6 tem o relógio como gatilho, e não o request (#53).
+
+Três motivos, cada um preso a um dado: cliente sem responder há 3 dias (cita a última
+fala dele), negócio parado no mesmo estágio há 10, e proposta na mesa há 5 — o limiar da
+proposta é menor porque cada dia sem resposta ali é uma comparação a mais com a
+concorrência. Quando os dois últimos coincidem, sai **um** alerta: quem está em Proposta
+há 12 dias também está "parado há 12 dias", e mandar as duas linhas cobra em dobro a
+atenção do vendedor pelo mesmo fato.
+
+**A varredura é determinística e não chama modelo.** Silêncio e tempo em estágio são
+contas de data; gastar token para descobrir que faz nove dias que ninguém fala seria pagar
+para fazer subtração. O custo do A6 no ledger só aparece quando ele passar a redigir o
+aviso com um modelo — e aí é invocação como outra qualquer, ligada ao Deal.
+
+O defeito mais caro aqui não é o falso positivo: é **repetir**. Aviso repetido treina o
+vendedor a fechar a lista sem ler, e aí o alerta certo, quando vier, também não é lido. A
+chave de deduplicação inclui o **marco** — a data do dado que originou o alerta —, e não
+só o motivo: o job roda de hora em hora sem repetir, mas se o cliente volta a falar e
+some de novo, o silêncio passa a contar de outra fala e aquilo é outro acontecimento.
+
+Hoje o conjunto de avisados vive na memória do processo, o que significa alerta duplicado
+com duas réplicas e lista reavisada depois de um restart. É limitação declarada, com o
+lugar certo já nomeado: o estado compartilhado da #66/#67.
+
+---
+
 ## 9. O ledger e a conta fechada
 
 `ai_invocations` registra por chamada: agente, modelo, tokens de entrada e saída, custo

@@ -1,0 +1,92 @@
+# LGPD: o que é dado pessoal aqui, e o que decorre disso
+
+Este documento existe por causa de **uma confusão específica** (#83), e ela gera decisão
+errada em cascata: quem acredita ter anonimizado conclui que pode reter para sempre,
+indexar à vontade e dispensar controle de acesso — porque "não é mais dado pessoal". E é.
+
+O que **não** está decidido aqui está nomeado no fim, com a issue que decide. Documento de
+conformidade que preenche lacuna com suposição é pior que documento incompleto: ele
+parece resposta.
+
+---
+
+## 1. O PII Shield pseudonimiza. Não anonimiza.
+
+O escudo troca `João Silva, 11 98765-4321` por `[NOME_1], [TEL_1]` **mantendo o vínculo
+com o Lead** — o mapa que remonta fica do nosso lado, por construção, porque a resposta do
+modelo precisa voltar legível para o vendedor.
+
+Isso é **pseudonimização**: reversível por quem tem a tabela.
+
+> Anonimização de verdade é **irreversível**, inclusive com informação adicional. Só o
+> dado anonimizado sai do escopo da LGPD. O nosso não sai.
+
+Consequência direta, e é o ponto inteiro do documento: **texto mascarado continua sendo
+dado pessoal**, e carrega junto todas as obrigações — base legal, prazo de retenção,
+controle de acesso, direito de acesso e exclusão do titular.
+
+Chamar o escudo de anonimização não seria imprecisão de vocabulário: seria **a base legal
+errada**, escrita por engano num documento que alguém vai ler para decidir.
+
+---
+
+## 2. Onde há dado pessoal
+
+Todo item desta lista é base de dado pessoal, com os mesmos controles. A coluna de estado
+diz o que **existe hoje** — não o que se pretende.
+
+| Onde | O que tem | Estado |
+|---|---|---|
+| Postgres (`leads`, `conversas`, `fichas_cliente`) | Nome, telefone, o que o cliente disse, o que o vendedor anotou | existe |
+| Payload que sai para o provedor de IA | Conversa mascarada pelo escudo — **pseudonimizada, não anônima** | existe |
+| Log da aplicação | Mesmo mascarado, é dado pessoal: o marcador é reversível pelo mapa, e o `deal_id` ao lado identifica | existe |
+| Ficha do cliente | Inclui **dado de terceiro** (o que o vendedor ouviu falar), que tem regime próprio | existe · regime em #89 |
+| Índice de embeddings (RAG) | Trechos de conversa vetorizados | não existe · #60, #62 |
+| Ledger (`ai_invocations`) | Custo ligado ao `deal_id`, que aponta para uma pessoa | existe |
+
+**O índice do RAG é a linha que mais escapa.** Vetor não parece dado pessoal — parece
+número. Mas ele é derivado do texto, é recuperável por semelhança e aponta para o mesmo
+titular: é base de dado pessoal como qualquer outra, com o mesmo controle de acesso e o
+mesmo expurgo. Apagar o Lead sem apagar o vetor deixa o dado vivo depois de o titular
+pedir exclusão.
+
+---
+
+## 3. O que decorre, na prática
+
+- **Retenção tem prazo, e prazo tem finalidade.** "Pseudonimizado, então guardo para
+  sempre" é a conclusão errada mais comum.
+- **Expurgo em cascata.** Exclusão do titular alcança conversa, ficha, log e índice —
+  qualquer um deles sozinho mantém o dado vivo.
+- **Controle de acesso vale para a base mascarada** tanto quanto para a original.
+- **A inferência também é dado pessoal.** "Sensível a preço", "esfriando" e "provável
+  necessidade" são dado novo, criado por nós, sobre alguém que nunca nos forneceu aquilo
+  — e o titular pode acessar e contestar. Protege-se o que entrou e esquece-se o que o
+  sistema produziu.
+
+---
+
+## 4. O gate que mantém isto verdadeiro
+
+Há teste que lê `README.md` e `docs/` e **reprova o build** se a palavra "anonimização"
+aparecer descrevendo o que fazemos, em vez de dizendo o que **não** fazemos.
+
+O motivo de ser teste, e não convenção: o termo errado é confortável — é mais curto, soa
+mais forte, e ninguém revisando um PR de código vai reler o README para conferir
+vocabulário jurídico. Convenção que depende de alguém lembrar tem prazo de validade.
+
+---
+
+## 5. O que este documento NÃO decide
+
+| Assunto | Issue |
+|---|---|
+| Papéis de controlador e operador, e subcontratação | #78 |
+| Base legal por finalidade, e legítimo interesse | #77 |
+| Registro das operações de tratamento | #76 |
+| Onde o provedor de IA processa (transferência internacional) | #79 |
+| Direitos do titular além da exclusão | #81 |
+| Dado sensível em regime próprio | #82 |
+| Aviso de transparência ao titular | #80 |
+| Resposta a incidente e log de auditoria | #84 |
+| Dado de terceiro na Ficha do Cliente | #89 |

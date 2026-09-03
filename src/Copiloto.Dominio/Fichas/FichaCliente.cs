@@ -2,24 +2,24 @@ namespace Copiloto.Dominio.Fichas;
 
 /// <summary>O que o vendedor descobriu sobre a empresa. Tudo opcional.</summary>
 public record SobreAEmpresa(
-    string? Ramo = null,
-    string? Porte = null,
-    string? Momento = null,
-    string? ComoChegou = null);
+    Anotacao? Ramo = null,
+    Anotacao? Porte = null,
+    Anotacao? Momento = null,
+    Anotacao? ComoChegou = null);
 
 /// <summary>Quem esta do outro lado, e o poder que tem sobre a decisao.</summary>
 public record SobreAPessoa(
-    string? Cargo = null,
-    string? PapelNaDecisao = null,
-    string? QuemMaisDecide = null,
-    string? EstiloObservado = null);
+    Anotacao? Cargo = null,
+    Anotacao? PapelNaDecisao = null,
+    Anotacao? QuemMaisDecide = null,
+    Anotacao? EstiloObservado = null);
 
 /// <summary>O negocio em si.</summary>
 public record SobreONegocio(
-    string? ProvavelNecessidade = null,
-    string? UsaHoje = null,
-    string? OrcamentoEstimado = null,
-    string? RiscoConhecido = null);
+    Anotacao? ProvavelNecessidade = null,
+    Anotacao? UsaHoje = null,
+    Anotacao? OrcamentoEstimado = null,
+    Anotacao? RiscoConhecido = null);
 
 /// <summary>Uma versao anterior da ficha, com quando e quem mudou.</summary>
 public record VersaoDaFicha(
@@ -100,14 +100,14 @@ public class FichaCliente
     }
 
     /// <summary>Os campos que tem conteudo, com o rotulo que vai ao contexto.</summary>
-    public IReadOnlyDictionary<string, string> Preenchidos
+    public IReadOnlyDictionary<string, Anotacao> Preenchidos
     {
         get
         {
-            var d = new Dictionary<string, string>();
-            void Por(string rotulo, string? valor)
+            var d = new Dictionary<string, Anotacao>();
+            void Por(string rotulo, Anotacao? anotacao)
             {
-                if (!string.IsNullOrWhiteSpace(valor)) d[rotulo] = valor.Trim();
+                if (anotacao is not null) d[rotulo] = anotacao;
             }
 
             Por("Ramo", Empresa.Ramo);
@@ -137,6 +137,20 @@ public class FichaCliente
     /// </summary>
     public IReadOnlyList<string> Lacunas() =>
         TodosOsRotulos.Where(r => !Preenchidos.ContainsKey(r)).ToList();
+
+    /// <summary>O que foi apurado. E so daqui que sai afirmacao (#88).</summary>
+    public IReadOnlyDictionary<string, Anotacao> Fatos =>
+        Preenchidos.Where(p => p.Value.EhFato).ToDictionary(p => p.Key, p => p.Value);
+
+    /// <summary>
+    /// O que alguem achou. Sustenta hipotese, e nada alem disso.
+    ///
+    /// Nao e' ruido a descartar: "parece desconfiado" muda a abordagem do
+    /// vendedor e tem lugar na ficha. O que nao pode e' virar premissa de uma
+    /// conclusao que volta com a autoridade do sistema.
+    /// </summary>
+    public IReadOnlyDictionary<string, Anotacao> Impressoes =>
+        Preenchidos.Where(p => !p.Value.EhFato).ToDictionary(p => p.Key, p => p.Value);
 
     private static readonly string[] TodosOsRotulos =
     [

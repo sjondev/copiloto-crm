@@ -24,8 +24,25 @@ public class Lead
 
     public Guid Id { get; }
     public string Telefone { get; }
+
+    /// <summary>
+    /// De que lado da mesa esta esta pessoa (#85).
+    ///
+    /// Nasce Cliente porque e o caso comum e porque errar para esse lado e
+    /// menos grave: cliente marcado como parceiro perde recurso; parceiro
+    /// marcado como cliente entra na base de precedentes de venda, e a
+    /// negociacao de fornecimento — com margem e custo — pode ser recuperada
+    /// enquanto o vendedor atende um comprador.
+    /// </summary>
+    public Relacao Relacao { get; private set; } = Relacao.Cliente;
     public string? Nome { get; private set; }
     public DateTimeOffset CriadoEm { get; }
+
+    /// <summary>
+    /// Marca quem esta do outro lado como fornecedor, transportadora,
+    /// representante — quem vende PARA a empresa, e nao compra dela.
+    /// </summary>
+    public void MarcarComo(Relacao relacao) => Relacao = relacao;
 
     /// <summary>Nome descoberto no meio da conversa, que e como ele costuma chegar.</summary>
     public void Identificar(string nome)

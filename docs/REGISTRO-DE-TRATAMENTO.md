@@ -162,6 +162,22 @@ que reprova o build se algum desses rótulos faltar.
   rodar no dia em que ninguém tem tempo.
 - **Estado:** existe.
 
+## 11. Dados de parceiro comercial
+
+- **Finalidade:** manter a relação com fornecedores, transportadoras e representantes —
+  compra, prazo de entrega, condição de fornecimento.
+- **Titulares:** o contato na empresa parceira. **É pessoa física**, ainda que a relação
+  seja B2B.
+- **Dados:** nome, telefone, cargo, e o conteúdo da conversa comercial.
+- **Base legal:** execução de contrato (art. 7, V) — base **própria**, distinta da usada
+  para clientes.
+- **Compartilhamento:** nenhum. Conversa de parceiro **não vai** para a base de precedentes
+  de venda.
+- **Retenção:** enquanto durar a relação de fornecimento, mais o prazo contratual.
+- **Segurança:** minimização (não guardar o que não se usa); isolamento do índice de
+  precedentes, cobrado por teste nas duas direções; consulta separável no banco.
+- **Estado:** existe (a marcação e o isolamento; o índice em si é #60).
+
 ---
 
 ## O que este registro ainda não fecha

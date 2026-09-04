@@ -18,6 +18,16 @@ public interface IQueue<T>
     int Aguardando { get; }
 
     /// <summary>
+    /// A fila esta aceitando trabalho agora?
+    ///
+    /// Existe para o `/saude` e para o webhook, e a resposta importa mais do
+    /// que parece: com a fila fora, RECUSAR a mensagem e melhor que aceitar.
+    /// Aceitar com 202 e perder e a falha silenciosa que a fila duravel existe
+    /// para eliminar — e o WhatsApp reentrega o que deu erro (#72).
+    /// </summary>
+    bool Aceitando { get; }
+
+    /// <summary>
     /// Enfileira. Devolve false quando nao deu — fila cheia com espera
     /// estourada, ou desligamento em andamento. Quem chama decide o que
     /// responder ao provedor: o webhook responde 503 para o WhatsApp

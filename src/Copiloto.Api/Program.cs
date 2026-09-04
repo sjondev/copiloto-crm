@@ -1,4 +1,5 @@
 using Copiloto.Api.Ia;
+using Copiloto.Api.Infra;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Persistencia;
 using Copiloto.Dominio.Ia;
@@ -19,7 +20,10 @@ builder.Services.AddScoped<IRepositorioDeLeads, LeadsNoBanco>();
 builder.Services.AddSingleton(_ => new RoteadorDeModelo(
     TabelaDeModelos.Carregar(builder.Configuration)));
 
-builder.Services.AddSingleton<FilaDeMensagens>();
+// Estado e fila vem da variavel de ambiente, com `inmemory` como padrao (#66).
+// Sem .env, sem Redis e sem RabbitMQ, a aplicacao sobe inteira.
+builder.Services.AddSingleton(_ => Backends.Fila<MensagemRecebida>(builder.Configuration));
+builder.Services.AddSingleton(_ => Backends.Estado(builder.Configuration));
 
 // O numero da empresa e o que decide quem falou em cada mensagem, entao ele e
 // configuracao e nao constante: cada instalacao tem o seu.
@@ -34,7 +38,7 @@ app.MapGet("/saude", () => Results.Ok(new { ok = true }));
 // O webhook responde na hora e nao processa nada (#40). O 202 e' deliberado: 200
 // diria "processado", e o que aconteceu foi "recebido e enfileirado".
 app.MapPost("/webhook/whatsapp", async (
-    MensagemRecebida mensagem, FilaDeMensagens fila, CancellationToken ct) =>
+    MensagemRecebida mensagem, IQueue<MensagemRecebida> fila, CancellationToken ct) =>
 {
     if (string.IsNullOrWhiteSpace(mensagem.ProviderMessageId))
         return Results.BadRequest(new { erro = "sem ProviderMessageId: a reentrega nao teria como ser reconhecida" });

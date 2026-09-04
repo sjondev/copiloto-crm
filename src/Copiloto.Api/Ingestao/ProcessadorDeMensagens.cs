@@ -1,5 +1,6 @@
 using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Vendas;
+using Copiloto.Api.Infra;
 
 namespace Copiloto.Api.Ingestao;
 
@@ -15,12 +16,12 @@ namespace Copiloto.Api.Ingestao;
 /// </summary>
 public class ProcessadorDeMensagens : BackgroundService
 {
-    private readonly FilaDeMensagens _fila;
+    private readonly IQueue<MensagemRecebida> _fila;
     private readonly ResolvedorDeLead _resolvedor;
     private readonly ILogger<ProcessadorDeMensagens> _log;
 
     public ProcessadorDeMensagens(
-        FilaDeMensagens fila, ResolvedorDeLead resolvedor, ILogger<ProcessadorDeMensagens> log)
+        IQueue<MensagemRecebida> fila, ResolvedorDeLead resolvedor, ILogger<ProcessadorDeMensagens> log)
     {
         _fila = fila;
         _resolvedor = resolvedor;

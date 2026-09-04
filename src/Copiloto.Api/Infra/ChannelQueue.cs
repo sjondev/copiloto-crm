@@ -1,19 +1,19 @@
 using System.Threading.Channels;
 
-namespace Copiloto.Api.Ingestao;
+namespace Copiloto.Api.Infra;
 
 /// <summary>
-/// A fila entre o webhook e o processamento (#40).
+/// A fila em processo, com `Channel<T>` — o padrao (#40, #66).
 ///
-/// `Channel<T>` em memoria, e nao RabbitMQ: o volume nao justifica (YAGNI). A
-/// troca fica barata porque quem publica so enxerga `Publicar` e quem consome
-/// so enxerga `Ler` — o dia em que doer, o corpo muda e as duas pontas nao.
+/// E o padrao pelo mesmo motivo do `FakeSource`: a aplicacao sobe inteira sem
+/// broker, e a demo nao tem cinco conteineres para falhar ao vivo. RabbitMQ
+/// entra atras da mesma interface na #69, por variavel de ambiente.
 ///
 /// PERDE MENSAGEM SE O PROCESSO CAIR, e isso e' aceito enquanto a fila e' de
-/// memoria. A durabilidade e a #69, e ate' la' o webhook responder 200 e' uma
+/// memoria. A durabilidade e a #69, e ate' la' o webhook responder 202 e' uma
 /// promessa de que a mensagem foi RECEBIDA, nao de que sera processada.
 /// </summary>
-public class FilaDeMensagens
+public class ChannelQueue<T> : IQueue<T>
 {
     /// <summary>
     /// Teto de itens esperando. Existe porque fila sem limite nao para de
@@ -23,8 +23,8 @@ public class FilaDeMensagens
     /// </summary>
     public const int Capacidade = 1_000;
 
-    private readonly Channel<MensagemRecebida> _canal =
-        Channel.CreateBounded<MensagemRecebida>(new BoundedChannelOptions(Capacidade)
+    private readonly Channel<T> _canal =
+        Channel.CreateBounded<T>(new BoundedChannelOptions(Capacidade)
         {
             // Contrapressao: o produtor ESPERA em vez de a fila descartar. O
             // webhook prefere demorar a responder do que perder a fala do
@@ -41,11 +41,11 @@ public class FilaDeMensagens
     /// Enfileira. Devolve false quando a fila esta cheia e a espera estourou o
     /// tempo — o chamador decide o que dizer ao provedor.
     /// </summary>
-    public async Task<bool> Publicar(MensagemRecebida mensagem, CancellationToken ct)
+    public async Task<bool> Publicar(T item, CancellationToken ct)
     {
         try
         {
-            await _canal.Writer.WriteAsync(mensagem, ct);
+            await _canal.Writer.WriteAsync(item, ct);
             return true;
         }
         catch (OperationCanceledException)
@@ -59,7 +59,7 @@ public class FilaDeMensagens
         }
     }
 
-    public IAsyncEnumerable<MensagemRecebida> Ler(CancellationToken ct) =>
+    public IAsyncEnumerable<T> Ler(CancellationToken ct) =>
         _canal.Reader.ReadAllAsync(ct);
 
     /// <summary>

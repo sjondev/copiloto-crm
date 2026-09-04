@@ -18,13 +18,16 @@ public class ProcessadorDeMensagens : BackgroundService
 {
     private readonly IQueue<MensagemRecebida> _fila;
     private readonly ResolvedorDeLead _resolvedor;
+    private readonly GuardaDeReentrega _guarda;
     private readonly ILogger<ProcessadorDeMensagens> _log;
 
     public ProcessadorDeMensagens(
-        IQueue<MensagemRecebida> fila, ResolvedorDeLead resolvedor, ILogger<ProcessadorDeMensagens> log)
+        IQueue<MensagemRecebida> fila, ResolvedorDeLead resolvedor,
+        GuardaDeReentrega guarda, ILogger<ProcessadorDeMensagens> log)
     {
         _fila = fila;
         _resolvedor = resolvedor;
+        _guarda = guarda;
         _log = log;
     }
 
@@ -48,8 +51,19 @@ public class ProcessadorDeMensagens : BackgroundService
         }
     }
 
-    private Task Processar(MensagemRecebida bruta)
+    private async Task Processar(MensagemRecebida bruta)
     {
+        // A dedupe fica AQUI, e nao no webhook, de proposito: marcar antes de
+        // enfileirar descartaria a reentrega de uma mensagem que se perdeu na
+        // fila quando o processo caiu — trocaria custo duplicado por fala do
+        // cliente sumida, que e' o desfecho pior.
+        if (!await _guarda.EhAPrimeiraVez(bruta.ProviderMessageId, CancellationToken.None))
+        {
+            _log.LogInformation(
+                "Mensagem {Id} ja processada: reentrega ignorada", bruta.ProviderMessageId);
+            return;
+        }
+
         var doCliente = _resolvedor.TelefoneDoCliente(bruta);
         if (doCliente is null)
         {
@@ -58,7 +72,7 @@ public class ProcessadorDeMensagens : BackgroundService
             _log.LogWarning(
                 "Mensagem {Id} descartada: nem De ({De}) nem Para ({Para}) e telefone valido",
                 bruta.ProviderMessageId, bruta.De, bruta.Para);
-            return Task.CompletedTask;
+            return;
         }
 
         var lead = _resolvedor.Resolver(doCliente, bruta.EnviadaEm);
@@ -70,7 +84,6 @@ public class ProcessadorDeMensagens : BackgroundService
         _log.LogInformation(
             "Mensagem {Id} de {Autor} no lead {Lead} processada fora do webhook",
             bruta.ProviderMessageId, autor, lead.Id);
-        return Task.CompletedTask;
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

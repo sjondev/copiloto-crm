@@ -84,6 +84,26 @@ Cada mensagem entra com um identificador estável da origem; invocações de IA 
 `Idempotency-Key` derivada do estado da conversa. Reprocessar é barato e não cobra duas
 vezes.
 
+**Onde o registro mora, e por quê (#67).** Em `IDistributedState`, não num dicionário do
+processo. Com duas instâncias atrás de um balanceador, cada processo teria seu próprio
+registro: a reentrega cai na outra instância, que nunca viu aquele id, e a mensagem é
+analisada de novo e **cobrada** de novo. Esse buraco não aparece em teste de unidade nem
+em desenvolvimento — ele só existe com réplica, e se manifesta como fatura maior, nunca
+como erro. Há um teste que documenta justamente o comportamento errado (dois estados
+separados ⇒ dois processamentos), para que voltar atrás quebre a suíte.
+
+A dedupe roda **no worker, não no webhook**: marcar antes de enfileirar descartaria a
+reentrega de uma mensagem que se perdeu na fila quando o processo caiu — trocaria custo
+duplicado por fala do cliente sumida, que é o desfecho pior. A decisão é uma operação
+atômica só (`TentarMarcar`), porque entre um `ler` e um `gravar` cabe a outra instância
+lendo "não existe".
+
+A janela padrão é de 24h, espelhando a janela de atendimento (§13.2, verificada), e é
+**configurável** por `IDEMPOTENCIA_JANELA_HORAS`: o prazo real de reentrega do webhook
+não foi conferido na fonte, e fixá-lo como constante seria arquitetar em cima de memória.
+Sobreviver a restart depende do backend — com `inmemory` o registro morre junto com o
+processo; a persistência é do Redis com `appendonly`, na #70.
+
 ---
 
 ## 6. Fila e o webhook

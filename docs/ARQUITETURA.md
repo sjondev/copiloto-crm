@@ -53,6 +53,18 @@ implícita de `string`, então nada entra como fato por omissão, e `BlocoSugeri
 (tática livre) e nada além disso. A âncora que chega ao vendedor carrega a procedência
 junto — "isso saiu de uma impressão sua de 01/09" é o que lhe dá a chance de discordar.
 
+**Dois modos, e o frio é o difícil (#87).** Sem nenhuma mensagem no fio, o copiloto
+opera em *abordagem inicial*: monta ângulos a partir dos **fatos** da ficha, propõe o
+"por que agora" (só a partir de um fato que justifique o momento — ramo diz quem o
+cliente é, não o que mudou nele), sugere o canal por onde o lead chegou, e pergunta o
+horário, que nenhum campo sustenta.
+
+Ficha sem fato não produz mensagem: o copiloto pede informação, citando o campo. Aqui não
+há segunda chance — a sugestão ruim não é descartada na tela, ela vai para o cliente —, e
+saudação genérica com ficha vazia é pior que copiloto nenhum, porque dá ao vendedor a
+falsa sensação de que a mensagem foi pensada. Com um fato só, sai **um** ângulo: dois
+recortes do mesmo dado são a aparência de escolha sem a escolha.
+
 ---
 
 ## 3. Roteamento de modelos

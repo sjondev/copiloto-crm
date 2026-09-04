@@ -73,6 +73,7 @@ Isto não é um wrapper de LLM. As peças que importam:
 | **Circuit breaker** | Por provedor, com teste que abre e fecha o circuito. |
 | **Idempotência** | Webhook de WhatsApp reentrega mensagem. Sem isso, você paga duas vezes pela mesma análise. |
 | **PII Shield** | CPF, telefone e e-mail são mascarados antes de sair da rede. Teste falha se vazar. É **pseudonimização, não anonimização**: o texto mascarado continua sendo dado pessoal ([LGPD.md](docs/LGPD.md)). |
+| **Papéis sob a LGPD** | A empresa cliente é **controladora**; o Copiloto é **operador**. Mandar conversa a um provedor de IA é subcontratar tratamento, e o controlador precisa autorizar ([LGPD.md](docs/LGPD.md#25-quem-responde-pelo-quê)). |
 | **Ledger + ROI** | Custo por invocação, ligado ao Deal. Responde quanto gastou **e quanto rendeu**. |
 
 ### A parte que quase ninguém faz: a conta fechada

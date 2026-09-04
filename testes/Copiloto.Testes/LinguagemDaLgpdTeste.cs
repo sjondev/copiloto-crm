@@ -33,6 +33,7 @@ public class LinguagemDaLgpdTeste
         Path.Combine("docs", "ARQUITETURA.md"),
         Path.Combine("docs", "LGPD.md"),
         Path.Combine("docs", "CONTRATO-TRATAMENTO.md"),
+        Path.Combine("docs", "REGISTRO-DE-TRATAMENTO.md"),
     };
 
     [Theory]
@@ -136,6 +137,57 @@ public class LinguagemDaLgpdTeste
 
         Assert.Contains("suboperador", texto, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Provedor de modelo", texto, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// O que toda operacao do registro precisa declarar (#76).
+    ///
+    /// Sao os campos do art. 37 que decidem alguma coisa. Operacao sem
+    /// RETENCAO e a que mais escapa, e e a que vira "guardamos desde 2019
+    /// porque ninguem definiu prazo".
+    /// </summary>
+    private static readonly string[] CamposObrigatorios =
+        ["**Finalidade:**", "**Titulares:**", "**Dados:**", "**Base legal:**",
+         "**Compartilhamento:**", "**Retenção:**", "**Segurança:**", "**Estado:**"];
+
+    [Fact]
+    public void Toda_operacao_registrada_declara_os_campos_que_decidem()
+    {
+        // O registro e cobrado pelo build porque operacao nova entra por PR de
+        // feature, e quem esta escrevendo codigo nao lembra de voltar no
+        // documento — a nao ser que ele reprove.
+        var caminho = Path.Combine(RaizDoRepositorio(), "docs", "REGISTRO-DE-TRATAMENTO.md");
+        var texto = File.ReadAllText(caminho);
+
+        var operacoes = texto.Split("\n## ")
+            .Where(bloco => char.IsDigit(bloco.FirstOrDefault()))
+            .ToList();
+
+        Assert.True(operacoes.Count >= 5,
+            $"O registro tem {operacoes.Count} operacoes numeradas — poucas para "
+            + "descrever o que o sistema faz.");
+
+        var faltando = operacoes
+            .SelectMany(op => CamposObrigatorios
+                .Where(campo => !op.Contains(campo))
+                .Select(campo => $"{op.Split('\n')[0].Trim()}: falta {campo}"))
+            .ToList();
+
+        Assert.True(faltando.Count == 0,
+            "Operacao de tratamento sem campo obrigatorio do art. 37:\n"
+            + string.Join("\n", faltando));
+    }
+
+    [Fact]
+    public void O_registro_diz_o_que_existe_e_o_que_ainda_e_issue()
+    {
+        // Registro que descreve o sistema pretendido, e nao o que roda, passa
+        // em auditoria e mente para quem decide.
+        var texto = File.ReadAllText(
+            Path.Combine(RaizDoRepositorio(), "docs", "REGISTRO-DE-TRATAMENTO.md"));
+
+        Assert.Contains("**Estado:** existe", texto);
+        Assert.Contains("issue #", texto, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string RaizDoRepositorio()

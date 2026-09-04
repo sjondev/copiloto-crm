@@ -161,6 +161,30 @@ reter para sempre, indexar à vontade e dispensar controle de acesso. Nenhuma da
 coisas é verdade aqui — e isso vale especialmente para o índice de embeddings do RAG,
 que é uma base de dados pessoais como qualquer outra.
 
+### 7.35 Direitos do titular, além da exclusão
+
+Confirmação, acesso, correção, portabilidade, informação sobre compartilhamento e
+oposição (#81). Três decisões que o art. 18 não escreve por você:
+
+**A exportação inclui o que o sistema produziu**, não só o que entrou. O titular tem
+direito de saber que foi classificado como "sensível a preço" ou "esfriando" — é dado
+pessoal sobre ele, gerado por nós, e ele pode contestar. A ficha sai com **natureza e
+procedência**: ver "anotaram uma *impressão* de que eu pareço desconfiada" é outra coisa
+de ver uma lista de campos. E como o dossiê é recalculado, e não guardado, o arquivo
+**diz isso** — senão o titular conclui que aquilo é tudo, e contesta o dado sem poder
+contestar a conclusão.
+
+**Oposição para a análise sem apagar o histórico comercial.** O negócio continua, a
+conversa continua guardada pela mesma finalidade, o vendedor continua vendendo — o que
+para é o dossiê. Se opor-se custasse o histórico, ninguém se oporia, e a base de legítimo
+interesse ficaria frágil justamente por falta de canal real. O estado vive no banco: um
+"parem de me analisar" que vale até a próxima subida não é oposição.
+
+**O prazo mora no código.** 15 dias do art. 19 para a resposta completa, com aviso *antes*
+do vencimento — prazo que ninguém mede só aparece depois de vencido, e o que chega depois
+disso não é um lembrete, é uma notificação da ANPD. Pedido atendido não vence depois:
+alarme falso esconde os que ainda importam.
+
 ### 7.4 Controles de engenharia
 
 - **PII Shield** mascarando antes da saída da rede, com teste que **falha o build** se

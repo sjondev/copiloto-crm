@@ -1,0 +1,61 @@
+# Estilo e formatacao (#75). Este gate REPROVA o PR.
+#
+# Ele existe ao lado do `ci.yml` porque os dois medem coisas diferentes: as
+# regras de analisador (nome fora do padrao, using que sobrou, chamada que
+# depende de cultura) ja reprovam dentro do build, por `TreatWarningsAsErrors`.
+# O que o build NAO ve e o que so o `dotnet format` conhece — espaco, quebra de
+# linha e ordem de import.
+#
+# Reprovar por espaco parece exagero ate a primeira revisao em que metade do
+# diff e reformatacao automatica do editor de outra pessoa. Formatacao decidida
+# por ferramenta custa zero atencao humana; formatacao decidida por costume
+# custa uma discussao por PR, para sempre.
+name: Estilo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: estilo-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  estilo:
+    name: Estilo e formatacao
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar o SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Cache de pacote NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restaurar
+        run: dotnet restore
+
+      # `--verify-no-changes` reprova sem tocar no arquivo: a esteira aponta, e
+      # quem conserta e quem escreveu, na maquina dele, com `dotnet format`.
+      # Esteira que commita correcao de estilo empurra commit que ninguem
+      # revisou para dentro do PR de outra pessoa.
+      #
+      # Migration e codigo do EF. Formatar o que a ferramenta gera produz um
+      # diff que volta sozinho na proxima migration.
+      - name: Conferir formatacao
+        run: >
+          dotnet format --no-restore --verify-no-changes
+          --exclude src/Copiloto.Api/Persistencia/Migrations

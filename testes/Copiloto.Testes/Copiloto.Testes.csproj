@@ -13,6 +13,9 @@
     <!-- SkippableFact: o teste da fila duravel PULA sem broker, em vez de
          passar sem ter rodado (#69). -->
     <PackageReference Include="Xunit.SkippableFact" />
+    <!-- Os atributos do servidor MCP sao lidos por reflexao no teste de
+         contrato das ferramentas (#56). -->
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>

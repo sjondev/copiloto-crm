@@ -26,6 +26,13 @@
   <!-- A fila duravel (#69) e borda, como o EF. -->
   <ItemGroup>
     <PackageReference Include="RabbitMQ.Client" />
+  <!--
+    Servidor MCP (#56). Fica na Api pelo mesmo motivo do EF: e borda. O dominio
+    nao sabe que existe MCP, e as ferramentas apenas traduzem o que ele ja
+    responde.
+  -->
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
   </ItemGroup>
 
 </Project>

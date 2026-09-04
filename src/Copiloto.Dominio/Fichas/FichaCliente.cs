@@ -1,3 +1,5 @@
+using Copiloto.Dominio.Seguranca;
+
 namespace Copiloto.Dominio.Fichas;
 
 /// <summary>O que o vendedor descobriu sobre a empresa. Tudo opcional.</summary>
@@ -79,10 +81,46 @@ public class FichaCliente
     public bool EstaVazia => Preenchidos.Count == 0;
 
     /// <summary>
+    /// Quanto tempo a ficha sobrevive ao negocio perdido (#89).
+    ///
+    /// Doze meses porque e' o horizonte em que o cliente que disse "agora nao"
+    /// costuma voltar — e a ficha existe exatamente para a segunda conversa nao
+    /// comecar do zero. Passado isso, ela deixa de ser memoria comercial util e
+    /// vira dado de terceiro guardado sem finalidade, que e' o que a lei nao
+    /// admite.
+    ///
+    /// Ficha de negocio ATIVO nao expira por tempo: enquanto ha negociacao, a
+    /// finalidade esta viva.
+    /// </summary>
+    public static readonly TimeSpan RetencaoAposPerder = TimeSpan.FromDays(365);
+
+    /// <summary>
+    /// Passou o prazo desde que o negocio foi perdido.
+    ///
+    /// Recebe a data da perda em vez de consultar o Deal porque a ficha nao
+    /// conhece o funil — e quem chama e' quem sabe se ainda ha negocio de pe.
+    /// </summary>
+    public bool DeveExpurgar(DateTimeOffset? negocioPerdidoEm, DateTimeOffset agora) =>
+        negocioPerdidoEm is not null && agora - negocioPerdidoEm >= RetencaoAposPerder;
+
+    /// <summary>
     /// Atualiza, guardando a versao anterior. Passar null em um bloco mantem o
     /// que ja estava — a ficha e PROGRESSIVA, cresce de tres linhas para quinze
     /// sem exigir que alguem redigite o que ja sabia.
     /// </summary>
+    /// <summary>
+    /// O que a tela de edicao precisa dizer ao vendedor, antes de ele escrever
+    /// (#89).
+    ///
+    /// E o item que muda o comportamento mais que qualquer politica: saber que
+    /// o titular pode pedir para ler faz escrever "prefere objetividade" em vez
+    /// de "chato pra caramba" — e o primeiro continua util para vender, so para
+    /// de ser passivo.
+    /// </summary>
+    public const string AvisoAoVendedor =
+        "O cliente pode pedir para ler o que está escrito aqui, e a empresa é "
+        + "obrigada a mostrar. Escreva o que você mostraria a ele.";
+
     public void Atualizar(
         DateTimeOffset quando,
         SobreAEmpresa? empresa = null,
@@ -90,6 +128,16 @@ public class FichaCliente
         SobreONegocio? negocio = null)
     {
         if (empresa is null && pessoa is null && negocio is null) return;
+
+        // Categoria sensivel nao entra na ficha (#82, #89). O vetor e realista:
+        // quem pesquisa alguem em rede social esbarra em posicionamento
+        // politico e religioso sem procurar, e anotar isso e um problema de
+        // outra magnitude — dado sensivel exige consentimento especifico, que
+        // ninguem pediu ao Joao antes de olhar o LinkedIn dele.
+        RecusarSensivel(pessoa?.Cargo, pessoa?.PapelNaDecisao,
+                        pessoa?.QuemMaisDecide, pessoa?.EstiloObservado,
+                        negocio?.ProvavelNecessidade, negocio?.UsaHoje,
+                        negocio?.OrcamentoEstimado, negocio?.RiscoConhecido);
 
         _historico.Insert(0, new VersaoDaFicha(AtualizadaEm, Empresa, Pessoa, Negocio));
 
@@ -151,6 +199,34 @@ public class FichaCliente
     /// </summary>
     public IReadOnlyDictionary<string, Anotacao> Impressoes =>
         Preenchidos.Where(p => !p.Value.EhFato).ToDictionary(p => p.Key, p => p.Value);
+
+    /// <summary>
+    /// Recusa anotacao com indicio de dado sensivel sobre a PESSOA.
+    ///
+    /// O bloco da EMPRESA fica de fora de proposito, e a diferenca e juridica e
+    /// nao de rigor: dado sensivel e sobre pessoa natural. "Ramo: igreja" ou
+    /// "Como chegou: indicacao do sindicato" descreve o CLIENTE PJ, e bloquear
+    /// isso impediria o vendedor de registrar quem ele atende — que e o tipo de
+    /// bloqueio que faz alguem escrever a informacao noutro campo, e ai o
+    /// controle deixa de existir sem deixar de incomodar.
+    /// </summary>
+    private static void RecusarSensivel(params Anotacao?[] anotacoes)
+    {
+        foreach (var anotacao in anotacoes)
+        {
+            if (anotacao is null) continue;
+
+            var indicios = DadoSensivel.Detectar(anotacao.Valor);
+            if (indicios.Count == 0) continue;
+
+            throw new ArgumentException(
+                $"\"{anotacao.Valor}\" tem indicio de {indicios[0].Categoria}, que e "
+                + "categoria sensivel (art. 11) e exige consentimento especifico — "
+                + "ninguem pediu isso ao titular antes de pesquisar sobre ele. "
+                + "Anote o que interessa a venda: o que ele precisa, quando decide, "
+                + "quem mais decide.");
+        }
+    }
 
     private static readonly string[] TodosOsRotulos =
     [

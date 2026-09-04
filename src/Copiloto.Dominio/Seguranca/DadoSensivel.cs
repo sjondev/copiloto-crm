@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Copiloto.Api.Seguranca;
+namespace Copiloto.Dominio.Seguranca;
 
 /// <summary>As categorias do art. 11 que aparecem em conversa de venda.</summary>
 public enum CategoriaSensivel
@@ -35,6 +35,11 @@ public record IndicioSensivel(CategoriaSensivel Categoria, string Trecho);
 /// A garantia nao e uma instrucao no prompt: o trecho sensivel nao chega ao
 /// modelo (<see cref="ForaDoContextoDeSugestao"/>) e nao entra no indice
 /// (<see cref="PodeIndexar"/>). O que nao esta la nao calibra nada.
+///
+/// Mora no DOMINIO, e nao na borda, desde a #89: o que faz um texto ser dado
+/// sensivel e regra da LGPD, nao detalhe de infraestrutura — e a Ficha do
+/// Cliente precisa dessa regra no proprio construtor para o bloqueio ser
+/// estrutural, em vez de depender de alguem lembrar de validar antes de gravar.
 /// </summary>
 public static class DadoSensivel
 {

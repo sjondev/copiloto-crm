@@ -23,4 +23,14 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
+  <!--
+    Auth (#49). Fica na Api porque e borda: o dominio guarda o HASH e o perfil,
+    e nao sabe o que e JWT nem BCrypt — sem PackageReference ele nao teria como
+    saber (#48).
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="BCrypt.Net-Next" />
+  </ItemGroup>
+
 </Project>

@@ -29,6 +29,9 @@ public class CopilotoDbContext : DbContext
     public DbSet<Mensagem> Mensagens => Set<Mensagem>();
     public DbSet<FichaCliente> Fichas => Set<FichaCliente>();
 
+    /// <summary>Quem entra no CRM, com perfil e hash de senha (#49).</summary>
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
+
     protected override void OnModelCreating(ModelBuilder b) =>
         b.ApplyConfigurationsFromAssembly(typeof(CopilotoDbContext).Assembly);
 }

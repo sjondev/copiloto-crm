@@ -1,7 +1,10 @@
+using Copiloto.Api.Auth;
 using Copiloto.Api.Ia;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Persistencia;
 using Copiloto.Dominio.Ia;
+using Copiloto.Dominio.Vendas;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,7 +30,42 @@ builder.Services.AddSingleton(_ => new ResolvedorDeLead(
     builder.Configuration["WHATSAPP_NUMERO_EMPRESA"] ?? "+55 11 3333-4444"));
 builder.Services.AddHostedService<ProcessadorDeMensagens>();
 
+// Auth (#49). O segredo vem SO de variavel de ambiente: sem ela, a aplicacao
+// nao sobe. Cair para um segredo embutido seria pior que nao ter auth — daria a
+// impressao de proteger enquanto qualquer um forja um token de gestor.
+var tokens = new Tokens(builder.Configuration["JWT_SEGREDO"] ?? "");
+builder.Services.AddSingleton(tokens);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(o => o.TokenValidationParameters = tokens.Validacao());
+
+builder.Services.AddAuthorization(o =>
+    o.AddPolicy("gestor", p => p.RequireRole(nameof(PerfilDeAcesso.Gestor))));
+
 var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// O login e o unico caminho que aceita senha, e ele responde a mesma coisa para
+// email inexistente e senha errada: dizer "usuario nao encontrado" entrega ao
+// atacante metade do trabalho — quais emails existem.
+app.MapPost("/auth/login", async (
+    Credenciais entrada, CopilotoDbContext ctx, Tokens tokens, CancellationToken ct) =>
+{
+    var email = (entrada.Email ?? "").Trim().ToLowerInvariant();
+    var usuario = await ctx.Usuarios.FirstOrDefaultAsync(u => u.Email == email, ct);
+
+    if (usuario is null || !Senhas.Confere(entrada.Senha ?? "", usuario.SenhaHash))
+        return Results.Unauthorized();
+
+    return Results.Ok(new
+    {
+        token = tokens.Emitir(usuario, DateTimeOffset.UtcNow),
+        expiraEm = DateTimeOffset.UtcNow + Tokens.Validade,
+        perfil = usuario.Perfil.ToString(),
+    });
+});
 
 app.MapGet("/saude", () => Results.Ok(new { ok = true }));
 
@@ -54,3 +92,6 @@ app.Run();
 
 /// <summary>Torna a classe gerada visivel para o WebApplicationFactory da suite.</summary>
 public partial class Program;
+
+/// <summary>O que chega no login. A senha nao passa disto para dentro.</summary>
+public record Credenciais(string? Email, string? Senha);

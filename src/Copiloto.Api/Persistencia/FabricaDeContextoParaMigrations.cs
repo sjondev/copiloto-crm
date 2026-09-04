@@ -25,6 +25,8 @@ public class FabricaDeContextoParaMigrations : IDesignTimeDbContextFactory<Copil
                      ?? "Host=localhost;Database=copiloto;Username=copiloto";
 
         return new CopilotoDbContext(
-            new DbContextOptionsBuilder<CopilotoDbContext>().UseNpgsql(cadeia).Options);
+            new DbContextOptionsBuilder<CopilotoDbContext>()
+                .UseNpgsql(cadeia, o => o.UseVector())
+                .Options);
     }
 }

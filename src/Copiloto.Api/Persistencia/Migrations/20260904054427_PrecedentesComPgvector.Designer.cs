@@ -3,6 +3,7 @@ using System;
 using Copiloto.Api.Persistencia;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -12,9 +13,11 @@ using Pgvector;
 namespace Copiloto.Api.Persistencia.Migrations
 {
     [DbContext(typeof(CopilotoDbContext))]
-    partial class CopilotoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260904054427_PrecedentesComPgvector")]
+    partial class PrecedentesComPgvector
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,49 +27,10 @@ namespace Copiloto.Api.Persistencia.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Copiloto.Dominio.Auditoria.AcessoRegistrado", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Detalhe")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<Guid>("LeadId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Operacao")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<string>("Origem")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTimeOffset>("Quando")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UsuarioId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LeadId", "Quando")
-                        .HasDatabaseName("ix_acessos_lead");
-
-                    b.HasIndex("UsuarioId", "Quando")
-                        .HasDatabaseName("ix_acessos_usuario");
-
-                    b.ToTable("acessos", (string)null);
-                });
-
             modelBuilder.Entity("Copiloto.Dominio.Conversas.Conversa", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("LeadId")
@@ -80,6 +44,7 @@ namespace Copiloto.Api.Persistencia.Migrations
             modelBuilder.Entity("Copiloto.Dominio.Conversas.Mensagem", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Autor")
@@ -90,19 +55,12 @@ namespace Copiloto.Api.Persistencia.Migrations
                     b.Property<Guid?>("ConversaId")
                         .HasColumnType("uuid");
 
-                    b.Property<TimeSpan?>("DuracaoDaMidia")
-                        .HasColumnType("interval");
-
                     b.Property<DateTimeOffset>("EnviadaEm")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Texto")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<string>("TipoDeMidia")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -114,40 +72,10 @@ namespace Copiloto.Api.Persistencia.Migrations
                     b.ToTable("mensagens", (string)null);
                 });
 
-            modelBuilder.Entity("Copiloto.Dominio.Dossies.Dossie", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("DealId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("DirecaoLida")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTimeOffset>("GeradoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.PrimitiveCollection<string[]>("Lacunas")
-                        .IsRequired()
-                        .HasColumnType("text[]");
-
-                    b.Property<string>("TemperaturaLida")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DealId", "GeradoEm")
-                        .HasDatabaseName("ix_dossies_deal_gerado");
-
-                    b.ToTable("dossies", (string)null);
-                });
-
             modelBuilder.Entity("Copiloto.Dominio.Fichas.FichaCliente", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("AtualizadaEm")
@@ -156,23 +84,8 @@ namespace Copiloto.Api.Persistencia.Migrations
                     b.Property<DateTimeOffset>("CriadaEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Empresa")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("empresa");
-
                     b.Property<Guid>("LeadId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Negocio")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("negocio");
-
-                    b.Property<string>("Pessoa")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("pessoa");
 
                     b.Property<string>("_historico")
                         .IsRequired()
@@ -191,6 +104,7 @@ namespace Copiloto.Api.Persistencia.Migrations
             modelBuilder.Entity("Copiloto.Dominio.Ia.AiInvocation", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("CustoEmReais")
@@ -252,6 +166,7 @@ namespace Copiloto.Api.Persistencia.Migrations
             modelBuilder.Entity("Copiloto.Dominio.Vendas.Deal", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("AbertoEm")
@@ -264,9 +179,6 @@ namespace Copiloto.Api.Persistencia.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
-
-                    b.Property<DateTimeOffset>("EstagioDesde")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("FechadoEm")
                         .HasColumnType("timestamp with time zone");
@@ -282,10 +194,8 @@ namespace Copiloto.Api.Persistencia.Migrations
             modelBuilder.Entity("Copiloto.Dominio.Vendas.Lead", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("AnaliseDeIaSuspensa")
-                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
@@ -294,21 +204,10 @@ namespace Copiloto.Api.Persistencia.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<DateTimeOffset?>("OpostoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Relacao")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<string>("Telefone")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
-
-                    b.Property<Guid?>("VendedorId")
-                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -316,45 +215,7 @@ namespace Copiloto.Api.Persistencia.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_leads_telefone");
 
-                    b.HasIndex("VendedorId")
-                        .HasDatabaseName("ix_leads_vendedor");
-
                     b.ToTable("leads", (string)null);
-                });
-
-            modelBuilder.Entity("Copiloto.Dominio.Vendas.Usuario", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Perfil")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("SenhaHash")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("ux_usuarios_email");
-
-                    b.ToTable("usuarios", (string)null);
                 });
 
             modelBuilder.Entity("Copiloto.Dominio.Conversas.Mensagem", b =>
@@ -365,86 +226,91 @@ namespace Copiloto.Api.Persistencia.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Copiloto.Dominio.Dossies.Dossie", b =>
+            modelBuilder.Entity("Copiloto.Dominio.Fichas.FichaCliente", b =>
                 {
-                    b.OwnsMany("Copiloto.Dominio.Dossies.Objecao", "Objecoes", b1 =>
+                    b.OwnsOne("Copiloto.Dominio.Fichas.SobreAEmpresa", "Empresa", b1 =>
                         {
-                            b1.Property<Guid>("DossieId")
+                            b1.Property<Guid>("FichaClienteId")
                                 .HasColumnType("uuid");
 
-                            b1.Property<int>("__synthesizedOrdinal")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("integer");
-
-                            b1.Property<string>("Descricao")
-                                .IsRequired()
+                            b1.Property<string>("ComoChegou")
                                 .HasColumnType("text");
 
-                            b1.Property<Guid>("MensagemId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<bool>("PorComportamento")
-                                .HasColumnType("boolean");
-
-                            b1.Property<string>("Tipo")
-                                .IsRequired()
+                            b1.Property<string>("Momento")
                                 .HasColumnType("text");
 
-                            b1.Property<string>("TrechoCitado")
-                                .IsRequired()
+                            b1.Property<string>("Porte")
                                 .HasColumnType("text");
 
-                            b1.HasKey("DossieId", "__synthesizedOrdinal");
+                            b1.Property<string>("Ramo")
+                                .HasColumnType("text");
 
-                            b1.ToTable("dossies");
+                            b1.HasKey("FichaClienteId");
 
-                            b1
-                                .ToJson("objecoes")
-                                .HasColumnType("jsonb");
+                            b1.ToTable("fichas_cliente");
 
                             b1.WithOwner()
-                                .HasForeignKey("DossieId");
+                                .HasForeignKey("FichaClienteId");
                         });
 
-                    b.OwnsMany("Copiloto.Dominio.Dossies.Sinal", "Sinais", b1 =>
+                    b.OwnsOne("Copiloto.Dominio.Fichas.SobreAPessoa", "Pessoa", b1 =>
                         {
-                            b1.Property<Guid>("DossieId")
+                            b1.Property<Guid>("FichaClienteId")
                                 .HasColumnType("uuid");
 
-                            b1.Property<int>("__synthesizedOrdinal")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("integer");
-
-                            b1.Property<string>("Descricao")
-                                .IsRequired()
+                            b1.Property<string>("Cargo")
                                 .HasColumnType("text");
 
-                            b1.Property<Guid>("MensagemId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Tipo")
-                                .IsRequired()
+                            b1.Property<string>("EstiloObservado")
                                 .HasColumnType("text");
 
-                            b1.Property<string>("TrechoCitado")
-                                .IsRequired()
+                            b1.Property<string>("PapelNaDecisao")
                                 .HasColumnType("text");
 
-                            b1.HasKey("DossieId", "__synthesizedOrdinal");
+                            b1.Property<string>("QuemMaisDecide")
+                                .HasColumnType("text");
 
-                            b1.ToTable("dossies");
+                            b1.HasKey("FichaClienteId");
 
-                            b1
-                                .ToJson("sinais")
-                                .HasColumnType("jsonb");
+                            b1.ToTable("fichas_cliente");
 
                             b1.WithOwner()
-                                .HasForeignKey("DossieId");
+                                .HasForeignKey("FichaClienteId");
                         });
 
-                    b.Navigation("Objecoes");
+                    b.OwnsOne("Copiloto.Dominio.Fichas.SobreONegocio", "Negocio", b1 =>
+                        {
+                            b1.Property<Guid>("FichaClienteId")
+                                .HasColumnType("uuid");
 
-                    b.Navigation("Sinais");
+                            b1.Property<string>("OrcamentoEstimado")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("ProvavelNecessidade")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("RiscoConhecido")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("UsaHoje")
+                                .HasColumnType("text");
+
+                            b1.HasKey("FichaClienteId");
+
+                            b1.ToTable("fichas_cliente");
+
+                            b1.WithOwner()
+                                .HasForeignKey("FichaClienteId");
+                        });
+
+                    b.Navigation("Empresa")
+                        .IsRequired();
+
+                    b.Navigation("Negocio")
+                        .IsRequired();
+
+                    b.Navigation("Pessoa")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Copiloto.Dominio.Ia.AiInvocation", b =>

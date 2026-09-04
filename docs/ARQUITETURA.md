@@ -277,6 +277,26 @@ isolada.
 Mitigação: o que é indexado passa pelo PII Shield **antes** de virar embedding, e a
 recuperação devolve padrão e técnica, não transcrição literal de terceiros.
 
+### 11.45 Parceiro não entra na base de precedentes (#85)
+
+Conversa com fornecedor, transportadora ou representante fica **fora** do índice de
+precedentes de venda, e a regra mora no domínio — não num filtro de consulta, que é o tipo
+de coisa esquecida na segunda consulta que alguém escrever.
+
+O risco não é só de dado pessoal (o contato na empresa parceira é pessoa física, ainda que
+a relação seja B2B): se conversa de fornecimento entra no mesmo índice que conversa de
+cliente, o sistema pode recuperar **uma negociação de compra, com margem e custo**,
+enquanto o vendedor atende um comprador. É vazamento comercial saindo pela porta que
+ninguém estava vigiando.
+
+O filtro vale **nos dois sentidos** — nada de parceiro sai para atendimento de cliente, e
+nada de cliente sai para atendimento de parceiro. Conferir só a origem deixaria metade do
+problema em pé.
+
+E não existe flag para "incluir parceiros": flag assim é ligada uma vez e nunca mais
+revisada. Se um dia houver base de precedentes de *compra*, ela é outra base, com outro
+escopo.
+
 ### 11.5 RAG precisa provar que serve
 
 Antes de virar padrão, a recuperação é comparada contra o baseline sem RAG nas

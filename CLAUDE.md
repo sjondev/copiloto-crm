@@ -188,6 +188,28 @@ sugestao tem dado do CRM que a sustente.
 
 ---
 
+## Memoria historica: o GitHub e parte do sistema
+
+O codigo responde **o que o sistema faz hoje**; a historia responde **por que**. As duas
+coisas sao parte do produto, e a segunda mora no GitHub — issues, comentarios, PRs e
+testes —, para sobreviver a troca de agente, modelo, maquina ou sessao.
+
+O metodo esta em **[docs/MEMORIA-HISTORICA.md](docs/MEMORIA-HISTORICA.md)**: quando
+registrar e quando nao registrar, o formato do comentario (`HISTORY:<TYPE>`), os tipos
+(`BUSINESS_RULE`, `ARCH_DECISION`, `IMPL_ERROR`, `LEGACY_BEHAVIOR`, `TECH_CONSTRAINT`,
+`RISK`…), o nivel de confianca, a memoria em camadas e o fechamento de issue.
+
+Duas regras de la que mudam o trabalho de todo dia:
+
+- **Evidencia antes de conclusao.** Observacao nao vira regra de negocio sem evidencia;
+  sem ela, registrar como `BUSINESS_AMBIGUITY`. Nunca inventar memoria para parecer
+  confiante.
+- **Conhecimento nao pode viver so no contexto da sessao.** O que a proxima pessoa
+  economizaria tempo sabendo, vai para o GitHub — nao para a mensagem de commit, que
+  ninguem pesquisa.
+
+---
+
 ## Fora de escopo, por decisao
 
 Multi-tenant · importacao de planilha · relatorios · permissao granular ·

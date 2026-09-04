@@ -318,13 +318,31 @@ da aplicação**:
 | Mecanismo | O que quebra com duas instâncias |
 |---|---|
 | Idempotência do webhook | Cada instância tem seu próprio registro de mensagens vistas. A reentrega cai na outra instância e é processada de novo — **e cobrada de novo**. |
-| Circuit breaker | Três instâncias, três circuitos independentes. Cada uma precisa falhar N vezes por conta própria antes de proteger. O provedor caído é golpeado 3N vezes. |
+| Circuit breaker | Três instâncias, três circuitos independentes. Cada uma precisa falhar N vezes por conta própria antes de proteger. O provedor caído é golpeado 3N vezes. **Resolvido em #68.** |
 | Rate limit por usuário | O limite vira o limite × número de instâncias. **Resolvido em #71.** |
 | Cache de análise | Taxa de acerto cai proporcionalmente às instâncias. **Resolvido em #71.** |
 
 Isso não é um problema de volume — é um problema de **corretude**. Um sistema cuja
 proteção contra gasto duplicado depende de rodar em processo único tem uma restrição
 de implantação não declarada.
+
+**O circuito, um só para todas as instâncias (#68).** A instância que abre protege as
+demais na mesma hora, em vez de cada uma descobrir a queda por conta própria.
+
+O detalhe que decide a implementação está no **meio-aberto**: quando a espera passa, o
+estado não volta a "fechado" para todo mundo ao mesmo tempo — isso faria a avalanche
+acontecer por expiração de chave, no pior momento possível, que é o provedor tentando se
+recuperar. A sonda é **disputada**: quem marca primeiro faz a requisição de teste, e as
+demais seguem barradas até haver resposta. A reserva da sonda é curta de propósito, para
+que a instância que morrer no meio do teste não prenda o circuito em meio-aberto.
+
+O contador de falhas tem **janela**: sem ela, três falhas espalhadas por uma semana
+abririam o circuito de um provedor que está de pé, e o sintoma seria "às vezes o sistema
+escolhe o modelo caro". Sucesso zera a contagem pelo mesmo motivo.
+
+O `RoteadorDeModelo` continua sendo regra de domínio e recebe uma função síncrona: quem
+vai chamar o modelo carrega o retrato dos provedores fora do ar — uma leitura por provedor
+da tabela — e entrega ao router. O router decide; ele não consulta infraestrutura.
 
 **Rate limit e cache, agora no estado compartilhado (#71).** O contador do limite vive em
 `IDistributedState`, então três réplicas dividem o mesmo teto em vez de multiplicá-lo —

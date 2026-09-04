@@ -25,6 +25,11 @@ builder.Services.AddSingleton(_ => new RoteadorDeModelo(
 builder.Services.AddSingleton(_ => Backends.Fila<MensagemRecebida>(builder.Configuration));
 builder.Services.AddSingleton(_ => Backends.Estado(builder.Configuration));
 
+// O circuito por provedor tambem vive no estado compartilhado (#68): com estado
+// local, tres replicas sao tres circuitos e o provedor caido leva 3N chamadas.
+builder.Services.AddSingleton(sp => new CircuitoDoProvedor(
+    sp.GetRequiredService<IDistributedState>()));
+
 // Rate limit e cache de analise dividem o mesmo estado compartilhado (#71): com
 // contador local, o limite viraria limite vezes o numero de replicas.
 builder.Services.AddSingleton(sp => new LimitadorDeTaxa(

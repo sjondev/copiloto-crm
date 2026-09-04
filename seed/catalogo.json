@@ -1,0 +1,40 @@
+{
+  "_comentario": [
+    "Fichas de produto do cenario de cafe, usadas para MEDIR o catalogo (#63).",
+    "Dados ficticios, no formato que uma torrefacao pequena realmente mantem:",
+    "variedade, origem, notas, torra, moagem e harmonizacao.",
+    "",
+    "A ficha aqui e deliberadamente COMPLETA. Medir com ficha curta daria um",
+    "numero otimista e a decisao sairia errada — o catalogo real de quem vende",
+    "cafe especial tem nota de degustacao, e e ela que ocupa espaco."
+  ],
+  "produtos": [
+    {
+      "nome": "Bourbon Amarelo",
+      "variedade": "Bourbon Amarelo",
+      "origem": "Serra da Mantiqueira, MG — 1.150m",
+      "notas": "caramelo, castanha-do-para e um final de laranja",
+      "torra": "media",
+      "moagem": "media, para coador de papel e prensa",
+      "harmonizacao": "pao de queijo, bolo simples, sobremesa com doce de leite"
+    },
+    {
+      "nome": "Catuai Vermelho",
+      "variedade": "Catuai Vermelho",
+      "origem": "Sul de Minas, Carmo de Minas — 1.000m",
+      "notas": "chocolate ao leite, amendoa e corpo alto",
+      "torra": "media escura",
+      "moagem": "fina, para espresso e moka",
+      "harmonizacao": "leite, doces com chocolate, comeco de manha"
+    },
+    {
+      "nome": "Geisha Microlote",
+      "variedade": "Geisha",
+      "origem": "Chapada Diamantina, BA — 1.300m, lote de 60kg",
+      "notas": "jasmim, bergamota e mel, acidez citrica marcante",
+      "torra": "clara",
+      "moagem": "media grossa, para metodos filtrados",
+      "harmonizacao": "sozinho, sem leite e sem acucar"
+    }
+  ]
+}

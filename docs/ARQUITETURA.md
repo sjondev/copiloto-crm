@@ -249,6 +249,30 @@ Fichas técnicas, notas de degustação, origem, torra, moagem recomendada. Vale
 **se** o catálogo for grande o bastante para não caber no contexto. Com poucos
 produtos, é mais barato e mais confiável mandar o catálogo inteiro.
 
+**Medido (#63), e a decisão é "não agora".** Com a ficha completa — variedade, origem,
+notas, torra, moagem e harmonização — o catálogo do seed dá:
+
+| Medida | Valor |
+|---|---|
+| Produtos | 3 |
+| Tokens estimados (~4 caracteres/token) | 179 |
+| Tokens por produto | 60 |
+| Teto, dentro da fatia do catálogo em C1 (60% de 800) | **8 produtos** |
+
+Cabe, então **manda inteiro, sem RAG**: trocar uma solução exata por uma aproximada,
+pagando latência, custo de embedding e reindexação, não se justifica por 179 tokens.
+
+O número que interessa não é o 179 — é o **8**. Uma torrefação com dez ou vinte cafés no
+catálogo é comum, e a conta estoura antes do que a intuição diz. Por isso há um teste que
+**falha quando o catálogo passa do teto**: no dia em que passar, "sem RAG" deixa de valer
+por medida, e não porque alguém lembrou de reabrir a issue.
+
+E quando passar, RAG ainda não é o primeiro passo. A mesma conta com a **ficha curta**
+(nome, notas e moagem) dá 27 tokens por produto e teto de **17** — e o passo seguinte é
+filtrar por característica antes de mandar ("doce, para espresso" seleciona por moagem e
+nota), o que continua sendo solução exata e custa uma comparação de string. RAG entra
+depois disso, se entrar.
+
 Critério de decisão, não de gosto: se o catálogo cabe no orçamento de tokens, não
 há RAG.
 

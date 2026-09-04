@@ -35,6 +35,9 @@ public class CopilotoDbContext : DbContext
     /// <summary>A trilha de auditoria (#84): quem tocou no dado de quem.</summary>
     public DbSet<AcessoRegistrado> Acessos => Set<AcessoRegistrado>();
 
+    /// <summary>Quem entra no CRM, com perfil e hash de senha (#49).</summary>
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
+
     protected override void OnModelCreating(ModelBuilder b) =>
         b.ApplyConfigurationsFromAssembly(typeof(CopilotoDbContext).Assembly);
 }

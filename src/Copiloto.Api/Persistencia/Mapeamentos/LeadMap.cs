@@ -24,6 +24,11 @@ public class LeadMap : IEntityTypeConfiguration<Lead>
         // Relacao como texto, e nao numero: a coluna e lida em investigacao e
         // em consulta manual, e um `1` obriga quem le a abrir o codigo (#85).
         e.Property(l => l.Relacao).HasConversion<string>().HasMaxLength(20).IsRequired();
+        // O dono do lead (#49). Indice porque a consulta do vendedor filtra por
+        // ele em toda tela — e sem indice a lista fica lenta exatamente para
+        // quem tem carteira grande.
+        e.Property(l => l.VendedorId);
+        e.HasIndex(l => l.VendedorId).HasDatabaseName("ix_leads_vendedor");
 
         // O indice UNICO e o ponto que nao da para deixar so no codigo.
         //

@@ -24,12 +24,15 @@
   </ItemGroup>
 
   <!--
-    A fila duravel (#69) e o servidor MCP (#56) sao borda, como o EF: o dominio
-    nao sabe que nenhum dos dois existe.
+    A fila duravel (#69), o servidor MCP (#56) e o auth (#49) sao borda, como o
+    EF: o dominio guarda o hash e o perfil, e nao sabe o que e' JWT nem BCrypt.
+    Sem PackageReference ele nao TERIA como saber (#48).
   -->
   <ItemGroup>
     <PackageReference Include="RabbitMQ.Client" />
     <PackageReference Include="ModelContextProtocol.AspNetCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="BCrypt.Net-Next" />
   </ItemGroup>
 
 </Project>

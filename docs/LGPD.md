@@ -102,6 +102,20 @@ Onde o provedor processa fisicamente é transferência internacional, e isso é 
 
 ---
 
+## 2.9 O registro das operações
+
+Cada tratamento — ingestão, cadastro, ficha, análise, ledger, log, varredura, índice e
+atendimento a pedidos — está descrito em
+[REGISTRO-DE-TRATAMENTO.md](REGISTRO-DE-TRATAMENTO.md), com finalidade, titulares, dados,
+base legal, compartilhamento, retenção, segurança e **estado**.
+
+A coluna de estado é o que separa registro de folheto: cada operação diz se já existe no
+código ou se ainda é issue. E há teste que **reprova o build** quando uma operação não
+declara algum desses campos — operação nova entra por PR de feature, e quem está
+escrevendo código não volta ao documento a não ser que ele reprove.
+
+---
+
 ## 3. O que decorre, na prática
 
 - **Retenção tem prazo, e prazo tem finalidade.** "Pseudonimizado, então guardo para
@@ -132,7 +146,6 @@ vocabulário jurídico. Convenção que depende de alguém lembrar tem prazo de 
 | Assunto | Issue |
 |---|---|
 | Base legal por finalidade, e legítimo interesse | #77 |
-| Registro das operações de tratamento | #76 |
 | Onde o provedor de IA processa (transferência internacional) | #79 |
 | Direitos do titular além da exclusão | #81 |
 | Dado sensível em regime próprio | #82 |

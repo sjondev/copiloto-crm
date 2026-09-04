@@ -4,8 +4,6 @@ using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Fichas;
 using Copiloto.Dominio.Titulares;
 using Copiloto.Dominio.Vendas;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 
 namespace Copiloto.Testes;
 
@@ -16,27 +14,13 @@ namespace Copiloto.Testes;
 /// sistema o classificou. Protege-se o dado que entrou e esquece-se o que o
 /// sistema produziu — e o segundo tambem e dado pessoal sobre ele.
 /// </summary>
-public class DireitosDoTitularTeste : IDisposable
+public class DireitosDoTitularTeste : BancoEmMemoria
 {
     private static readonly DateTimeOffset T0 = new(2026, 9, 3, 10, 0, 0, TimeSpan.Zero);
 
-    private readonly SqliteConnection _conexao;
-    private readonly DbContextOptions<CopilotoDbContext> _opcoes;
-
-    public DireitosDoTitularTeste()
-    {
-        _conexao = new SqliteConnection("DataSource=:memory:");
-        _conexao.Open();
-        _opcoes = new DbContextOptionsBuilder<CopilotoDbContext>().UseSqlite(_conexao).Options;
-        using var ctx = new CopilotoDbContext(_opcoes);
-        ctx.Database.EnsureCreated();
-    }
-
-    public void Dispose() => _conexao.Dispose();
-
     private Guid GravarTitularCompleto()
     {
-        using var ctx = new CopilotoDbContext(_opcoes);
+        using var ctx = NovoContexto();
         var leadId = Guid.NewGuid();
 
         var lead = new Lead(leadId, "+55 11 98888-1111", T0, "Marina");
@@ -68,7 +52,7 @@ public class DireitosDoTitularTeste : IDisposable
     public async Task Confirmacao_responde_sim_ou_nao()
     {
         var leadId = GravarTitularCompleto();
-        using var ctx = new CopilotoDbContext(_opcoes);
+        using var ctx = NovoContexto();
 
         Assert.True(await Exportador(ctx).Confirmar(leadId, default));
         Assert.False(await Exportador(ctx).Confirmar(Guid.NewGuid(), default));
@@ -78,7 +62,7 @@ public class DireitosDoTitularTeste : IDisposable
     public async Task O_acesso_traz_conversa_ficha_e_negocio()
     {
         var leadId = GravarTitularCompleto();
-        using var ctx = new CopilotoDbContext(_opcoes);
+        using var ctx = NovoContexto();
 
         var dados = await Exportador(ctx).Exportar(leadId, default);
 
@@ -95,7 +79,7 @@ public class DireitosDoTitularTeste : IDisposable
         // Ver "anotaram uma IMPRESSAO de que eu pareco desconfiada" e outra
         // coisa de ver uma lista de campos (#88).
         var leadId = GravarTitularCompleto();
-        using var ctx = new CopilotoDbContext(_opcoes);
+        using var ctx = NovoContexto();
 
         var dados = await Exportador(ctx).Exportar(leadId, default);
 
@@ -111,7 +95,7 @@ public class DireitosDoTitularTeste : IDisposable
         // tudo. O dossie e recalculado, e ele precisa saber disso para poder
         // contestar a CONCLUSAO, e nao so o dado.
         var leadId = GravarTitularCompleto();
-        using var ctx = new CopilotoDbContext(_opcoes);
+        using var ctx = NovoContexto();
 
         var dados = await Exportador(ctx).Exportar(leadId, default);
 
@@ -123,7 +107,7 @@ public class DireitosDoTitularTeste : IDisposable
     public async Task O_titular_recebe_com_quem_o_dado_foi_compartilhado()
     {
         var leadId = GravarTitularCompleto();
-        using var ctx = new CopilotoDbContext(_opcoes);
+        using var ctx = NovoContexto();
 
         var dados = await Exportador(ctx).Exportar(leadId, default);
 
@@ -136,7 +120,7 @@ public class DireitosDoTitularTeste : IDisposable
         // Devolver um JSON com campos em branco pareceria "temos um cadastro
         // seu, mas esta vazio" — que e uma resposta errada, e nao uma resposta
         // pobre.
-        using var ctx = new CopilotoDbContext(_opcoes);
+        using var ctx = NovoContexto();
 
         Assert.Null(await Exportador(ctx).Exportar(Guid.NewGuid(), default));
         Assert.Null(await Exportador(ctx).ExportarComoJson(Guid.NewGuid(), default));
@@ -148,7 +132,7 @@ public class DireitosDoTitularTeste : IDisposable
     public async Task A_portabilidade_sai_em_json_legivel_por_maquina_e_por_gente()
     {
         var leadId = GravarTitularCompleto();
-        using var ctx = new CopilotoDbContext(_opcoes);
+        using var ctx = NovoContexto();
 
         var json = await Exportador(ctx).ExportarComoJson(leadId, default);
 
@@ -214,14 +198,14 @@ public class DireitosDoTitularTeste : IDisposable
     {
         // "Parem de me analisar" que vale ate a proxima subida nao e oposicao.
         var leadId = GravarTitularCompleto();
-        using (var ctx = new CopilotoDbContext(_opcoes))
+        using (var ctx = NovoContexto())
         {
             var lead = ctx.Leads.Single(l => l.Id == leadId);
             lead.OporSeAAnalise(T0);
             ctx.SaveChanges();
         }
 
-        using var leitura = new CopilotoDbContext(_opcoes);
+        using var leitura = NovoContexto();
 
         Assert.True(leitura.Leads.Single(l => l.Id == leadId).AnaliseDeIaSuspensa);
         Assert.True((await Exportador(leitura).Exportar(leadId, default))!.AnaliseDeIaSuspensa);

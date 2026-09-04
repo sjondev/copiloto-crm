@@ -188,6 +188,11 @@ dotnet_diagnostic.CA2000.severity = suggestion
 # ceremonia que some no meio do que importa. Vira `error` no dia em que a #54
 # mostrar log no p99, e nao antes: otimizacao sem medida e chute com custo.
 dotnet_diagnostic.CA1848.severity = suggestion
+# Mesma familia da CA1848, mesma resposta: nao avaliar argumento de log quando o
+# log esta desligado economiza um acesso a propriedade por mensagem processada.
+# O preco de obedecer e um `if (_log.IsEnabled(...))` em volta de cada chamada —
+# tres linhas de ceremonia para esconder a unica linha que interessa.
+dotnet_diagnostic.CA1873.severity = suggestion
 
 # --- Codigo que a ferramenta escreveu ---
 #

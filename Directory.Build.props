@@ -28,6 +28,13 @@
     nome fora do padrao) para dentro do build. Sem ela, elas so existiriam
     dentro do editor de quem tem o editor certo configurado.
 
+    `AnalysisLevel` esta PRESO em 9.0, e nao em `latest`. `latest` significa "o
+    que vier no SDK instalado", e o conteudo dele muda de uma versao de patch
+    para outra: o primeiro push desta politica compilou limpo na maquina (SDK
+    9.0.203) e reprovou no runner, que tinha uma regra a mais. Gate cujo
+    conjunto de regras depende de quem esta compilando nao mede o codigo — mede
+    a maquina.
+
     `GenerateDocumentationFile` esta aqui por um efeito colateral, e nao pela
     documentacao: sem ele o compilador nao produz a informacao que a IDE0005
     (using nao usado) precisa, e a regra fica ligada sem nunca acusar nada.
@@ -40,7 +47,7 @@
   <PropertyGroup>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisLevel>9.0</AnalysisLevel>
     <AnalysisMode>Recommended</AnalysisMode>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

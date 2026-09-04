@@ -245,6 +245,20 @@ public class LinguagemDaLgpdTeste
             Assert.Contains(cenario, texto, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void A_verificacao_de_transferencia_internacional_tem_data_e_link()
+    {
+        // A #79 exige data e link, nao memoria: "isso precisa ser verificado na
+        // documentacao do fornecedor, nao presumido". Tabela sem fonte envelhece
+        // em silencio e vira lembranca de alguem.
+        var texto = File.ReadAllText(Path.Combine(RaizDoRepositorio(), "docs", "LGPD.md"));
+        var secao = texto[texto.IndexOf("Transferência internacional", StringComparison.Ordinal)..];
+
+        Assert.Contains("Consultado em", secao);
+        Assert.Contains("https://", secao);
+        Assert.Contains("Não verificado", secao);   // as lacunas ficam declaradas
+    }
+
     private static string RaizDoRepositorio()
     {
         var raiz = typeof(LinguagemDaLgpdTeste).Assembly

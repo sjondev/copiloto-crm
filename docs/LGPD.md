@@ -145,6 +145,66 @@ transforma transparência em ruído, que é a forma mais eficiente de não ser l
 
 ---
 
+## 2.87 Transferência internacional: onde o provedor processa
+
+Mandar a conversa para um provedor com infraestrutura fora do Brasil é **transferência
+internacional de dados pessoais** (art. 33) — e o PII Shield reduz o que sai, mas não
+elimina a transferência (#79, #43).
+
+**Hoje não há transferência nenhuma:** `MODEL_PROVIDER=fake` é o padrão e nada sai da
+máquina. A transferência começa no instante da primeira invocação com provedor real, e é
+por isso que esta verificação precisa estar feita **antes** de a chave ser configurada, e
+não depois.
+
+### O que foi verificado na fonte
+
+Consultado em **04/09/2026**. Detalhe de plataforma muda: o que envelhece aqui é a data, e
+é por isso que ela está escrita.
+
+| Provedor | Treina com o que recebe? | Retenção | Onde processa |
+|---|---|---|---|
+| **Anthropic** (API) | **Não, por padrão.** *"By default, we will not use your inputs or outputs from our commercial products (e.g. Claude for Work, Anthropic API, Claude Gov, etc.) to train our models."* Exceção: feedback explícito (👍/👎), retido *"in our secured back-end for up to 5 years"* | **Não verificado** para a API — a página de retenção que encontrei trata de produtos de consumo, e a de organização fala de plano Enterprise (*"data is retained indefinitely unless a custom retention period is set"*), que não é a mesma coisa | **Não verificado.** O Trust Center não expôs o conteúdo à consulta automática |
+| **OpenAI** (API) | **Não, por padrão.** *"As of March 1, 2023, data sent to the OpenAI API is not used to train or improve OpenAI models (unless you explicitly opt in to share data with us)."* | Logs de monitoramento de abuso por **até 30 dias**, *"unless longer retention is required by law"*. Existe **Zero Data Retention**, *"subject to prior approval by OpenAI"* | Residência configurável em: EUA, Europa (EEA + Suíça), Austrália, Canadá, Japão, Índia, Singapura, Coreia do Sul, Reino Unido, Emirados. **Não há região no Brasil** |
+
+Fontes: [Anthropic — uso de dados para treino](https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training) ·
+[Anthropic — retenção por organização](https://privacy.claude.com/en/articles/10440198-how-long-do-you-store-my-organization-s-data) ·
+[OpenAI — Your data](https://developers.openai.com/api/docs/guides/your-data)
+
+### O que essa verificação já decide
+
+**Nenhum dos dois treina com o que recebe pela API por padrão.** Isso é o critério mais
+prático da issue, e o resultado é bom: a conversa do cliente da torrefação não vira
+material de treino — desde que ninguém ative feedback explícito, que na Anthropic guarda
+por até 5 anos.
+
+**Configurar residência não evita a transferência internacional.** Nem a lista de regiões
+da OpenAI inclui o Brasil, então a conversa sai do país de qualquer forma, e o mecanismo do
+art. 33 continua sendo necessário. Escolher a Europa muda o destino, não a natureza da
+operação.
+
+**Duas lacunas ficam abertas, e estão abertas de propósito**: a retenção padrão da API da
+Anthropic e onde cada um processa fisicamente. Não achei essas duas na documentação
+pública, e preencher por analogia com o que o outro provedor faz seria exatamente o tipo de
+memória inventada que este documento existe para evitar. São perguntas para o formulário de
+contratação, junto do DPA.
+
+### Antes de plugar um provedor real
+
+1. Refazer esta tabela para o provedor escolhido, com **link e data**.
+2. Confirmar por escrito (DPA) a retenção e o local de processamento — as duas lacunas
+   acima.
+3. Desligar o que der: feedback explícito, e Zero Data Retention onde existir.
+4. Identificar o **mecanismo de transferência** do art. 33 aplicável — cláusulas
+   contratuais, cláusulas-padrão ou outro. *Isto é decisão jurídica, não técnica, e está
+   fora do que este documento afirma.*
+5. Registrar o provedor como suboperador (§2.5) e reavaliar o balanceamento da
+   [LIA](BASE-LEGAL.md#23-o-balanceamento-com-a-pergunta-desconfortável): se um provedor
+   treinasse com os dados, a resposta ao titular mudaria de figura.
+6. **Reavaliar ao trocar de provedor.** A tabela vale para quem está nela, na data em que
+   foi consultada.
+
+---
+
 ## 2.9 O registro das operações
 
 Cada tratamento — ingestão, cadastro, ficha, análise, ledger, log, varredura, índice e

@@ -74,7 +74,9 @@ que reprova o build se algum desses rótulos faltar.
   [BASE-LEGAL.md](BASE-LEGAL.md#2-avaliação-de-legítimo-interesse). Depende do canal de
   oposição funcionando (#81) — e ele existe.
 - **Compartilhamento:** provedor de modelo, quando configurado. Hoje `MODEL_PROVIDER=fake`
-  e **nada sai da máquina**. Onde o provedor processa é a #79.
+  e **nada sai da máquina**. Onde cada provedor processa, o que retém e se treina com o que
+  recebe está verificado em [LGPD.md](LGPD.md#287-transferência-internacional-onde-o-provedor-processa),
+  com data e link (#79).
 - **Retenção:** o dossiê é recalculado, não guardado. O que persiste é o custo (operação 5).
 - **Segurança:** PII Shield antes da saída; dado sensível removido do contexto (#82);
   oposição do titular suspende a análise sem apagar o histórico (#81).

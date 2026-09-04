@@ -146,6 +146,22 @@ que reprova o build se algum desses rótulos faltar.
   arquivo vazio que pareceria cadastro em branco; prazo de 15 dias medido em código (#81).
 - **Estado:** existe.
 
+## 10. Trilha de auditoria
+
+- **Finalidade:** saber quem acessou o dado de qual titular, para conter e dimensionar
+  incidente (#84) e responder ao titular que pergunta.
+- **Titulares:** clientes (como alvo do acesso); vendedores (como autores).
+- **Dados:** id do usuário, id do lead, operação, origem, data e hora. **Não guarda
+  conteúdo de mensagem nem valor de campo.**
+- **Base legal:** cumprimento de obrigação legal (segurança e resposta a incidente) e
+  legítimo interesse na proteção do próprio tratamento.
+- **Compartilhamento:** nenhum; vai ao controlador e à ANPD apenas quando houver incidente.
+- **Retenção:** 24 meses — precisa cobrir um incidente descoberto tarde, que é a regra e
+  não a exceção.
+- **Segurança:** registro imutável; índices por usuário e por titular para a consulta
+  rodar no dia em que ninguém tem tempo.
+- **Estado:** existe.
+
 ---
 
 ## O que este registro ainda não fecha

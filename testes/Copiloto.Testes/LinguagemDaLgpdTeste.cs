@@ -35,6 +35,7 @@ public class LinguagemDaLgpdTeste
         Path.Combine("docs", "CONTRATO-TRATAMENTO.md"),
         Path.Combine("docs", "REGISTRO-DE-TRATAMENTO.md"),
         Path.Combine("docs", "BASE-LEGAL.md"),
+        Path.Combine("docs", "INCIDENTE.md"),
     };
 
     [Theory]
@@ -216,6 +217,32 @@ public class LinguagemDaLgpdTeste
         Assert.Contains("provavelmente não", texto, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("oposição", texto, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("revisão jurídica", texto, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void O_plano_de_incidente_manda_conter_antes_de_avaliar()
+    {
+        // A tentacao e entender primeiro para nao agir errado, e cada minuto de
+        // investigacao com o acesso aberto e um minuto de incidente ainda
+        // acontecendo (#84).
+        var texto = File.ReadAllText(Path.Combine(RaizDoRepositorio(), "docs", "INCIDENTE.md"));
+
+        Assert.Contains("Conter vem antes de avaliar", texto);
+        Assert.True(
+            texto.IndexOf("**Conter**", StringComparison.Ordinal)
+            < texto.IndexOf("**Avaliar**", StringComparison.Ordinal),
+            "No procedimento, conter precisa vir antes de avaliar.");
+    }
+
+    [Fact]
+    public void Os_cenarios_proprios_deste_projeto_estao_mapeados()
+    {
+        // Um CRM comum nao tem indice vetorial com conversa dentro nem servidor
+        // MCP feito para agente consumir em volume.
+        var texto = File.ReadAllText(Path.Combine(RaizDoRepositorio(), "docs", "INCIDENTE.md"));
+
+        foreach (var cenario in new[] { "embeddings", "MCP", "provedor de IA", "Postgres" })
+            Assert.Contains(cenario, texto, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string RaizDoRepositorio()

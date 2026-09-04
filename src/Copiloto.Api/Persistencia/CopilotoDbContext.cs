@@ -1,3 +1,4 @@
+using Copiloto.Dominio.Auditoria;
 using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Fichas;
 using Copiloto.Dominio.Ia;
@@ -28,6 +29,9 @@ public class CopilotoDbContext : DbContext
     public DbSet<Conversa> Conversas => Set<Conversa>();
     public DbSet<Mensagem> Mensagens => Set<Mensagem>();
     public DbSet<FichaCliente> Fichas => Set<FichaCliente>();
+
+    /// <summary>A trilha de auditoria (#84): quem tocou no dado de quem.</summary>
+    public DbSet<AcessoRegistrado> Acessos => Set<AcessoRegistrado>();
 
     protected override void OnModelCreating(ModelBuilder b) =>
         b.ApplyConfigurationsFromAssembly(typeof(CopilotoDbContext).Assembly);

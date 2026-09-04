@@ -32,6 +32,7 @@ public class LinguagemDaLgpdTeste
         "README.md",
         Path.Combine("docs", "ARQUITETURA.md"),
         Path.Combine("docs", "LGPD.md"),
+        Path.Combine("docs", "CONTRATO-TRATAMENTO.md"),
     };
 
     [Theory]
@@ -110,6 +111,31 @@ public class LinguagemDaLgpdTeste
         }
 
         if (atual.Count > 0) yield return (inicio, string.Join(" ", atual));
+    }
+
+    [Fact]
+    public void Os_papeis_estao_definidos_com_quem_e_cada_um()
+    {
+        // Papel nao e formalidade: e quem responde perante o titular e a ANPD
+        // (#78). Documento que fala de LGPD sem dizer quem e controlador
+        // descreve obrigacoes sem dono.
+        var texto = File.ReadAllText(Path.Combine(RaizDoRepositorio(), "docs", "LGPD.md"));
+
+        Assert.Contains("Controlador", texto, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Operador", texto, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("empresa cliente", texto, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void O_provedor_de_modelo_esta_mapeado_como_suboperador()
+    {
+        // E o item descoberto tarde: mandar a conversa para um provedor de IA e
+        // subcontratar tratamento, e sem isso a empresa cliente compartilha
+        // dado dos clientes dela com um terceiro que ela nao sabe que existe.
+        var texto = File.ReadAllText(Path.Combine(RaizDoRepositorio(), "docs", "LGPD.md"));
+
+        Assert.Contains("suboperador", texto, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Provedor de modelo", texto, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string RaizDoRepositorio()

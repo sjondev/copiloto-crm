@@ -107,10 +107,12 @@ public class Tokens
 
             return (id, perfil);
         }
-        catch (SecurityTokenException)
+        catch (Exception erro) when (erro is SecurityTokenException or ArgumentException)
         {
-            // Expirado, assinatura errada, emissor errado: para quem chama, e
-            // tudo a mesma coisa — nao autenticado.
+            // Expirado, assinatura errada, emissor errado, ou texto que nem e
+            // token: para quem chama e tudo a mesma coisa — nao autenticado. O
+            // handler lanca ArgumentException para entrada malformada, e deixar
+            // isso subir viraria erro 500 num caminho que qualquer um alcanca.
             return null;
         }
     }

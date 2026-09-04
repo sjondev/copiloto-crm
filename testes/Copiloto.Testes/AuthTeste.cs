@@ -83,10 +83,14 @@ public class AuthTeste
     [Fact]
     public void O_token_carrega_quem_e_e_o_perfil()
     {
+        // Emitido AGORA, e nao num T0 fixo: a validacao usa o relogio do
+        // sistema, entao um token datado de 10:00 UTC ainda nao vale as 05:00 —
+        // e o teste falharia so em certas horas do dia, que e a pior forma de
+        // teste intermitente.
         var tokens = new Tokens(Segredo);
         var gestor = Gestor();
 
-        var lido = tokens.Ler(tokens.Emitir(gestor, T0));
+        var lido = tokens.Ler(tokens.Emitir(gestor, DateTimeOffset.UtcNow));
 
         Assert.NotNull(lido);
         Assert.Equal(gestor.Id, lido!.Value.UsuarioId);
@@ -101,7 +105,7 @@ public class AuthTeste
         var tokens = new Tokens(Segredo);
         var usuario = Vendedor();
 
-        var token = tokens.Emitir(usuario, T0);
+        var token = tokens.Emitir(usuario, DateTimeOffset.UtcNow);
 
         Assert.DoesNotContain(usuario.Email, token);
         Assert.DoesNotContain(usuario.SenhaHash, token);

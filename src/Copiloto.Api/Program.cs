@@ -139,7 +139,22 @@ if (mcpLigado)
         .WithToolsFromAssembly();
 }
 
+// Auth (#49). O segredo vem SO de variavel de ambiente: sem ela, a aplicacao
+// nao sobe. Cair para um segredo embutido seria pior que nao ter auth — daria a
+// impressao de proteger enquanto qualquer um forja um token de gestor.
+var tokens = new Tokens(builder.Configuration["JWT_SEGREDO"] ?? "");
+builder.Services.AddSingleton(tokens);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(o => o.TokenValidationParameters = tokens.Validacao());
+
+builder.Services.AddAuthorization(o =>
+    o.AddPolicy("gestor", p => p.RequireRole(nameof(PerfilDeAcesso.Gestor))));
+
 var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Cada dependencia separada, e nao um "ok" agregado: health check que responde
 // so verde ou vermelho manda o plantonista procurar do zero (#72).
@@ -169,22 +184,6 @@ app.MapHub<DossieHub>(DossieHub.Rota);
 // aqui fica so o numero, sem tela.
 app.MapGet("/triagem/economia", (ContadorDeTriagem contador) => Results.Ok(contador.Agora()));
 if (mcpLigado) app.MapMcp();
-// Auth (#49). O segredo vem SO de variavel de ambiente: sem ela, a aplicacao
-// nao sobe. Cair para um segredo embutido seria pior que nao ter auth — daria a
-// impressao de proteger enquanto qualquer um forja um token de gestor.
-var tokens = new Tokens(builder.Configuration["JWT_SEGREDO"] ?? "");
-builder.Services.AddSingleton(tokens);
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(o => o.TokenValidationParameters = tokens.Validacao());
-
-builder.Services.AddAuthorization(o =>
-    o.AddPolicy("gestor", p => p.RequireRole(nameof(PerfilDeAcesso.Gestor))));
-
-var app = builder.Build();
-
-app.UseAuthentication();
-app.UseAuthorization();
 
 // O login e o unico caminho que aceita senha, e ele responde a mesma coisa para
 // email inexistente e senha errada: dizer "usuario nao encontrado" entrega ao

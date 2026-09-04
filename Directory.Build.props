@@ -5,9 +5,8 @@
   fica para tras numa atualizacao — e o erro so aparece quando algum tipo novo
   do framework nao compila num projeto e compila nos outros.
 
-  A politica de analisador e de aviso-como-erro NAO entra aqui ainda: ela e da
-  #75, que define os limiares e a politica de falha. Este arquivo existe para
-  que ela tenha um lugar so onde ligar.
+  A politica de analisador e de aviso-como-erro entrou pela #75, e o lugar de
+  ligar ela e este.
 -->
 <Project>
 
@@ -15,6 +14,37 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!--
+    O gate de estilo da #75.
+
+    `TreatWarningsAsErrors` e o item que faz a politica valer: aviso nao quebra
+    build, e o que nao quebra build acumula ate ninguem mais ler a lista.
+    Silenciar um aviso passa a ser decisao explicita, com nome e motivo escrito
+    no `.editorconfig`, e nao um numero que cresce sozinho no fim da compilacao.
+
+    `EnforceCodeStyleInBuild` traz as regras IDE* (formatacao, using que sobrou,
+    nome fora do padrao) para dentro do build. Sem ela, elas so existiriam
+    dentro do editor de quem tem o editor certo configurado.
+
+    `GenerateDocumentationFile` esta aqui por um efeito colateral, e nao pela
+    documentacao: sem ele o compilador nao produz a informacao que a IDE0005
+    (using nao usado) precisa, e a regra fica ligada sem nunca acusar nada.
+    CS1591 e CS1573 saem junto. Exigir XML doc em todo membro publico, e um
+    `<param>` para cada parametro, produz comentario obrigatorio — que e
+    exatamente o comentario que ninguem le. Aqui o XML doc existe onde ha um
+    porque a contar, e documentar UM parametro sem documentar os outros cinco e
+    escolha, nao esquecimento.
+  -->
+  <PropertyGroup>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
   </PropertyGroup>
 
 </Project>

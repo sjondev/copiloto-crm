@@ -1,4 +1,5 @@
 using Copiloto.Api.Persistencia;
+using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Vendas;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,18 +55,33 @@ public static class ConsultasDoCrm
         if (lead is null) return null;
 
         var ficha = await ctx.Fichas.AsNoTracking().FirstOrDefaultAsync(f => f.LeadId == leadId, ct);
-        var deal = await ctx.Deals.AsNoTracking()
+        // A ordenacao acontece no cliente, e nao no banco: o SQLite da suite
+        // NAO ordena DateTimeOffset ("SQLite does not support expressions of
+        // type 'DateTimeOffset' in ORDER BY clauses"), e o Postgres de producao
+        // ordena. Ordenar no servidor daria uma consulta que passa em producao e
+        // quebra so no teste — e o desfecho provavel disso e alguem apagar o
+        // teste. Aqui o custo e nenhum: negocio ABERTO por lead sao poucos.
+        var abertos = await ctx.Deals.AsNoTracking()
             .Where(d => d.LeadId == leadId && d.FechadoEm == null)
-            .OrderByDescending(d => d.AbertoEm)
-            .FirstOrDefaultAsync(ct);
+            .ToListAsync(ct);
+
+        var deal = abertos.OrderByDescending(d => d.AbertoEm).FirstOrDefault();
 
         var conversa = await ctx.Conversas.AsNoTracking()
             .Include(c => c.Mensagens)
             .FirstOrDefaultAsync(c => c.LeadId == leadId, ct);
 
-        var silencio = conversa?.UltimaDoCliente is { } ultima
-            ? (int)(agora - ultima.EnviadaEm).TotalDays
-            : (int?)null;
+        // O silencio sai do MAXIMO, e nao de `UltimaDoCliente`: aquela
+        // propriedade usa `LastOrDefault`, que so vale enquanto a lista foi
+        // montada por `Registrar`. Lida do banco, a colecao vem na ordem do
+        // provedor — a PK e Guid — e "a ultima fala" pode ser a primeira. Ja
+        // aconteceu aqui: 9 dias de silencio onde eram 8. O conserto e no
+        // dominio e esta na #136; esta linha nao espera por ele.
+        var ultima = conversa?.Mensagens
+            .Where(m => m.Autor == Autor.Cliente)
+            .MaxBy(m => m.EnviadaEm);
+
+        var silencio = ultima is null ? (int?)null : (int)(agora - ultima.EnviadaEm).TotalDays;
 
         // `Anotado` e um dicionario chato de proposito: nesta base a ficha ainda
         // guarda texto simples. Quando a #88 entrar, cada linha passa a dizer se
@@ -87,14 +103,26 @@ public static class ConsultasDoCrm
         if (dias < 0) dias = 0;
         var limite = agora.AddDays(-dias);
 
-        var parados = await ctx.Deals.AsNoTracking()
-            .Where(d => d.FechadoEm == null && d.EstagioDesde <= limite)
-            .OrderBy(d => d.EstagioDesde)
-            .Take(TetoDeResultados)
+        // O filtro por DATA tambem sai para o cliente, e nao so a ordem: no
+        // SQLite da suite, `DateTimeOffset` nao e comparavel nem ordenavel em
+        // SQL ("could not be translated"). O que fica no banco e o que ele sabe
+        // fazer — negocio ABERTO —, e e esse recorte que segura o tamanho.
+        //
+        // Em Postgres o filtro rodaria no servidor. Escrever assim e o menor
+        // denominador, e o preco esta pago enquanto o funil couber em memoria;
+        // quando nao couber, a saida e mapear a coluna como DateTime UTC, e ai
+        // os dois bancos filtram. Isso e mudanca de modelo, e nao cabia aqui.
+        var abertos = await ctx.Deals.AsNoTracking()
+            .Where(d => d.FechadoEm == null)
             .Join(ctx.Leads.AsNoTracking(), d => d.LeadId, l => l.Id, (d, l) => new { d, l.Nome })
             .ToListAsync(ct);
 
-        return parados
+        // O teto entra DEPOIS de ordenar, senao "os 50 mais parados" viraria
+        // "50 quaisquer entre os parados" — a resposta errada para a pergunta.
+        return abertos
+            .Where(x => x.d.EstagioDesde <= limite)
+            .OrderBy(x => x.d.EstagioDesde)
+            .Take(TetoDeResultados)
             .Select(x => new NegocioParado(
                 x.d.Id, x.d.LeadId, x.Nome, x.d.Estagio.ToString(),
                 (int)(agora - x.d.EstagioDesde).TotalDays))

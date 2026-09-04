@@ -43,7 +43,10 @@ public class ServidorMcpTeste : IDisposable
         using var ctx = new CopilotoDbContext(_opcoes);
         var leadId = Guid.NewGuid();
 
-        ctx.Leads.Add(new Lead(leadId, "+55 11 98888-1111", T0.AddDays(-30), "Marina"));
+        // Telefone NORMALIZADO, como o ResolvedorDeLead grava em producao: a
+        // busca por telefone so acha quem foi gravado assim.
+        ctx.Leads.Add(new Lead(
+            leadId, Telefone.Normalizar("+55 11 98888-1111")!.ToString(), T0.AddDays(-30), "Marina"));
 
         var deal = new Deal(Guid.NewGuid(), leadId, T0.AddDays(-30));
         deal.MoverPara(Estagio.Qualificacao, T0.AddDays(-20));

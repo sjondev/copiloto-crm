@@ -22,6 +22,12 @@
          mapeamento sem exigir Postgres de pe. -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.19" />
 
+    <!-- Auth (#49). Conferidos em 04/09/2026 via `dotnet package search`:
+         JwtBearer 9.0.19 (mesma faixa do EF Core ja usado) e BCrypt.Net-Next
+         4.2.0. BCrypt e nao MD5/SHA-1: velocidade e defeito em hash de senha. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.19" />
+    <PackageVersion Include="BCrypt.Net-Next" Version="4.2.0" />
+
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="xunit" Version="2.9.2" />

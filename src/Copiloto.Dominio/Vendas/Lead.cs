@@ -27,6 +27,34 @@ public class Lead
     public string? Nome { get; private set; }
     public DateTimeOffset CriadoEm { get; }
 
+    /// <summary>
+    /// O vendedor dono deste lead (#49). Nulo enquanto ninguem assumiu.
+    ///
+    /// Lead entra pelo WhatsApp sem dono — nao ha formulario nem atribuicao no
+    /// caminho —, e por isso o nulo NAO pode significar "de ninguem": um lead
+    /// que so aparece depois de alguem atribuir e um lead que ninguem atende.
+    /// Sem dono, ele e da equipe; com dono, e de quem assumiu.
+    /// </summary>
+    public Guid? VendedorId { get; private set; }
+
+    /// <summary>
+    /// Assume o lead. Nao rouba: quem ja tem dono precisa ser liberado antes,
+    /// senao dois vendedores atendem o mesmo cliente sem saber um do outro.
+    /// </summary>
+    public string? Assumir(Guid vendedorId)
+    {
+        if (vendedorId == Guid.Empty)
+            throw new ArgumentException("Sem vendedor.", nameof(vendedorId));
+
+        if (VendedorId is { } dono && dono != vendedorId)
+            return "Este lead ja e de outro vendedor. Peca para ele liberar.";
+
+        VendedorId = vendedorId;
+        return null;
+    }
+
+    public void Liberar() => VendedorId = null;
+
     /// <summary>Nome descoberto no meio da conversa, que e como ele costuma chegar.</summary>
     public void Identificar(string nome)
     {

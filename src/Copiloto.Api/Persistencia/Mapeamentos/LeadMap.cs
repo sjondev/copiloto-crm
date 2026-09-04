@@ -14,6 +14,12 @@ public class LeadMap : IEntityTypeConfiguration<Lead>
         e.Property(l => l.Nome).HasMaxLength(200);
         e.Property(l => l.CriadoEm).IsRequired();
 
+        // O dono do lead (#49). Indice porque a consulta do vendedor filtra por
+        // ele em toda tela — e sem indice a lista fica lenta exatamente para
+        // quem tem carteira grande.
+        e.Property(l => l.VendedorId);
+        e.HasIndex(l => l.VendedorId).HasDatabaseName("ix_leads_vendedor");
+
         // O indice UNICO e o ponto que nao da para deixar so no codigo.
         //
         // A #22 resolveu a normalizacao, mas duas instancias processando a mesma

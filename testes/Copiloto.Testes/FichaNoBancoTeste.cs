@@ -1,4 +1,5 @@
 using Copiloto.Api.Persistencia;
+using Microsoft.EntityFrameworkCore;
 using Fichas = Copiloto.Dominio.Fichas;
 
 namespace Copiloto.Testes;

@@ -22,6 +22,12 @@
          mapeamento sem exigir Postgres de pe. -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.19" />
 
+    <!-- Servidor MCP (#56). Conferido em 04/09/2026 via `dotnet package search`:
+         ModelContextProtocol 2.2.0 e ModelContextProtocol.AspNetCore 2.2.0 sao as
+         versoes correntes. A issue citava 2.1.0, levantada em outra data — o
+         numero envelheceu, e por isso a data fica escrita ao lado. -->
+    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
+
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="xunit" Version="2.9.2" />

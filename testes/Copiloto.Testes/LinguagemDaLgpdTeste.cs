@@ -34,6 +34,7 @@ public class LinguagemDaLgpdTeste
         Path.Combine("docs", "LGPD.md"),
         Path.Combine("docs", "CONTRATO-TRATAMENTO.md"),
         Path.Combine("docs", "REGISTRO-DE-TRATAMENTO.md"),
+        Path.Combine("docs", "BASE-LEGAL.md"),
     };
 
     [Theory]
@@ -188,6 +189,33 @@ public class LinguagemDaLgpdTeste
 
         Assert.Contains("**Estado:** existe", texto);
         Assert.Contains("issue #", texto, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Nenhuma_operacao_ficou_sem_base_legal_definida()
+    {
+        // Base legal determina o que o produto PODE fazer — consentimento pede
+        // revogação que para na hora, legitimo interesse pede canal de
+        // oposicao. Sao funcionalidades diferentes, e descobrir depois de
+        // construir custa retrabalho (#77).
+        var texto = File.ReadAllText(
+            Path.Combine(RaizDoRepositorio(), "docs", "REGISTRO-DE-TRATAMENTO.md"));
+
+        Assert.DoesNotContain("Base legal:** pendente", texto);
+    }
+
+    [Fact]
+    public void A_avaliacao_de_legitimo_interesse_encara_a_pergunta_desconfortavel()
+    {
+        // O cliente que manda mensagem para uma torrefacao espera ser analisado
+        // por IA? A resposta honesta e "provavelmente nao", e e ela que obriga
+        // a salvaguarda mais forte. Uma LIA que so lista beneficios nao e
+        // avaliacao, e folheto.
+        var texto = File.ReadAllText(Path.Combine(RaizDoRepositorio(), "docs", "BASE-LEGAL.md"));
+
+        Assert.Contains("provavelmente não", texto, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("oposição", texto, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("revisão jurídica", texto, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string RaizDoRepositorio()

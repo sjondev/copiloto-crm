@@ -102,6 +102,22 @@ Onde o provedor processa fisicamente é transferência internacional, e isso é 
 
 ---
 
+## 2.8 A base legal, e o que ela obriga
+
+Está em [BASE-LEGAL.md](BASE-LEGAL.md), por finalidade. Em resumo: receber e guardar a
+conversa é **execução de contrato** (o cliente escreveu para comprar); analisar por IA é
+**legítimo interesse**, com a avaliação escrita; atender pedido de titular é **obrigação
+legal**; e dado sensível **não tem base** — por isso é removido, em vez de tratado com
+cuidado extra.
+
+A escolha não é etiqueta: legítimo interesse **obriga** canal de oposição funcionando, e é
+por isso que a oposição é código (#81) e não política. A avaliação também encara a
+pergunta que decide o balanceamento — *o cliente que manda mensagem para uma torrefação
+espera ser analisado por IA?* —, e a resposta honesta, "provavelmente não", é o que exige
+salvaguarda proporcionalmente mais forte.
+
+---
+
 ## 2.9 O registro das operações
 
 Cada tratamento — ingestão, cadastro, ficha, análise, ledger, log, varredura, índice e
@@ -145,7 +161,6 @@ vocabulário jurídico. Convenção que depende de alguém lembrar tem prazo de 
 
 | Assunto | Issue |
 |---|---|
-| Base legal por finalidade, e legítimo interesse | #77 |
 | Onde o provedor de IA processa (transferência internacional) | #79 |
 | Direitos do titular além da exclusão | #81 |
 | Dado sensível em regime próprio | #82 |

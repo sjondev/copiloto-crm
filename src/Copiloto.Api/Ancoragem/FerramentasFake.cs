@@ -92,9 +92,12 @@ public class FerramentasFake : IFerramentasDeAncoragem
         var porKg = item.PrecoPorKg * (1 - desconto);
         var preco = $"{porKg.ToString("C", Brasil)}/kg";
 
+        // A cultura vai EXPLICITA tambem aqui. `{desconto:P0}` usaria a cultura do
+        // processo, e o mesmo desconto sai "8%" numa maquina e "8 %" noutra —
+        // a fala que chega ao vendedor mudaria conforme o servidor onde roda.
         return Achado.De(desconto == 0
             ? preco
-            : $"{preco} (-{desconto:P0} na faixa de {quantidade}kg)");
+            : $"{preco} (-{desconto.ToString("P0", Brasil)} na faixa de {quantidade}kg)");
     }
 
     /// <summary>

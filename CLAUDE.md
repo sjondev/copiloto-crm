@@ -62,6 +62,7 @@ Valem da raiz do repositorio, com a solution ja de pe.
 dotnet build                              # compila a solution
 dotnet test                               # suite xUnit
 dotnet format --verify-no-changes         # estilo: reprova sem alterar arquivo
+dotnet run --project ferramentas/Gatilhos -- .   # gatilhos de KISS/DRY: so avisa
 dotnet run --project src/Copiloto.Api     # sobe a API
 
 docker compose up -d                      # so o Postgres (padrao)

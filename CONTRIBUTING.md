@@ -28,6 +28,39 @@ Bateu qualquer um: **para e decide**.
 
 ---
 
+## Quem mede
+
+A política acima virou verificação automática na #75, em duas ferramentas com
+**políticas de falha diferentes** — e a diferença é o ponto.
+
+| O que | Onde | Política |
+|---|---|---|
+| Estilo, formatação, nome, `using` que sobrou | `.editorconfig` + `dotnet format` | **reprova o PR** |
+| Tamanho, aninhamento, parâmetros, duplicação | `ferramentas/Gatilhos` | **avisa**, não reprova |
+
+O estilo reprova porque a ferramenta conserta sozinha: `dotnet format` resolve, e
+não há conversa a ter. Um gatilho de tamanho não tem conserto automático — ele
+exige uma decisão sobre o desenho, e **gate que reprova build por um método de 42
+linhas vira gate que todo mundo aprende a contornar**. A partir daí ele não mede
+mais nada.
+
+Na sua máquina:
+
+```bash
+dotnet format --verify-no-changes --exclude src/Copiloto.Api/Persistencia/Migrations
+dotnet run --project ferramentas/Gatilhos -- .
+```
+
+O medidor lê o código com o **Roslyn**, e não com expressão regular: chave dentro
+de string interpolada e de comentário existe neste repositório, e contagem por
+texto erraria em silêncio — produzindo um número plausível, que é o pior tipo de
+número.
+
+Ele mede o repositório **inteiro**, e não só o seu diff. Gate que só vale para
+código novo deixa o passivo existente invisível para sempre.
+
+---
+
 ## A regra dos três
 
 **Não abstraia na segunda ocorrência.**

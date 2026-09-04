@@ -31,10 +31,10 @@ public class FichaClienteTeste
         // um dado FALSO no campo que alguem foi forcado a inventar para salvar.
         var ficha = Nova();
 
-        ficha.Atualizar(T0, empresa: new SobreAEmpresa(Ramo: "cafeteria"));
+        ficha.Atualizar(T0, empresa: new SobreAEmpresa(Ramo: Anotacao.Fato("cafeteria")));
 
         Assert.Single(ficha.Preenchidos);
-        Assert.Equal("cafeteria", ficha.Preenchidos["Ramo"]);
+        Assert.Equal("cafeteria", ficha.Preenchidos["Ramo"].Valor);
     }
 
     [Fact]
@@ -43,12 +43,12 @@ public class FichaClienteTeste
         // Nasce com tres linhas e cresce. Exigir que alguem redigite o que ja
         // preencheu e o mesmo que garantir que nao vao preencher de novo.
         var ficha = Nova();
-        ficha.Atualizar(T0, empresa: new SobreAEmpresa(Ramo: "cafeteria"));
+        ficha.Atualizar(T0, empresa: new SobreAEmpresa(Ramo: Anotacao.Fato("cafeteria")));
 
-        ficha.Atualizar(T0.AddDays(1), pessoa: new SobreAPessoa(Cargo: "sócio"));
+        ficha.Atualizar(T0.AddDays(1), pessoa: new SobreAPessoa(Cargo: Anotacao.Fato("sócio")));
 
-        Assert.Equal("cafeteria", ficha.Preenchidos["Ramo"]);
-        Assert.Equal("sócio", ficha.Preenchidos["Cargo"]);
+        Assert.Equal("cafeteria", ficha.Preenchidos["Ramo"].Valor);
+        Assert.Equal("sócio", ficha.Preenchidos["Cargo"].Valor);
     }
 
     [Fact]
@@ -57,12 +57,12 @@ public class FichaClienteTeste
         // "Ele era o decisor e agora nao e" e informacao de VENDA, nao
         // auditoria: a mudanca em si diz algo.
         var ficha = Nova();
-        ficha.Atualizar(T0, pessoa: new SobreAPessoa(PapelNaDecisao: "decisor"));
-        ficha.Atualizar(T0.AddDays(2), pessoa: new SobreAPessoa(PapelNaDecisao: "influenciador"));
+        ficha.Atualizar(T0, pessoa: new SobreAPessoa(PapelNaDecisao: Anotacao.Fato("decisor")));
+        ficha.Atualizar(T0.AddDays(2), pessoa: new SobreAPessoa(PapelNaDecisao: Anotacao.Fato("influenciador")));
 
-        Assert.Equal("influenciador", ficha.Preenchidos["Papel na decisão"]);
+        Assert.Equal("influenciador", ficha.Preenchidos["Papel na decisão"].Valor);
         Assert.Equal(2, ficha.Historico.Count);
-        Assert.Equal("decisor", ficha.Historico[0].Pessoa.PapelNaDecisao);
+        Assert.Equal("decisor", ficha.Historico[0].Pessoa.PapelNaDecisao!.Valor);
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class FichaClienteTeste
         var ficha = Nova();
         Assert.Equal(12, ficha.Lacunas().Count);
 
-        ficha.Atualizar(T0, empresa: new SobreAEmpresa(Ramo: "cafeteria", Porte: "3 lojas"));
+        ficha.Atualizar(T0, empresa: new SobreAEmpresa(Ramo: Anotacao.Fato("cafeteria"), Porte: Anotacao.Fato("3 lojas")));
 
         Assert.Equal(10, ficha.Lacunas().Count);
         Assert.DoesNotContain("Ramo", ficha.Lacunas());
@@ -97,7 +97,7 @@ public class FichaClienteTeste
         // trata ausencia declarada como fato apurado — passa a raciocinar sobre
         // "uma empresa cujo porte e desconhecido" em vez de nao falar de porte.
         var ficha = Nova();
-        ficha.Atualizar(T0, empresa: new SobreAEmpresa(Ramo: "cafeteria"));
+        ficha.Atualizar(T0, empresa: new SobreAEmpresa(Ramo: Anotacao.Fato("cafeteria")));
 
         var c2 = CamadaC2.Montar(ficha);
 
@@ -121,12 +121,12 @@ public class FichaClienteTeste
         // A #52 mostra isso no playbook; aqui e o mesmo sinal, para o vendedor
         // perceber quando a ficha ficou grande demais.
         var ficha = Nova();
-        ficha.Atualizar(T0, empresa: new SobreAEmpresa(Ramo: "cafeteria de bairro"));
+        ficha.Atualizar(T0, empresa: new SobreAEmpresa(Ramo: Anotacao.Fato("cafeteria de bairro")));
         var pequena = CamadaC2.TokensEstimados(CamadaC2.Montar(ficha));
 
         ficha.Atualizar(T0, negocio: new SobreONegocio(
-            RiscoConhecido: "contrato vigente com fornecedor atual ate dezembro, "
-                          + "e o socio majoritario indicou esse fornecedor"));
+            RiscoConhecido: Anotacao.Fato("contrato vigente com fornecedor atual ate dezembro, "
+                          + "e o socio majoritario indicou esse fornecedor")));
         var maior = CamadaC2.TokensEstimados(CamadaC2.Montar(ficha));
 
         Assert.True(maior > pequena);

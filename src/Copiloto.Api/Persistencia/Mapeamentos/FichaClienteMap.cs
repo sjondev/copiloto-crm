@@ -9,7 +9,8 @@ namespace Copiloto.Api.Persistencia.Mapeamentos;
 
 public class FichaClienteMap : IEntityTypeConfiguration<FichaCliente>
 {
-    private static readonly JsonSerializerOptions Json = new();
+    private static readonly JsonSerializerOptions Json =
+        new() { Converters = { new AnotacaoJson() } };
 
     public void Configure(EntityTypeBuilder<FichaCliente> e)
     {
@@ -23,43 +24,59 @@ public class FichaClienteMap : IEntityTypeConfiguration<FichaCliente>
         // seriam duas versoes da verdade sem criterio de desempate.
         e.HasIndex(f => f.LeadId).IsUnique().HasDatabaseName("ux_fichas_lead");
 
-        // Os tres blocos viram colunas na mesma tabela, e nao tabelas proprias:
-        // eles nao existem sem a ficha e nunca sao consultados sozinhos.
-        e.OwnsOne(f => f.Empresa);
-        e.OwnsOne(f => f.Pessoa);
-        e.OwnsOne(f => f.Negocio);
+        // Os tres blocos e o historico vao como JSON, por conversor.
+        //
+        // Os blocos ERAM `OwnsOne` com quatro colunas de texto cada, e a #88
+        // derrubou isso: cada campo virou `Anotacao` (valor + natureza + fonte +
+        // quando), e o EF nao consegue ligar parametro de construtor a um owned
+        // aninhado — "No suitable constructor was found for entity type
+        // 'SobreAEmpresa'".
+        //
+        // As duas saidas eram achatar `Anotacao` em quatro colunas por campo
+        // (48 colunas na ficha) ou serializar o bloco. A primeira e o dominio se
+        // curvando ao ORM, e o dominio e' quem tem razao para existir. O
+        // conversor paga o preco no mapeamento, que e' o lugar certo para pagar
+        // — foi o mesmo raciocinio que o historico ja tinha feito aqui.
+        //
+        // O que isso custa: nao da para consultar "fichas cujo ramo e cafeteria"
+        // por indice. Ninguem consulta — a ficha e sempre lida pelo lead, e a
+        // busca por conteudo de ficha nao existe em nenhuma issue aberta.
+        var (deEmpresa, comparaEmpresa) = ComoJson<SobreAEmpresa>();
+        var (dePessoa, comparaPessoa) = ComoJson<SobreAPessoa>();
+        var (deNegocio, comparaNegocio) = ComoJson<SobreONegocio>();
+        var (deHistorico, comparaHistorico) = ComoJson<List<VersaoDaFicha>>();
 
-        // O historico vai como JSON numa coluna so, por conversor.
-        //
-        // A primeira tentativa foi `OwnsMany(...).ToJson()`, que e o caminho
-        // idiomatico, e ele NAO fecha aqui: `VersaoDaFicha` tem tres records
-        // aninhados, e o EF nao consegue ligar esses parametros de construtor
-        // dentro de um owned em JSON.
-        //
-        // A saida obvia seria achatar `VersaoDaFicha` em doze campos soltos —
-        // e ela esta errada. Seria o dominio se curvando ao ORM, quando o
-        // dominio e' quem tem razao para existir. O conversor deixa o modelo
-        // como esta e paga o preco no mapeamento, que e' o lugar certo para
-        // pagar.
-        //
-        // O historico e lista de LEITURA (a tela mostra "o que mudou e quando"),
-        // nunca alvo de consulta por campo, entao JSON nao custa nada aqui.
-        var conversor = new ValueConverter<List<VersaoDaFicha>, string>(
-            v => JsonSerializer.Serialize(v, Json),
-            s => JsonSerializer.Deserialize<List<VersaoDaFicha>>(s, Json) ?? new());
-
-        // Sem o comparador, o EF compara por REFERENCIA e nunca percebe que a
-        // lista mudou — a versao nova simplesmente nao seria gravada, sem erro.
-        var comparador = new ValueComparer<List<VersaoDaFicha>>(
-            (a, b) => JsonSerializer.Serialize(a, Json) == JsonSerializer.Serialize(b, Json),
-            v => JsonSerializer.Serialize(v, Json).GetHashCode(),
-            v => JsonSerializer.Deserialize<List<VersaoDaFicha>>(
-                     JsonSerializer.Serialize(v, Json), Json)!);
+        e.Property(f => f.Empresa).HasColumnName("empresa")
+            .HasConversion(deEmpresa, comparaEmpresa);
+        e.Property(f => f.Pessoa).HasColumnName("pessoa")
+            .HasConversion(dePessoa, comparaPessoa);
+        e.Property(f => f.Negocio).HasColumnName("negocio")
+            .HasConversion(deNegocio, comparaNegocio);
 
         e.Property<List<VersaoDaFicha>>("_historico")
             .HasColumnName("historico")
-            .HasConversion(conversor, comparador);
+            .HasConversion(deHistorico, comparaHistorico);
 
         e.Ignore(f => f.Historico);
+        e.Ignore(f => f.Preenchidos);
+        e.Ignore(f => f.Fatos);
+        e.Ignore(f => f.Impressoes);
     }
+
+    /// <summary>
+    /// Conversor e comparador de um tipo do dominio para JSON.
+    ///
+    /// O comparador NAO e opcional, e o modo de falhar e o pior possivel: sem
+    /// ele o EF compara por REFERENCIA, nunca percebe que o bloco mudou, e a
+    /// gravacao simplesmente nao acontece — sem excecao, sem log, com o
+    /// SaveChanges devolvendo sucesso.
+    /// </summary>
+    private static (ValueConverter<T, string>, ValueComparer<T>) ComoJson<T>() => (
+        new ValueConverter<T, string>(
+            v => JsonSerializer.Serialize(v, Json),
+            s => JsonSerializer.Deserialize<T>(s, Json)!),
+        new ValueComparer<T>(
+            (a, b) => JsonSerializer.Serialize(a, Json) == JsonSerializer.Serialize(b, Json),
+            v => JsonSerializer.Serialize(v, Json).GetHashCode(),
+            v => JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(v, Json), Json)!));
 }

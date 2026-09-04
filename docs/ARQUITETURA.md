@@ -28,7 +28,7 @@ montado em camadas com orçamento de tokens:
 |---|---|---|---|
 | **C0** | Identidade do agente, o que pode afirmar, regra de ancoragem | ~200 | **nunca** |
 | **C1** | Playbook da empresa: produto, preço, política de desconto, tom | ~800 | não |
-| **C2** | Ficha do negócio: lead, valor, estágio, dias parado, proposta | ~1000 | parcial |
+| **C2** | Ficha do cliente: o que o vendedor já sabia, em fatos e impressões separados | ~1000 | parcial |
 | **C3** | A conversa: mensagens literais + resumo progressivo do que veio antes | resto | sim |
 
 **Regra de corte:** estourou o orçamento, corta C3 do mais antigo para o mais novo,
@@ -38,6 +38,20 @@ substituindo mensagens literais por resumo. C0 nunca é cortada.
 por escrito") só sobrevivem no literal. Resumir a conversa recente destrói exatamente o
 sinal que o dossiê existe para captar. Por isso o resumo progressivo age no passado
 distante, nunca nas últimas mensagens.
+
+**C2 vai dividida em duas seções, e isso não é cosmético (#88):** cada linha da ficha
+nasce marcada como **fato** ("é gerente de compras", com fonte opcional — site, LinkedIn,
+o próprio cliente disse) ou **impressão** ("parece desconfiado", datada, sem fonte, porque
+a fonte é quem anotou). Numa lista única as duas chegam ao modelo com o mesmo peso, e o
+palpite do vendedor volta para ele reembalado como conclusão do sistema — uma câmara de
+eco que confirma o viés original em vez de corrigi-lo, e que ainda cobra um modelo por
+volta.
+
+A separação é estrutural, não uma instrução de prompt: `Anotacao` não tem conversão
+implícita de `string`, então nada entra como fato por omissão, e `BlocoSugerido.AncoradoEm`
+**recusa** impressão em qualquer tática que precise de âncora. Impressão sustenta hipótese
+(tática livre) e nada além disso. A âncora que chega ao vendedor carrega a procedência
+junto — "isso saiu de uma impressão sua de 01/09" é o que lhe dá a chance de discordar.
 
 ---
 

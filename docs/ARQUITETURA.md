@@ -191,7 +191,16 @@ alarme falso esconde os que ainda importam.
   vazar em log ou payload.
 - **Dado sensível** (saúde, religião, origem racial) chega sozinho em conversa livre.
   Nunca entra no índice, nunca vira inferência de perfil, nunca calibra técnica de
-  persuasão.
+  persuasão — e a garantia é estrutural (#82): a `MolduraDeContexto`, único caminho da
+  fala do cliente até o modelo, troca o trecho por `[SENSIVEL:categoria]` antes de montar
+  o bloco. O que não está lá não calibra nada. O trecho sai, a **frase fica**: em "to com
+  refluxo, posso tomar café?" o pedido está na segunda metade, e descartar a fala inteira
+  perderia a venda junto com o dado. Retenção própria, de 30 dias.
+- **Frequência é sinal de processo, não de cliente.** Dado sensível em cinco *conversas*
+  distintas numa semana dispara alerta ao gestor: quase nunca é coincidência, e costuma
+  ser um formulário, um roteiro de abordagem ou uma campanha pedindo informação que a
+  empresa não precisa. Cinco menções na mesma conversa não disparam nada — é um cliente
+  falante.
 - **Retenção** configurável por finalidade; conversa antiga vira resumo ou é expurgada.
 - **Exclusão em cascata**, incluindo os embeddings — apagar o Lead sem apagar o vetor
   deixa o dado vivo depois de o titular pedir exclusão.

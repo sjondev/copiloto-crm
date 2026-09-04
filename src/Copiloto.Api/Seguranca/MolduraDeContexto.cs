@@ -50,7 +50,12 @@ public class MolduraDeContexto
         var abre = $"<<<CLIENTE:{nonce}>>>";
         var fecha = $"<<<FIM:{nonce}>>>";
 
-        var conteudo = Neutralizar(falaDoCliente ?? "", nonce);
+        // Dado sensivel sai ANTES de o bloco existir (#82). A moldura e o unico
+        // caminho da fala do cliente para o modelo, e por isso a limpeza mora
+        // aqui e nao em quem chama: garantia que depende de alguem lembrar de
+        // chamar e garantia ate a primeira pressa.
+        var semSensivel = DadoSensivel.ForaDoContextoDeSugestao(falaDoCliente ?? "");
+        var conteudo = Neutralizar(semSensivel, nonce);
 
         return ($"{abre}\n{conteudo}\n{fecha}", nonce);
     }

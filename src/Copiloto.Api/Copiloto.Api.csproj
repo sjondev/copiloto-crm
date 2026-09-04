@@ -23,4 +23,13 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
+  <!--
+    Servidor MCP (#56). Fica na Api pelo mesmo motivo do EF: e borda. O dominio
+    nao sabe que existe MCP, e as ferramentas apenas traduzem o que ele ja
+    responde.
+  -->
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
+  </ItemGroup>
+
 </Project>

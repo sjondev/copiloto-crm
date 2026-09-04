@@ -10,6 +10,9 @@
          suite continua rodando offline como o CLAUDE.md manda. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <!-- Os atributos do servidor MCP sao lidos por reflexao no teste de
+         contrato das ferramentas (#56). -->
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>

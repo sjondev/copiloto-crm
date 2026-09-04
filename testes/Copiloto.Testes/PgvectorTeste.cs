@@ -1,6 +1,8 @@
 using Copiloto.Api.Persistencia;
 using Copiloto.Api.Rag;
 using Copiloto.Dominio.Rag;
+using Copiloto.Dominio.Vendas;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Pgvector.EntityFrameworkCore;
 using Xunit;
@@ -226,5 +228,28 @@ public class PgvectorTeste : IAsyncLifetime
 
         var texto = string.Join("\n", plano);
         Assert.Contains("ix_precedentes_vetor", texto);
+    }
+
+    // --- O modelo fora do Postgres ---
+
+    [Fact]
+    public void Fora_do_Postgres_o_Precedente_sai_do_modelo_de_proposito()
+    {
+        // `vector(1536)` nao existe em SQLite, e o EF nao ignora isso em
+        // silencio: ele recusa o modelo INTEIRO, derrubando junto todo teste de
+        // mapeamento que nao tem nada a ver com RAG.
+        //
+        // A exclusao e por provedor, e este teste e o que impede ela de virar
+        // cobertura sumida sem aviso: se alguem tirar o `Ignore`, o vermelho
+        // aparece aqui, com o motivo escrito, e nao em quatorze testes alheios
+        // com um erro de mapeamento que nao fala do assunto.
+        using var conexao = new SqliteConnection("DataSource=:memory:");
+        conexao.Open();
+
+        using var ctx = new CopilotoDbContext(
+            new DbContextOptionsBuilder<CopilotoDbContext>().UseSqlite(conexao).Options);
+
+        Assert.Null(ctx.Model.FindEntityType(typeof(Precedente)));
+        Assert.NotNull(ctx.Model.FindEntityType(typeof(Lead)));
     }
 }

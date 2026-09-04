@@ -21,6 +21,9 @@ public class LeadMap : IEntityTypeConfiguration<Lead>
         // instancia — senao o "parem de me analisar" vale ate a proxima subida.
         e.Property(l => l.AnaliseDeIaSuspensa).IsRequired();
         e.Property(l => l.OpostoEm);
+        // Relacao como texto, e nao numero: a coluna e lida em investigacao e
+        // em consulta manual, e um `1` obriga quem le a abrir o codigo (#85).
+        e.Property(l => l.Relacao).HasConversion<string>().HasMaxLength(20).IsRequired();
 
         // O indice UNICO e o ponto que nao da para deixar so no codigo.
         //

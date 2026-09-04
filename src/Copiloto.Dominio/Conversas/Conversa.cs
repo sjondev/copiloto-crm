@@ -18,7 +18,20 @@ public class Conversa
 
     public Guid Id { get; }
     public Guid LeadId { get; }
-    public IReadOnlyList<Mensagem> Mensagens => _mensagens;
+    /// <summary>
+    /// As falas em ordem cronologica, sempre.
+    ///
+    /// A ordenacao acontece na LEITURA, e nao so no <see cref="Registrar"/>,
+    /// porque a lista tem duas origens. Quando o webhook chama `Registrar`, ela
+    /// ja nasce ordenada; quando o ORM materializa a conversa do banco, ela vem
+    /// na ordem que o provedor devolveu — e a chave primaria e Guid, entao nao
+    /// ha ordem cronologica nenhuma garantida ali (#136).
+    ///
+    /// Confiar na ordem da lista sem isto e o tipo de defeito que nao levanta
+    /// excecao: o numero sai errado e plausivel na tela do vendedor.
+    /// </summary>
+    public IReadOnlyList<Mensagem> Mensagens =>
+        _mensagens.OrderBy(m => m.EnviadaEm).ToList();
 
     /// <summary>
     /// Guarda a fala, mantendo a ordem cronologica.
@@ -36,8 +49,16 @@ public class Conversa
         _mensagens.Sort((a, b) => a.EnviadaEm.CompareTo(b.EnviadaEm));
     }
 
+    /// <summary>
+    /// A ultima fala do cliente, por DATA e nao por posicao.
+    ///
+    /// Era `LastOrDefault`, que dependia de a lista estar ordenada — verdade
+    /// quando ela vem do webhook, mentira quando vem do banco. O silencio saiu
+    /// errado num teste (9 dias onde eram 8) porque a primeira fala do cliente
+    /// ficou por ultimo na materializacao.
+    /// </summary>
     public Mensagem? UltimaDoCliente =>
-        _mensagens.LastOrDefault(m => m.Autor == Autor.Cliente);
+        _mensagens.Where(m => m.Autor == Autor.Cliente).MaxBy(m => m.EnviadaEm);
 
     /// <summary>Silencio desde a ultima fala do cliente — o sinal de esfriamento.</summary>
     public TimeSpan? SilencioDoCliente(DateTimeOffset agora) =>

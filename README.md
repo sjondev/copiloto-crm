@@ -75,6 +75,35 @@ Isto não é um wrapper de LLM. As peças que importam:
 | **PII Shield** | CPF, telefone e e-mail são mascarados antes de sair da rede. Teste falha se vazar. |
 | **Ledger + ROI** | Custo por invocação, ligado ao Deal. Responde quanto gastou **e quanto rendeu**. |
 
+### Carga: o número, e não "ficou rápido"
+
+Medido em 04/09/2026, 30s por cenário, com `./scripts/stress.sh`. **Sem provedor de IA
+configurado** — o teste mede esta aplicação, não a latência da API de um fornecedor.
+
+| Cenário | Conexões | RPS | p50 | p90 | p99 | máx | Erros |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `GET /saude` | 10 | 38.056 | 0 ms | 0 ms | 0 ms | 3 ms | 0 |
+| `GET /saude` | 100 | 12.016 | 8 ms | 10 ms | 17 ms | 71 ms | 0 |
+| `POST /webhook/whatsapp` | 10 | 17.237 | 0 ms | 1 ms | 2 ms | 49 ms | 0 |
+| `POST /webhook/whatsapp` | 100 | 22.465 | 4 ms | 6 ms | 9 ms | 75 ms | 0 |
+
+Máquina: i7-1355U (12 threads), 16 GB, .NET 9.0.203, Linux. **RPS sem máquina não compara
+com nada**, e é por isso que ela está aqui.
+
+O webhook sustenta **p99 de 9 ms com 100 conexões**, bem abaixo do limite de 100 ms que a
+issue pedia. Nenhum erro, nenhum timeout e nenhum não-2xx em 1,19 milhão de requisições: a
+fila absorveu tudo sem precisar recusar.
+
+Dois números que só aparecem medindo:
+
+- **O webhook rende mais com 100 conexões do que com 10** (22 mil RPS contra 17 mil). Com
+  poucas conexões o gargalo é o ida-e-volta, não o servidor.
+- **`/saude` com 100 conexões rendeu menos que o webhook**, o que parece absurdo para um
+  endpoint que devolve `{"ok":true}`. A explicação está no processo: o worker de ingestão
+  ainda drenava as 673 mil mensagens do cenário anterior, **e escreve uma linha de log por
+  mensagem**. O que a medição pegou foi o custo do log competindo por CPU com o servidor
+  HTTP — resultado sobre a aplicação, não sobre o endpoint.
+
 ### A parte que quase ninguém faz: a conta fechada
 
 Quase todo projeto de IA sabe dizer o que **gastou**. Praticamente nenhum sabe dizer o

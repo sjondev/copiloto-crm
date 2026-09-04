@@ -29,25 +29,34 @@ a mensagem" esta fora de escopo por decisao, nao por falta de tempo.
 ## Estado real do repositorio
 
 > Esta secao envelhece rapido. **Quem fecha uma issue atualiza ela no mesmo PR.**
+> Conferido em 04/09/2026.
 
-- **A solution existe**: `Copiloto.sln` com `Copiloto.Dominio` (POCO, sem pacote),
-  `Copiloto.Api` e a suite `Copiloto.Testes`. Front ainda nao existe.
-- Dominio: conversas e agrupamento de falas, dossie e sinais, ficha do cliente,
-  planos e ancoragem, deal e lead, roteamento de modelo.
-- Api: webhook do WhatsApp com fila, resolvedor de lead, EF Core + Postgres com
-  migrations, PII Shield e guarda de saida, catalogo fake de ancoragem.
+- **A solution esta de pe**: `Copiloto.sln` com `src/Copiloto.Dominio` (POCO, sem
+  pacote), `src/Copiloto.Api` e `testes/Copiloto.Testes`.
+- **O front existe** (#50): `web/` em React + Vite, com a tela do dossie e da
+  conversa, e os estados em Storybook (#170).
+- Dominio: conversas e agrupamento de falas, dossie com sinais e objecoes, ficha do
+  cliente separando fato de impressao, planos e ancoragem, deal e lead.
+- Api: webhook com fila atras de `IQueue`, resolvedor de lead, EF Core + Postgres,
+  PII Shield e guarda de saida, cascata de modelos com circuito compartilhado,
+  auth JWT, servidor MCP (desligado por padrao) e RAG com `pgvector`.
 - `seed/conversas/` tem as tres conversas do cenario de cafe. `prompts/tecnicas/`
   continua **vazia**.
-- Esteira: `.github/workflows/ci.yml` (build + test) e `segredo.yml`.
-- **77 issues abertas, 16 fechadas**, em 9 milestones (M0 Fundacao -> M8 LGPD).
+- Esteira: `ci.yml` (build + test) e `segredo.yml`.
+- **49 issues abertas, 58 fechadas**, em 9 milestones (M0 Fundacao -> M8 LGPD).
 - Ordem acordada: **alicerce antes de morador** — estrutura primeiro, funcionalidade
   depois.
+
+`dotnet build` e `dotnet test` ja tem o que rodar, mas quem roda e a esteira (ver
+"Quem confere o que"). Parte da suite **pula sem servico**: sem RabbitMQ os testes de
+fila duravel ficam pulados, e sem Postgres com pgvector os de similaridade tambem —
+teste pulado nao e teste verde.
 
 ---
 
 ## Comandos
 
-Todos valem: a solution existe e a suite roda offline.
+Valem da raiz do repositorio, com a solution ja de pe.
 
 ```bash
 dotnet build                              # compila a solution
@@ -152,9 +161,10 @@ feat: Redis e RabbitMQ atras de interface, com in-memory como padrao
 
 ## Documento que afirma o que o codigo faz precisa de quem confira
 
-`README.md` e `docs/ARQUITETURA.md` descrevem router, ledger, MCP e RAG que **ainda
-nao existem**. Hoje isso e tese declarada, e esta tudo bem. O que nao pode e virar
-promessa desatualizada em silencio.
+`README.md` e `docs/ARQUITETURA.md` afirmam o que o produto faz. Parte ja e codigo
+— router, ledger de custo e RAG —, parte ainda e tese declarada, e tese declarada
+esta tudo bem. O que nao pode e virar promessa desatualizada em silencio: cada
+merge move a fronteira entre as duas, e quem move corrige a frase.
 
 Regra: **ao fechar uma issue, se o documento passou a divergir do codigo, corrige
 no mesmo PR.** Esses dois arquivos circulam fora do produto — sao a primeira coisa

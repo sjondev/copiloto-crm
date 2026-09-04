@@ -1,9 +1,13 @@
 # Esteira base: compila e testa. Os gates especializados (segredo #47, KISS/DRY
 # #75) sao workflows proprios e assumem este aqui de pe.
 #
-# Sem Postgres no job de proposito: a suite roda offline por decisao
-# (MODEL_PROVIDER=fake, CONVERSATION_SOURCE=fake). Servico so entra junto com o
-# primeiro teste de integracao que precisar dele.
+# A suite roda offline por decisao (MODEL_PROVIDER=fake, CONVERSATION_SOURCE=
+# fake), e o mapeamento comum e conferido em SQLite na memoria.
+#
+# O Postgres entrou como servico na #60, seguindo a regra que ja estava aqui:
+# servico entra junto com o PRIMEIRO teste que precisa dele. E pgvector nao tem
+# equivalente em SQLite — sem o servico, os testes de similaridade pulariam, e
+# teste que pula em silencio na esteira e garantia que ninguem confere.
 name: CI
 
 on:
@@ -27,6 +31,24 @@ jobs:
     runs-on: ubuntu-latest
     # Job travado nao pode queimar minuto ate o teto da conta.
     timeout-minutes: 10
+
+    services:
+      # Postgres COM pgvector (#60). A mesma imagem do docker-compose: o teste
+      # que confere o indice de similaridade precisa da extensao, e SQLite nao
+      # substitui — fingir que substitui seria testar outra coisa.
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: copiloto
+          POSTGRES_PASSWORD: teste
+          POSTGRES_DB: copiloto
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U copiloto -d copiloto"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - uses: actions/checkout@v4
@@ -54,4 +76,7 @@ jobs:
         run: dotnet build --no-restore --configuration Release --nologo
 
       - name: Testar
+        env:
+          # Com esta variavel os testes de pgvector RODAM em vez de pular.
+          POSTGRES_URL: "Host=localhost;Port=5432;Database=copiloto;Username=copiloto;Password=teste"
         run: dotnet test --no-build --configuration Release --nologo

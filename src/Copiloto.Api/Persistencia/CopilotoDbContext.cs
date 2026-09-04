@@ -1,6 +1,7 @@
 using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Fichas;
 using Copiloto.Dominio.Ia;
+using Copiloto.Dominio.Rag;
 using Copiloto.Dominio.Vendas;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,6 +30,16 @@ public class CopilotoDbContext : DbContext
     public DbSet<Mensagem> Mensagens => Set<Mensagem>();
     public DbSet<FichaCliente> Fichas => Set<FichaCliente>();
 
-    protected override void OnModelCreating(ModelBuilder b) =>
+    /// <summary>Trechos de conversa vetorizados, para recuperar por semelhanca (#60).</summary>
+    public DbSet<Precedente> Precedentes => Set<Precedente>();
+
+    protected override void OnModelCreating(ModelBuilder b)
+    {
+        // A extensao entra pela MIGRATION, e nao por um comando solto: banco
+        // novo sem `vector` habilitado quebra na primeira consulta, e o erro
+        // aparece longe de quem esqueceu de rodar o comando (#60).
+        b.HasPostgresExtension("vector");
+
         b.ApplyConfigurationsFromAssembly(typeof(CopilotoDbContext).Assembly);
+    }
 }

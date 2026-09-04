@@ -22,8 +22,20 @@
          mapeamento sem exigir Postgres de pe. -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.19" />
 
+    <!-- pgvector (#60). Conferidos em 04/09/2026 via `dotnet package search`:
+         Pgvector 0.3.2 e Pgvector.EntityFrameworkCore 0.3.0. A extensao no
+         banco e a 0.8.6, da imagem pgvector/pgvector:pg16 que o compose ja usa.
+         Sem banco vetorial dedicado: o Postgres ja esta aqui, com o mesmo
+         backup, a mesma transacao e a mesma credencial. -->
+    <PackageVersion Include="Pgvector" Version="0.3.2" />
+    <PackageVersion Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
+
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <!-- SkippableFact (conferido em 04/09/2026: 1.5.85). Existe para o teste que
+         precisa de servico externo PULAR em vez de passar quando ele nao esta
+         de pe: teste que passa por nao ter rodado e pior que teste vermelho. -->
+    <PackageVersion Include="Xunit.SkippableFact" Version="1.5.85" />
     <PackageVersion Include="xunit" Version="2.9.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>

@@ -1,7 +1,9 @@
 using Copiloto.Api.Ia;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Persistencia;
+using Copiloto.Api.Rag;
 using Copiloto.Dominio.Ia;
+using Copiloto.Dominio.Rag;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,9 +13,18 @@ var builder = WebApplication.CreateBuilder(args);
 // "funciona na minha maquina" que vira incidente.
 builder.Services.AddDbContext<CopilotoDbContext>(o =>
     o.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")
-                ?? "Host=localhost;Database=copiloto;Username=copiloto"));
+                ?? "Host=localhost;Database=copiloto;Username=copiloto",
+        // `UseVector` precisa estar aqui E na fabrica de migrations: sem ele o
+        // Npgsql nao sabe traduzir o tipo `vector`, e a falha aparece so na
+        // primeira consulta de similaridade (#60).
+        npg => npg.UseVector()));
 
 builder.Services.AddScoped<IRepositorioDeLeads, LeadsNoBanco>();
+
+// Embedding fake e o padrao (#60), pela mesma razao do FakeSource: a suite e a
+// demo rodam offline e de graca. O provedor real entra atras da mesma interface.
+builder.Services.AddSingleton<IEmbeddingProvider, FakeEmbeddingProvider>();
+builder.Services.AddScoped<IBuscaPorSimilaridade, BuscaComPgvector>();
 
 // O router e a tabela dele: a tabela vem do appsettings, nunca de codigo.
 builder.Services.AddSingleton(_ => new RoteadorDeModelo(

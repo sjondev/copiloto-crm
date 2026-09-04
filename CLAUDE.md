@@ -29,23 +29,31 @@ a mensagem" esta fora de escopo por decisao, nao por falta de tempo.
 ## Estado real do repositorio
 
 > Esta secao envelhece rapido. **Quem fecha uma issue atualiza ela no mesmo PR.**
+> Conferido em 04/09/2026.
 
-- **Nao existe uma linha de C#.** Sem `.sln`, sem `.csproj`, sem front.
-- O que existe: `README.md`, `docs/ARQUITETURA.md` (13 secoes de decisao),
-  `docker-compose.yml`, `.env.example`, templates de issue.
-- `prompts/tecnicas/` e `seed/` existem e estao **vazias**.
-- **89 issues abertas, nenhuma fechada**, em 9 milestones (M0 Fundacao -> M8 LGPD).
+- **A solution esta de pe**: `Copiloto.sln` com `src/Copiloto.Dominio`,
+  `src/Copiloto.Api` e `testes/Copiloto.Testes`. **Front nenhum** — nao existe tela.
+- No backend ja tem: dominio POCO com as transicoes de estagio, ingestao por webhook
+  com fila, persistencia EF Core/Postgres, PII Shield com gate na esteira, router de
+  modelo com circuito, a ficha do vendedor e o RAG com `pgvector`.
+- `prompts/tecnicas/` continua **vazia**; `seed/conversas/` tem as tres conversas do
+  cenario de cafe.
+- **16 issues fechadas, 79 abertas**, em 9 milestones (M0 Fundacao -> M8 LGPD).
+- **29 PRs abertos** esperando merge: a `main` esta atras do que ja foi escrito.
+  Antes de comecar, conferir se o que voce precisa nao esta num PR aberto — refazer
+  na sua branch daria conflito e duas versoes da mesma decisao.
 - Ordem acordada: **alicerce antes de morador** — estrutura primeiro, funcionalidade
   depois.
 
-Enquanto nao houver `.sln`, `dotnet build` **nao tem o que compilar**, e isso e
-resposta valida (ver "nao deu pra checar" abaixo), nunca um erro a esconder.
+`dotnet build` e `dotnet test` ja tem o que rodar, mas quem roda e a esteira (ver
+"Quem confere o que"). Parte da suite **pula sem servico**: sem `POSTGRES_URL` os
+testes de pgvector ficam pulados, e teste pulado nao e teste verde.
 
 ---
 
 ## Comandos
 
-Passam a valer a partir do esqueleto da solution; antes disso, nao existem.
+Valem da raiz do repositorio, com a solution ja de pe.
 
 ```bash
 dotnet build                              # compila a solution
@@ -126,7 +134,7 @@ Excecao: limpeza trivial no arquivo ja tocado, em **commit separado**.
 
 ## Fluxo de trabalho
 
-**Uma issue por branch, uma branch por PR.** As 89 issues sao o plano; trabalho
+**Uma issue por branch, uma branch por PR.** As issues sao o plano; trabalho
 que nao tem issue, abre issue antes.
 
 ```bash
@@ -147,9 +155,10 @@ feat: Redis e RabbitMQ atras de interface, com in-memory como padrao
 
 ## Documento que afirma o que o codigo faz precisa de quem confira
 
-`README.md` e `docs/ARQUITETURA.md` descrevem router, ledger, MCP e RAG que **ainda
-nao existem**. Hoje isso e tese declarada, e esta tudo bem. O que nao pode e virar
-promessa desatualizada em silencio.
+`README.md` e `docs/ARQUITETURA.md` afirmam o que o produto faz. Parte ja e codigo
+— router, ledger de custo e RAG —, parte ainda e tese declarada, e tese declarada
+esta tudo bem. O que nao pode e virar promessa desatualizada em silencio: cada
+merge move a fronteira entre as duas, e quem move corrige a frase.
 
 Regra: **ao fechar uma issue, se o documento passou a divergir do codigo, corrige
 no mesmo PR.** Esses dois arquivos circulam fora do produto — sao a primeira coisa

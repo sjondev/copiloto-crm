@@ -10,6 +10,8 @@
          suite continua rodando offline como o CLAUDE.md manda. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <!-- Os testes de pgvector pulam sem banco, em vez de passar (#60). -->
+    <PackageReference Include="Xunit.SkippableFact" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>

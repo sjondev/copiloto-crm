@@ -1,0 +1,24 @@
+<!--
+  O medidor dos gatilhos de KISS e DRY (#75).
+
+  Ele nao entra no build da aplicacao nem e publicado: e ferramenta, e mora em
+  `ferramentas/` por isso. Esta na solution para uma razao so — ferramenta fora
+  da solution nao compila na esteira, e ferramenta que nao compila para de ser
+  rodada no dia em que quebra em silencio.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Gatilhos</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Roslyn: o mesmo parser do compilador. Contar chave em texto erra em
+         string, em comentario e em interpolacao, e uma medida errada e pior
+         que medida nenhuma — ela vira discussao sobre a ferramenta. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+
+</Project>

@@ -10,6 +10,9 @@
          suite continua rodando offline como o CLAUDE.md manda. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <!-- SkippableFact: o teste da fila duravel PULA sem broker, em vez de
+         passar sem ter rodado (#69). -->
+    <PackageReference Include="Xunit.SkippableFact" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>

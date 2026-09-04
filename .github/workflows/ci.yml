@@ -2,8 +2,14 @@
 # #75) sao workflows proprios e assumem este aqui de pe.
 #
 # Sem Postgres no job de proposito: a suite roda offline por decisao
-# (MODEL_PROVIDER=fake, CONVERSATION_SOURCE=fake). Servico so entra junto com o
-# primeiro teste de integracao que precisar dele.
+# (MODEL_PROVIDER=fake, CONVERSATION_SOURCE=fake), e o mapeamento e conferido em
+# SQLite na memoria.
+#
+# RabbitMQ e a excecao, e ela chegou com a #69: durabilidade nao tem como ser
+# provada contra uma fila em memoria. Sem o servico, os testes daquela fila
+# PULAM — e teste que pula em silencio na esteira e garantia que ninguem
+# confere. O servico entrou junto com o primeiro teste que precisava dele, como
+# esta regra sempre previu.
 name: CI
 
 on:
@@ -27,6 +33,21 @@ jobs:
     runs-on: ubuntu-latest
     # Job travado nao pode queimar minuto ate o teto da conta.
     timeout-minutes: 10
+
+    services:
+      # Fila duravel (#69). A imagem e fixada por VERSAO: com `:latest`, o
+      # comportamento do broker muda sem ninguem tocar neste repositorio.
+      rabbitmq:
+        image: rabbitmq:4-alpine
+        ports:
+          - 5672:5672
+        # Sem o health check, o job comeca a testar antes de o broker aceitar
+        # conexao, e a falha aparece como teste intermitente.
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - uses: actions/checkout@v4
@@ -54,4 +75,7 @@ jobs:
         run: dotnet build --no-restore --configuration Release --nologo
 
       - name: Testar
+        env:
+          # Com esta variavel, os testes da fila duravel RODAM em vez de pular.
+          RABBITMQ_URL: amqp://guest:guest@localhost:5672
         run: dotnet test --no-build --configuration Release --nologo

@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Copiloto.Dominio.Seguranca;
 
 namespace Copiloto.Api.Seguranca;
 

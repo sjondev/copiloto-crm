@@ -1,4 +1,3 @@
-using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Vendas;
 
 namespace Copiloto.Api.Ingestao;

@@ -11,23 +11,23 @@ public class FichaClienteMap : IEntityTypeConfiguration<FichaCliente>
 {
     private static readonly JsonSerializerOptions Json = new();
 
-    public void Configure(EntityTypeBuilder<FichaCliente> e)
+    public void Configure(EntityTypeBuilder<FichaCliente> builder)
     {
-        e.ToTable("fichas_cliente");
-        e.HasKey(f => f.Id);
-        e.Property(f => f.LeadId).IsRequired();
-        e.Property(f => f.CriadaEm).IsRequired();
-        e.Property(f => f.AtualizadaEm).IsRequired();
+        builder.ToTable("fichas_cliente");
+        builder.HasKey(f => f.Id);
+        builder.Property(f => f.LeadId).IsRequired();
+        builder.Property(f => f.CriadaEm).IsRequired();
+        builder.Property(f => f.AtualizadaEm).IsRequired();
 
         // Uma ficha por lead: a ficha E o que se sabe daquele cliente, e duas
         // seriam duas versoes da verdade sem criterio de desempate.
-        e.HasIndex(f => f.LeadId).IsUnique().HasDatabaseName("ux_fichas_lead");
+        builder.HasIndex(f => f.LeadId).IsUnique().HasDatabaseName("ux_fichas_lead");
 
         // Os tres blocos viram colunas na mesma tabela, e nao tabelas proprias:
         // eles nao existem sem a ficha e nunca sao consultados sozinhos.
-        e.OwnsOne(f => f.Empresa);
-        e.OwnsOne(f => f.Pessoa);
-        e.OwnsOne(f => f.Negocio);
+        builder.OwnsOne(f => f.Empresa);
+        builder.OwnsOne(f => f.Pessoa);
+        builder.OwnsOne(f => f.Negocio);
 
         // O historico vai como JSON numa coluna so, por conversor.
         //
@@ -56,10 +56,10 @@ public class FichaClienteMap : IEntityTypeConfiguration<FichaCliente>
             v => JsonSerializer.Deserialize<List<VersaoDaFicha>>(
                      JsonSerializer.Serialize(v, Json), Json)!);
 
-        e.Property<List<VersaoDaFicha>>("_historico")
+        builder.Property<List<VersaoDaFicha>>("_historico")
             .HasColumnName("historico")
             .HasConversion(conversor, comparador);
 
-        e.Ignore(f => f.Historico);
+        builder.Ignore(f => f.Historico);
     }
 }

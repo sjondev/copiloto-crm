@@ -59,7 +59,7 @@ public class MolduraDeContexto
     /// Tira do conteudo qualquer coisa com cara de delimitador.
     ///
     /// O nonce ja torna a adivinhacao inviavel, mas isto e cinto e suspensorio
-    /// barato: um `<<<FIM:` no meio da fala do cliente e, na melhor hipotese,
+    /// barato: um `&lt;&lt;&lt;FIM:` no meio da fala do cliente e, na melhor hipotese,
     /// ruido que confunde o modelo — e na pior, um teste de sondagem para
     /// descobrir o formato.
     /// </summary>

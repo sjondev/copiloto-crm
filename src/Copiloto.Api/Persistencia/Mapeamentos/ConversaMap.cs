@@ -6,30 +6,30 @@ namespace Copiloto.Api.Persistencia.Mapeamentos;
 
 public class ConversaMap : IEntityTypeConfiguration<Conversa>
 {
-    public void Configure(EntityTypeBuilder<Conversa> e)
+    public void Configure(EntityTypeBuilder<Conversa> builder)
     {
-        e.ToTable("conversas");
-        e.HasKey(c => c.Id);
-        e.Property(c => c.LeadId).IsRequired();
+        builder.ToTable("conversas");
+        builder.HasKey(c => c.Id);
+        builder.Property(c => c.LeadId).IsRequired();
 
-        e.HasMany(c => c.Mensagens).WithOne().OnDelete(DeleteBehavior.Cascade);
-        e.Navigation(c => c.Mensagens).UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.HasMany(c => c.Mensagens).WithOne().OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(c => c.Mensagens).UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
 
 public class MensagemMap : IEntityTypeConfiguration<Mensagem>
 {
-    public void Configure(EntityTypeBuilder<Mensagem> e)
+    public void Configure(EntityTypeBuilder<Mensagem> builder)
     {
-        e.ToTable("mensagens");
-        e.HasKey(m => m.Id);
-        e.Property(m => m.Autor).HasConversion<string>().HasMaxLength(20).IsRequired();
-        e.Property(m => m.Texto).IsRequired();
-        e.Property(m => m.EnviadaEm).IsRequired();
+        builder.ToTable("mensagens");
+        builder.HasKey(m => m.Id);
+        builder.Property(m => m.Autor).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(m => m.Texto).IsRequired();
+        builder.Property(m => m.EnviadaEm).IsRequired();
 
         // Ordenar por envio e a consulta mais frequente da tela — e foi por ela
         // que a #22 existe: balao fora de ordem faz o dossie ler a conversa ao
         // contrario.
-        e.HasIndex(m => m.EnviadaEm).HasDatabaseName("ix_mensagens_enviada_em");
+        builder.HasIndex(m => m.EnviadaEm).HasDatabaseName("ix_mensagens_enviada_em");
     }
 }

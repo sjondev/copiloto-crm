@@ -5,7 +5,7 @@ namespace Copiloto.Api.Ingestao;
 /// <summary>
 /// A fila entre o webhook e o processamento (#40).
 ///
-/// `Channel<T>` em memoria, e nao RabbitMQ: o volume nao justifica (YAGNI). A
+/// `Channel&lt;T&gt;` em memoria, e nao RabbitMQ: o volume nao justifica (YAGNI). A
 /// troca fica barata porque quem publica so enxerga `Publicar` e quem consome
 /// so enxerga `Ler` — o dia em que doer, o corpo muda e as duas pontas nao.
 ///

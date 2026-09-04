@@ -191,5 +191,4 @@ vocabulário jurídico. Convenção que depende de alguém lembrar tem prazo de 
 | Onde o provedor de IA processa (transferência internacional) | #79 |
 | Direitos do titular além da exclusão | #81 |
 | Dado sensível em regime próprio | #82 |
-| Resposta a incidente e log de auditoria | #84 |
 | Dado de terceiro na Ficha do Cliente | #89 |

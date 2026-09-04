@@ -14,6 +14,12 @@ public class LeadMap : IEntityTypeConfiguration<Lead>
         e.Property(l => l.Nome).HasMaxLength(200);
         e.Property(l => l.CriadoEm).IsRequired();
 
+        // A oposicao a analise (#81) e' estado do titular, nao configuracao de
+        // uso: ela precisa sobreviver a restart, a deploy e a troca de
+        // instancia — senao o "parem de me analisar" vale ate a proxima subida.
+        e.Property(l => l.AnaliseDeIaSuspensa).IsRequired();
+        e.Property(l => l.OpostoEm);
+
         // O indice UNICO e o ponto que nao da para deixar so no codigo.
         //
         // A #22 resolveu a normalizacao, mas duas instancias processando a mesma

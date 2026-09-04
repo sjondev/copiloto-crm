@@ -407,6 +407,28 @@ A suíte é escrita contra o **contrato**, parametrizada pela implementação: `
 que impede a segunda implementação de nascer com garantias mais fracas que a primeira sem
 ninguém notar.
 
+### 12.35 Quando a infraestrutura cai (#72)
+
+`/saude` reporta **cada dependência separadamente** — Postgres, fila e estado
+compartilhado, com o motivo da falha junto. Health check que responde só verde ou vermelho
+manda o plantonista procurar do zero.
+
+**Estado compartilhado fora degrada; não derruba.** O vendedor não pode perder o
+atendimento inteiro por causa de um cache. Mas cair para memória em silêncio esconderia
+que idempotência, rate limit e circuito passaram a valer só naquela instância — então o
+decorator **grita enquanto estiver degradado**, e o risco aparece no `/saude` com essa
+frase. Falha silenciosa aqui reaparece semanas depois como fatura maior, sem ninguém ligar
+uma coisa à outra. A reconexão é automática, mas espaçada: tentar o primário a cada chamada
+transformaria toda operação numa espera de timeout, e o remédio ficaria mais caro que a
+doença. O que foi gravado na memória durante a queda **não é promovido** de volta — são
+chaves de validade curta, e reidratar idempotência vencida reintroduziria decisões que já
+expiraram.
+
+**Fila fora é essencial, e aqui está o ponto contraintuitivo:** com a fila fora, *recusar*
+a mensagem é melhor que aceitar. O webhook devolve 503, que provoca reentrega; aceitar com
+202 e perder é exatamente a falha silenciosa que a fila durável existe para eliminar — o
+WhatsApp reentrega o que deu erro, e não reentrega o que ele acha que entregou.
+
 ### 12.4 Redis também é backplane do SignalR
 
 Com mais de uma instância, o vendedor conectado à instância A não recebe o evento

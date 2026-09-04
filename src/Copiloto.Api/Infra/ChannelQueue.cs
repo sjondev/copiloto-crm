@@ -38,6 +38,15 @@ public class ChannelQueue<T> : IQueue<T>
     public int Aguardando => _canal.Reader.Count;
 
     /// <summary>
+    /// Em memoria a fila so para de aceitar no desligamento. Um broker
+    /// responderia pela conexao, e e por isso que isto e do contrato e nao um
+    /// detalhe do Channel.
+    /// </summary>
+    public bool Aceitando => !_fechada;
+
+    private bool _fechada;
+
+    /// <summary>
     /// Enfileira. Devolve false quando a fila esta cheia e a espera estourou o
     /// tempo — o chamador decide o que dizer ao provedor.
     /// </summary>
@@ -66,5 +75,9 @@ public class ChannelQueue<T> : IQueue<T>
     /// Fecha para escrita. O consumidor continua lendo o que ficou — e' o que
     /// faz o desligamento DRENAR em vez de descartar.
     /// </summary>
-    public void PararDeAceitar() => _canal.Writer.TryComplete();
+    public void PararDeAceitar()
+    {
+        _fechada = true;
+        _canal.Writer.TryComplete();
+    }
 }

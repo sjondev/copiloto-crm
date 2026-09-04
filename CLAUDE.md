@@ -30,22 +30,24 @@ a mensagem" esta fora de escopo por decisao, nao por falta de tempo.
 
 > Esta secao envelhece rapido. **Quem fecha uma issue atualiza ela no mesmo PR.**
 
-- **Nao existe uma linha de C#.** Sem `.sln`, sem `.csproj`, sem front.
-- O que existe: `README.md`, `docs/ARQUITETURA.md` (13 secoes de decisao),
-  `docker-compose.yml`, `.env.example`, templates de issue.
-- `prompts/tecnicas/` e `seed/` existem e estao **vazias**.
-- **89 issues abertas, nenhuma fechada**, em 9 milestones (M0 Fundacao -> M8 LGPD).
+- **A solution existe**: `Copiloto.sln` com `Copiloto.Dominio` (POCO, sem pacote),
+  `Copiloto.Api` e a suite `Copiloto.Testes`. Front ainda nao existe.
+- Dominio: conversas e agrupamento de falas, dossie e sinais, ficha do cliente,
+  planos e ancoragem, deal e lead, roteamento de modelo.
+- Api: webhook do WhatsApp com fila, resolvedor de lead, EF Core + Postgres com
+  migrations, PII Shield e guarda de saida, catalogo fake de ancoragem.
+- `seed/conversas/` tem as tres conversas do cenario de cafe. `prompts/tecnicas/`
+  continua **vazia**.
+- Esteira: `.github/workflows/ci.yml` (build + test) e `segredo.yml`.
+- **77 issues abertas, 16 fechadas**, em 9 milestones (M0 Fundacao -> M8 LGPD).
 - Ordem acordada: **alicerce antes de morador** — estrutura primeiro, funcionalidade
   depois.
-
-Enquanto nao houver `.sln`, `dotnet build` **nao tem o que compilar**, e isso e
-resposta valida (ver "nao deu pra checar" abaixo), nunca um erro a esconder.
 
 ---
 
 ## Comandos
 
-Passam a valer a partir do esqueleto da solution; antes disso, nao existem.
+Todos valem: a solution existe e a suite roda offline.
 
 ```bash
 dotnet build                              # compila a solution
@@ -66,11 +68,14 @@ docker compose ps
 ## Regras que nao se negociam
 
 - **A IA nunca escreve para o cliente.** Ver a tese acima.
-- **Regra de ancoragem.** Escassez, prova social, desconto e prazo so viram
-  sugestao se existir dado no CRM que sustente. Sem dado, o agente devolve como
-  **pergunta ao vendedor**, nunca como fala pronta. Sugerir "restam 2 unidades"
-  quando existem 200 e publicidade enganosa, cria passivo para a empresa que usa
-  o produto e queima o vendedor com o cliente (#15, #16).
+- **Regra de ancoragem.** Escassez, prova social, desconto, prazo e preco so
+  viram sugestao se existir dado no CRM que sustente. Sem dado, o agente devolve
+  como **pergunta ao vendedor**, nunca como fala pronta. Sugerir "restam 2
+  unidades" quando existem 200 e publicidade enganosa, cria passivo para a
+  empresa que usa o produto e queima o vendedor com o cliente (#15, #16).
+  O dado vem de ferramenta consultada ANTES da fala (#57), e **dado que existe e
+  nao sustenta a fala barra a sugestao igual a dado ausente**: com 140kg em
+  estoque nao ha caminho de codigo que produza escassez.
 - **Todo sinal do dossie cita a fala que o originou.** Sem citacao, o bloco nao e
   exibido. E o que transforma "a IA ta ruim" de reclamacao subjetiva em defeito
   verificavel.
@@ -126,7 +131,7 @@ Excecao: limpeza trivial no arquivo ja tocado, em **commit separado**.
 
 ## Fluxo de trabalho
 
-**Uma issue por branch, uma branch por PR.** As 89 issues sao o plano; trabalho
+**Uma issue por branch, uma branch por PR.** As issues sao o plano; trabalho
 que nao tem issue, abre issue antes.
 
 ```bash

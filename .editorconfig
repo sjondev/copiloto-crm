@@ -1,0 +1,230 @@
+# Estilo do Copiloto, num lugar so.
+#
+# Este arquivo e metade do gate da #75. As regras daqui viram ERRO de compilacao
+# (`EnforceCodeStyleInBuild`, no Directory.Build.props), e nao aviso: aviso que
+# nao quebra o build acumula ate ninguem mais ler, e a partir dai ele nao mede
+# mais nada.
+#
+# A outra metade — tamanho de arquivo, tamanho de metodo, aninhamento,
+# parametros e duplicacao — NAO esta aqui de proposito. Aqueles gatilhos avisam
+# e nao reprovam (`ferramentas/Gatilhos` e `.github/workflows/gatilhos.yml`),
+# porque gate que reprova build por um metodo de 42 linhas vira gate que todo
+# mundo aprende a contornar.
+#
+# Regra pratica ao mexer aqui: severidade `error` so para o que uma ferramenta
+# conserta sozinha (`dotnet format`). O resto e conversa de revisao, e conversa
+# de revisao nao cabe em analisador.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Duas linhas no fim de linha sao quebra de linha em Markdown, e nao sujeira.
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[*.{csproj,props,targets,sln,config}]
+indent_size = 2
+
+# ---------------------------------------------------------------------------
+# C#
+# ---------------------------------------------------------------------------
+
+[*.cs]
+
+# --- Organizacao do arquivo ---
+
+# Namespace de bloco gasta um nivel de indentacao em 100% das linhas do arquivo
+# para nao dizer nada. O projeto ja escreve assim; a regra impede a volta.
+csharp_style_namespace_declarations = file_scoped:error
+
+csharp_using_directive_placement = outside_namespace:error
+# `System` primeiro: e como o repositorio ja escreve, e a alternativa
+# (alfabetica pura) so serviria para reordenar arquivo que ninguem pediu para
+# mexer — diff de import no meio de um PR de feature esconde o que importa.
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+# Using que sobrou e pista falsa: sugere dependencia que o arquivo nao tem.
+# Precisa de GenerateDocumentationFile para valer no build — esta ligado.
+dotnet_diagnostic.IDE0005.severity = error
+
+# --- Formatacao (o que o `dotnet format` conserta sozinho) ---
+
+dotnet_diagnostic.IDE0055.severity = error
+
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_members_in_anonymous_types = true
+csharp_new_line_between_query_expression_clauses = true
+
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+csharp_indent_labels = one_less_than_current
+csharp_indent_block_contents = true
+csharp_indent_braces = false
+csharp_indent_case_contents_when_block = false
+
+csharp_space_after_cast = false
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+csharp_space_between_method_call_parameter_list_parentheses = false
+csharp_space_between_parentheses = false
+csharp_space_before_colon_in_inheritance_clause = true
+csharp_space_after_colon_in_inheritance_clause = true
+csharp_space_around_binary_operators = before_and_after
+csharp_space_after_comma = true
+csharp_space_before_comma = false
+csharp_space_after_dot = false
+csharp_space_before_dot = false
+csharp_space_after_semicolon_in_for_statement = true
+csharp_space_before_semicolon_in_for_statement = false
+csharp_space_around_declaration_statements = false
+csharp_space_before_open_square_brackets = false
+csharp_space_between_empty_square_brackets = false
+csharp_space_between_square_brackets = false
+
+# A guarda de uma linha (`if (id == Guid.Empty) throw ...`) e o padrao do
+# dominio deste projeto: quebrar ela em duas linhas dobra o tamanho do bloco de
+# validacao sem dizer nada a mais. Quebrar so quando a linha nao couber e
+# decisao de quem escreve, e nao do formatador.
+csharp_preserve_single_line_statements = true
+csharp_preserve_single_line_blocks = true
+
+# --- Nomes ---
+#
+# So o que ja e o padrao do repositorio. Nome e assunto de revisao humana; o
+# que entra aqui e a casca mecanica que ninguem quer discutir duas vezes.
+
+dotnet_diagnostic.IDE1006.severity = error
+
+dotnet_naming_rule.tipos_em_pascal.severity = error
+dotnet_naming_rule.tipos_em_pascal.symbols = tipos
+dotnet_naming_rule.tipos_em_pascal.style = pascal
+dotnet_naming_symbols.tipos.applicable_kinds = class,struct,enum,property,method,event,delegate
+dotnet_naming_symbols.tipos.applicable_accessibilities = *
+dotnet_naming_style.pascal.capitalization = pascal_case
+
+dotnet_naming_rule.interface_com_i.severity = error
+dotnet_naming_rule.interface_com_i.symbols = interfaces
+dotnet_naming_rule.interface_com_i.style = i_maiusculo
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+dotnet_naming_symbols.interfaces.applicable_accessibilities = *
+dotnet_naming_style.i_maiusculo.capitalization = pascal_case
+dotnet_naming_style.i_maiusculo.required_prefix = I
+
+# Constante e static readonly sao PascalCase, e nao `_campo`: elas nao sao
+# estado da instancia, e sublinhado ali passaria a informacao errada. A regra
+# vem ANTES da de campo privado porque a primeira que casa e a que vale.
+# `required_modifiers` exige TODOS os modificadores listados, e nao qualquer um
+# deles — por isso sao duas regras, e nao uma com `const,static`.
+dotnet_naming_rule.constante_em_pascal.severity = error
+dotnet_naming_rule.constante_em_pascal.symbols = constantes
+dotnet_naming_rule.constante_em_pascal.style = pascal
+dotnet_naming_symbols.constantes.applicable_kinds = field
+dotnet_naming_symbols.constantes.applicable_accessibilities = *
+dotnet_naming_symbols.constantes.required_modifiers = const
+
+dotnet_naming_rule.campo_estatico_em_pascal.severity = error
+dotnet_naming_rule.campo_estatico_em_pascal.symbols = campos_estaticos
+dotnet_naming_rule.campo_estatico_em_pascal.style = pascal
+dotnet_naming_symbols.campos_estaticos.applicable_kinds = field
+dotnet_naming_symbols.campos_estaticos.applicable_accessibilities = *
+dotnet_naming_symbols.campos_estaticos.required_modifiers = static
+
+dotnet_naming_rule.campo_privado_com_underline.severity = error
+dotnet_naming_rule.campo_privado_com_underline.symbols = campos_privados
+dotnet_naming_rule.campo_privado_com_underline.style = underline_camel
+dotnet_naming_symbols.campos_privados.applicable_kinds = field
+dotnet_naming_symbols.campos_privados.applicable_accessibilities = private
+dotnet_naming_symbols.campos_privados.required_modifiers =
+dotnet_naming_style.underline_camel.capitalization = camel_case
+dotnet_naming_style.underline_camel.required_prefix = _
+
+# --- Preferencias que ficam em SUGESTAO, e o motivo ---
+#
+# `var` e expression-body sao escolha de legibilidade caso a caso: as vezes o
+# tipo explicito e a unica coisa que diz o que a linha faz. Analisador nao tem
+# como saber qual dos dois e o caso, entao ele sugere e nao manda.
+
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_expression_bodied_accessors = true:suggestion
+
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+
+csharp_style_prefer_primary_constructors = false:suggestion
+
+# --- Correcao, nao gosto ---
+#
+# Estes tres nao sao estilo: sao defeito com cara de estilo.
+
+# `catch { }` engole o erro e o sintoma aparece semanas depois, longe da causa.
+dotnet_diagnostic.CA1031.severity = suggestion
+# Comparacao de string por cultura muda de resultado conforme a maquina.
+dotnet_diagnostic.CA1310.severity = error
+# Descartavel que ninguem descarta segura conexao de banco ate o processo cair.
+dotnet_diagnostic.CA2000.severity = suggestion
+# Log com delegado gerado economiza alocacao que, nesta escala, ninguem mede.
+# O preco de obedecer e uma classe parcial e um atributo por linha de log —
+# ceremonia que some no meio do que importa. Vira `error` no dia em que a #54
+# mostrar log no p99, e nao antes: otimizacao sem medida e chute com custo.
+dotnet_diagnostic.CA1848.severity = suggestion
+# Mesma familia da CA1848, mesma resposta: nao avaliar argumento de log quando o
+# log esta desligado economiza um acesso a propriedade por mensagem processada.
+# O preco de obedecer e um `if (_log.IsEnabled(...))` em volta de cada chamada —
+# tres linhas de ceremonia para esconder a unica linha que interessa.
+dotnet_diagnostic.CA1873.severity = suggestion
+
+# --- Codigo que a ferramenta escreveu ---
+#
+# Migration e arquivo gerado pelo EF. Formatar o que a ferramenta gera produz
+# diff que volta sozinho na proxima migration.
+[**/Migrations/*.cs]
+generated_code = true
+dotnet_diagnostic.IDE0005.severity = none
+dotnet_diagnostic.IDE0055.severity = none
+dotnet_diagnostic.IDE1006.severity = none
+
+# ---------------------------------------------------------------------------
+# Testes
+# ---------------------------------------------------------------------------
+#
+# Teste nao e biblioteca publica: o que vale nele e ser lido como frase por
+# quem esta investigando um vermelho as duas da manha. Tres regras de API
+# publica saem daqui por isso, e nao por comodidade.
+
+[testes/**/*.cs]
+
+# `Baloes_fora_de_ordem_sao_ordenados_antes_de_agrupar` e o nome do teste E o
+# relatorio de falha. Trocar por PascalCase para agradar uma regra de API
+# publica piora a unica saida que alguem le sob pressao.
+dotnet_diagnostic.CA1707.severity = none
+
+# GC.SuppressFinalize protege contra tipo derivado que introduz finalizador.
+# Classe de teste do xUnit nao tem finalizador, nao e herdada e vive um metodo:
+# a ceremonia protegeria contra o que nao existe.
+dotnet_diagnostic.CA1816.severity = none
+
+# Matriz alocada por chamada num teste que roda uma vez. A alocacao que a regra
+# economiza nao aparece em lugar nenhum, e o campo estatico levaria o dado de
+# entrada para longe da asercao que o usa.
+dotnet_diagnostic.CA1861.severity = none

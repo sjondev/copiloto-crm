@@ -29,6 +29,6 @@ public class CopilotoDbContext : DbContext
     public DbSet<Mensagem> Mensagens => Set<Mensagem>();
     public DbSet<FichaCliente> Fichas => Set<FichaCliente>();
 
-    protected override void OnModelCreating(ModelBuilder b) =>
-        b.ApplyConfigurationsFromAssembly(typeof(CopilotoDbContext).Assembly);
+    protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CopilotoDbContext).Assembly);
 }

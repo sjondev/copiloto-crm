@@ -1,5 +1,5 @@
 {
-  "_comentario": "A1/A3/A4, a leitura da conversa. Cada sinal CITA a fala que o originou — sem citacao o bloco nao e exibido, e e isso que torna 'a IA ta ruim' um defeito verificavel em vez de reclamacao. As lacunas sao a parte mais util: o que ainda NAO sabemos.",
+  "_comentario": "A1/A3/A4, a leitura da conversa. Cada sinal CITA a fala que o originou, e o trecho e conferido contra a conversa de verdade antes de virar Sinal — sem citacao real o bloco nao existe, e e isso que torna 'a IA ta ruim' um defeito verificavel em vez de reclamacao. A temperatura tem DIRECAO: morno subindo e morno caindo pedem coisas opostas do vendedor.",
   "tarefa": "Leitura",
   "tokensEntrada": 1240,
   "tokensSaida": 210,
@@ -22,6 +22,7 @@
       "Para quantas pessoas ele compra por mes? Sem isso nao da para dizer se o kg cabe no uso dele.",
       "Ele ja torra em casa ou compra moido? Muda o produto inteiro da conversa.",
       "Quem decide a compra e ele mesmo?"
-    ]
+    ],
+    "direcao": "esfriando"
   }
 }

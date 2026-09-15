@@ -40,6 +40,18 @@ builder.Services.AddSingleton(_ => new MontadorDeContexto(
 // esgota: erro na tela no meio de uma venda e pior que dado desatualizado.
 builder.Services.AddSingleton<CascataDeModelos>();
 
+// O agente A1 (#13). A camada C0 vem de ARQUIVO e nao de string em codigo:
+// ajustar o que o agente sabe e a operacao mais frequente depois que o produto
+// esta no ar, e em codigo cada ajuste vira deploy.
+builder.Services.AddSingleton(sp => new AgenteDeLeitura(
+    sp.GetRequiredService<CascataDeModelos>(),
+    sp.GetRequiredService<MontadorDeContexto>(),
+    File.ReadAllText(Path.Combine(
+        builder.Configuration["PROMPTS_DIR"]
+        ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "prompts"),
+        "a1-leitura.md")),
+    sp.GetRequiredService<ILogger<AgenteDeLeitura>>()));
+
 // O numero da empresa e o que decide quem falou em cada mensagem, entao ele e
 // configuracao e nao constante: cada instalacao tem o seu.
 //

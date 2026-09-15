@@ -1,0 +1,27 @@
+{
+  "_comentario": "A1/A3/A4, a leitura da conversa. Cada sinal CITA a fala que o originou — sem citacao o bloco nao e exibido, e e isso que torna 'a IA ta ruim' um defeito verificavel em vez de reclamacao. As lacunas sao a parte mais util: o que ainda NAO sabemos.",
+  "tarefa": "Leitura",
+  "tokensEntrada": 1240,
+  "tokensSaida": 210,
+  "resposta": {
+    "estagio": "consideracao",
+    "temperatura": "morna",
+    "sinais": [
+      {
+        "descricao": "preco perguntado duas vezes em tres dias",
+        "trecho_citado": "qual o valor do kg?",
+        "tipo": "compra"
+      },
+      {
+        "descricao": "objecao velada: adiou sem dizer nao",
+        "trecho_citado": "vou pensar melhor e te falo",
+        "tipo": "fuga"
+      }
+    ],
+    "lacunas": [
+      "Para quantas pessoas ele compra por mes? Sem isso nao da para dizer se o kg cabe no uso dele.",
+      "Ele ja torra em casa ou compra moido? Muda o produto inteiro da conversa.",
+      "Quem decide a compra e ele mesmo?"
+    ]
+  }
+}

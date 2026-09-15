@@ -82,7 +82,7 @@ public class FakeSource : IConversationSource
 
             yield return new MensagemRecebida(
                 $"seed.{conversa.Id}.{i}", de, para, m.Texto,
-                inicio.AddSeconds(m.OffsetSegundos));
+                inicio.AddSeconds(m.OffsetSegundos), m.Midia);
         }
     }
 

@@ -1,3 +1,5 @@
+using Copiloto.Dominio.Conversas;
+
 namespace Copiloto.Api.Ingestao;
 
 /// <summary>O que o webhook do WhatsApp entrega, cru, antes de virar dominio.</summary>
@@ -14,12 +16,18 @@ namespace Copiloto.Api.Ingestao;
 /// mesma rotina resolve os dois sentidos, e a conversa que o vendedor iniciou
 /// nao entra no historico como se o cliente tivesse falado primeiro.
 /// </remarks>
+/// <param name="Midia">
+/// O anexo, quando a fala nao e texto (#23). A Fase 1 nao transcreve nem
+/// interpreta nada disso — mas descartar o TIPO na porta de entrada e o que
+/// faria o dossie ler a conversa pela metade sem saber que era pela metade.
+/// </param>
 public record MensagemRecebida(
     string ProviderMessageId,
     string De,
     string Para,
     string Texto,
-    DateTimeOffset EnviadaEm)
+    DateTimeOffset EnviadaEm,
+    Midia? Midia = null)
 {
     /// <summary>
     /// O que impede a fala de entrar na fila, ou <c>null</c> se nada impede.
@@ -33,5 +41,7 @@ public record MensagemRecebida(
             ? "sem ProviderMessageId: a reentrega nao teria como ser reconhecida"
             : string.IsNullOrWhiteSpace(De) || string.IsNullOrWhiteSpace(Para)
                 ? "sem De/Para: nao ha como dizer quem falou"
-                : null;
+                : string.IsNullOrWhiteSpace(Texto) && Midia is null
+                    ? "sem texto e sem midia: nao ha fala nenhuma nisso"
+                    : null;
 }

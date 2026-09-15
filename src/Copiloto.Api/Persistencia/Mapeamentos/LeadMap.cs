@@ -9,6 +9,8 @@ public class LeadMap : IEntityTypeConfiguration<Lead>
     public void Configure(EntityTypeBuilder<Lead> e)
     {
         e.ToTable("leads");
+        // O id nasce no dominio, nunca no banco (#158). Ver ConversaMap.
+        e.Property(l => l.Id).ValueGeneratedNever();
         e.HasKey(l => l.Id);
         e.Property(l => l.Telefone).HasMaxLength(20).IsRequired();
         e.Property(l => l.Nome).HasMaxLength(200);

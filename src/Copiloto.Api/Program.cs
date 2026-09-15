@@ -42,8 +42,13 @@ builder.Services.AddSingleton<CascataDeModelos>();
 
 // O numero da empresa e o que decide quem falou em cada mensagem, entao ele e
 // configuracao e nao constante: cada instalacao tem o seu.
-builder.Services.AddSingleton(_ => new ResolvedorDeLead(
-    builder.Configuration["WHATSAPP_NUMERO_EMPRESA"] ?? "+55 11 3333-4444"));
+//
+// Scoped e nao Singleton (#158): o resolvedor grava Lead, e gravar exige o
+// DbContext do escopo. Como singleton ele caia no LeadsEmMemoria do construtor,
+// e todo Lead criado sumia no restart sem erro nenhum aparecer.
+builder.Services.AddScoped(sp => new ResolvedorDeLead(
+    builder.Configuration["WHATSAPP_NUMERO_EMPRESA"] ?? "+55 11 3333-4444",
+    sp.GetRequiredService<IRepositorioDeLeads>()));
 builder.Services.AddHostedService<ProcessadorDeMensagens>();
 
 var app = builder.Build();

@@ -29,12 +29,27 @@ public class Dossie
     public IReadOnlyList<Sinal> Sinais => _sinais;
 
     /// <summary>
+    /// A leitura entra decomposta em duas colunas porque o EF Core nao mapeia
+    /// objeto de valor em propriedade sem setter publico — e abrir o setter
+    /// deixaria qualquer um trocar a temperatura sem passar por <see cref="Ler"/>.
+    /// </summary>
+    public Temperatura? TemperaturaLida { get; private set; }
+
+    public Direcao? DirecaoLida { get; private set; }
+
+    /// <summary>
     /// A temperatura lida, com direcao (#13). Nula enquanto ninguem leu.
     /// </summary>
-    public Termometro? Termometro { get; private set; }
+    public Termometro? Termometro =>
+        TemperaturaLida is { } valor ? new Termometro(valor, DirecaoLida ?? Direcao.Estavel) : null;
 
-    public void Ler(Termometro termometro) =>
-        Termometro = termometro ?? throw new ArgumentNullException(nameof(termometro));
+    public void Ler(Termometro termometro)
+    {
+        ArgumentNullException.ThrowIfNull(termometro);
+
+        TemperaturaLida = termometro.Valor;
+        DirecaoLida = termometro.Para;
+    }
 
     public IReadOnlyList<Sinal> SinaisDe(TipoDeSinal tipo) =>
         _sinais.Where(s => s.Tipo == tipo).ToList();

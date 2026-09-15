@@ -1,4 +1,6 @@
+using Copiloto.Api.Ia;
 using Copiloto.Api.Persistencia;
+using Copiloto.Dominio.Dossies;
 using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Vendas;
 using Microsoft.EntityFrameworkCore;
@@ -60,6 +62,7 @@ public class ProcessadorDeMensagens : BackgroundService
         using var escopo = _escopos.CreateScope();
         var resolvedor = escopo.ServiceProvider.GetRequiredService<ResolvedorDeLead>();
         var ctx = escopo.ServiceProvider.GetRequiredService<CopilotoDbContext>();
+        var agente = escopo.ServiceProvider.GetService<AgenteDeLeitura>();
 
         var doCliente = resolvedor.TelefoneDoCliente(bruta);
         if (doCliente is null)
@@ -74,7 +77,7 @@ public class ProcessadorDeMensagens : BackgroundService
 
         try
         {
-            await Guardar(ctx, resolvedor, bruta, doCliente);
+            await Guardar(ctx, resolvedor, agente, bruta, doCliente);
         }
         catch (DbUpdateException e)
         {
@@ -88,7 +91,11 @@ public class ProcessadorDeMensagens : BackgroundService
     }
 
     private async Task Guardar(
-        CopilotoDbContext ctx, ResolvedorDeLead resolvedor, MensagemRecebida bruta, Telefone doCliente)
+        CopilotoDbContext ctx,
+        ResolvedorDeLead resolvedor,
+        AgenteDeLeitura? agente,
+        MensagemRecebida bruta,
+        Telefone doCliente)
     {
         var id = IdDaMensagem.De(bruta.ProviderMessageId);
 
@@ -120,11 +127,84 @@ public class ProcessadorDeMensagens : BackgroundService
         }
 
         conversa.Registrar(new Mensagem(id, autor, bruta.Texto, bruta.EnviadaEm, bruta.Midia));
+
+        var deal = await DealAberto(ctx, lead.Id, bruta.EnviadaEm);
         await ctx.SaveChangesAsync();
 
         _log.LogInformation(
             "Fala {Id} de {Autor} guardada na conversa {Conversa} do lead {Lead}",
             bruta.ProviderMessageId, autor, conversa.Id, lead.Id);
+
+        await Reler(ctx, agente, conversa, deal);
+    }
+
+    /// <summary>
+    /// O negocio daquele lead, aberto na primeira fala.
+    ///
+    /// No WhatsApp nao existe cadastro previo nem botao de "iniciar negociacao":
+    /// a primeira mensagem JA e a negociacao. Esperar alguem abrir o Deal na mao
+    /// deixaria o custo de IA sem dono desde a primeira chamada — e vincular
+    /// custo depois exige backfill e adivinhacao (#2).
+    ///
+    /// Um Deal por lead, por enquanto. Cliente que volta meses depois para
+    /// comprar outra coisa merece Deal novo, e isso e decisao de produto que
+    /// ainda nao foi tomada — quando for, o lugar e aqui.
+    /// </summary>
+    private static async Task<Deal> DealAberto(
+        CopilotoDbContext ctx, Guid leadId, DateTimeOffset quando)
+    {
+        // O mais recente e escolhido no CLIENTE: o SQLite da suite nao aceita
+        // DateTimeOffset em ORDER BY (TECH-005, #56). Filtrar por lead acontece
+        // no banco, entao o que vem para a memoria sao os deals de UM lead.
+        var doLead = await ctx.Deals.Where(d => d.LeadId == leadId).ToListAsync();
+
+        var existente = doLead.MaxBy(d => d.AbertoEm);
+        if (existente is not null) return existente;
+
+        var novo = new Deal(Guid.NewGuid(), leadId, quando);
+        ctx.Deals.Add(novo);
+        return novo;
+    }
+
+    /// <summary>
+    /// Refaz a leitura com a fala nova e guarda o dossie (#161).
+    ///
+    /// Falha de leitura NAO derruba a ingestao: a fala ja esta no banco, que e o
+    /// que nao pode se perder. Cascata esgotada devolve null e a tela segue
+    /// mostrando o dossie anterior — e essa e a decisao da #30, nao um descuido.
+    /// </summary>
+    private async Task Reler(
+        CopilotoDbContext ctx, AgenteDeLeitura? agente, Conversa conversa, Deal deal)
+    {
+        // Agente opcional de proposito: guardar a fala e o que nao pode falhar.
+        // Uma instalacao sem camada de IA configurada continua sendo um CRM que
+        // registra conversa — deixar a ingestao morrer por isso trocaria uma
+        // funcionalidade ausente por perda de dado.
+        if (agente is null)
+        {
+            _log.LogWarning(
+                "Sem AgenteDeLeitura registrado: a fala do deal {Deal} foi guardada sem leitura",
+                deal.Id);
+            return;
+        }
+
+        try
+        {
+            var dossie = await agente.Ler(conversa, deal.Id, "", "", CancellationToken.None);
+            if (dossie is null) return;
+
+            ctx.Dossies.Add(dossie);
+            await ctx.SaveChangesAsync();
+
+            _log.LogInformation(
+                "Dossie {Dossie} gerado para o deal {Deal}: {Sinais} sinal(is), {Lacunas} lacuna(s)",
+                dossie.Id, deal.Id, dossie.Sinais.Count, dossie.Lacunas.Count);
+        }
+        catch (Exception e)
+        {
+            _log.LogError(e,
+                "Leitura falhou no deal {Deal}, mas a fala ja esta guardada", deal.Id);
+        }
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

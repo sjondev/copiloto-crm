@@ -90,6 +90,19 @@ public class AgenteDeLeitura
 
         var dossie = new Dossie(Guid.NewGuid(), dealId, DateTimeOffset.UtcNow);
         dossie.Ler(LerTermometro(lido));
+
+        // As lacunas que o modelo apontou. Elas NAO exigem citacao, e a
+        // diferenca e o ponto: sinal afirma algo sobre a conversa e precisa da
+        // frase que o sustente; lacuna diz o que a conversa NAO tem, e nao ha
+        // frase para citar quando o assunto nunca apareceu.
+        //
+        // O agente dedicado de BANT e a #8. Aqui so se aproveita o que o A1 ja
+        // devolveu — descartar seria jogar fora a parte mais util do dossie.
+        foreach (var lacuna in Lista(lido, "lacunas"))
+        {
+            if (lacuna.ValueKind == JsonValueKind.String) dossie.RegistrarLacuna(lacuna.GetString()!);
+        }
+
         dossie.DeclararMidiaNaoInterpretada(conversa.Mensagens);
 
         var inventados = 0;

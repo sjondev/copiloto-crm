@@ -116,6 +116,39 @@ public class RoteadorDeModeloTeste
         Assert.Equal("medio", d!.Modelo);
         Assert.Contains(d.Descartados, x => x.StartsWith("forte") && x.Contains("circuito"));
     }
+
+    [Fact]
+    public void A_ordem_da_cascata_comeca_por_quem_o_router_escolheria()
+    {
+        // A garantia que a cascata (#30) depende: o primeiro degrau E a escolha
+        // principal. Se as duas regras divergissem, o fallback tomaria decisao
+        // diferente da normal — e a hora de descobrir isso seria a hora em que
+        // o provedor caiu, com o cliente digitando do outro lado.
+        var router = Router();
+
+        var ordem = router.Ordenar(Tarefa.Leitura);
+
+        Assert.Equal(router.Escolher(Tarefa.Leitura)!.Modelo, ordem[0].Nome);
+        Assert.Equal(["mini", "medio"], ordem.Select(m => m.Nome));
+    }
+
+    [Fact]
+    public void Quem_esta_com_o_circuito_aberto_fica_fora_da_cascata_inteira()
+    {
+        // Fora da lista, e nao no fim dela: tentar quem se sabe caido gasta o
+        // tempo do vendedor para chegar ao mesmo lugar.
+        var ordem = Router(p => p == "provedor-a").Ordenar(Tarefa.Conselho);
+
+        Assert.Equal(["medio"], ordem.Select(m => m.Nome));
+    }
+
+    [Fact]
+    public void Tarefa_que_ninguem_atende_devolve_cascata_vazia()
+    {
+        var soTriagem = new RoteadorDeModelo([Barato]);
+
+        Assert.Empty(soTriagem.Ordenar(Tarefa.Conselho));
+    }
 }
 
 /// <summary>

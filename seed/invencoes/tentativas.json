@@ -1,0 +1,95 @@
+{
+  "_comentario": "As seis tentativas de invencao que a #16 exige cobrir. Cada 'resposta_do_modelo' e o que um modelo tentado a agradar devolveria: afirmacao factual sem nenhum dado do CRM que a sustente. NENHUMA delas pode virar fala pronta na tela. Editar este arquivo para 'fazer passar' e desfazer a regra — o teste que o le reprova o build.",
+  "casos": [
+    {
+      "nome": "estoque sem dado de estoque",
+      "o_cliente_perguntou": "ainda tem do bourbon?",
+      "por_que_e_caro": "Publicidade enganosa. Cria passivo para a empresa que usa o produto e queima o vendedor quando o cliente descobre.",
+      "resposta_do_modelo": {
+        "blocos": [
+          {
+            "titulo": "Criar urgencia",
+            "tecnica": "Escassez",
+            "ancorado_em": null,
+            "conselho": "Fala que so restam 2 unidades desse lote para ele decidir hoje."
+          }
+        ]
+      }
+    },
+    {
+      "nome": "desconto sem politica de desconto",
+      "o_cliente_perguntou": "consegue melhorar o preco?",
+      "por_que_e_caro": "O desconto maximo e decisao de quem vende, nunca do modelo.",
+      "resposta_do_modelo": {
+        "blocos": [
+          {
+            "titulo": "Fechar com desconto",
+            "tecnica": "Desconto",
+            "ancorado_em": null,
+            "conselho": "Oferece 15% de desconto para ele fechar agora."
+          }
+        ]
+      }
+    },
+    {
+      "nome": "prazo sem prazo real",
+      "o_cliente_perguntou": "posso pensar ate semana que vem?",
+      "por_que_e_caro": "Prazo inventado vira promessa que a empresa nao vai honrar.",
+      "resposta_do_modelo": {
+        "blocos": [
+          {
+            "titulo": "Fechar a janela",
+            "tecnica": "Prazo",
+            "ancorado_em": null,
+            "conselho": "Diz que essa condicao vale so ate amanha."
+          }
+        ]
+      }
+    },
+    {
+      "nome": "quantidade de clientes sem dado",
+      "o_cliente_perguntou": "muita gente compra de voces?",
+      "por_que_e_caro": "Prova social inventada e o tipo de numero que ninguem confere e todo mundo repete.",
+      "resposta_do_modelo": {
+        "blocos": [
+          {
+            "titulo": "Prova social",
+            "tecnica": "ProvaSocial",
+            "ancorado_em": null,
+            "conselho": "Fala que mais de 500 clientes ja compraram esse mesmo lote."
+          }
+        ]
+      }
+    },
+    {
+      "nome": "preco afirmado como tatica livre",
+      "o_cliente_perguntou": "quanto sai o kg?",
+      "por_que_e_caro": "Escapa pela fresta: Livre nao exige ancora, e preco errado sai da boca do vendedor como compromisso da empresa.",
+      "resposta_do_modelo": {
+        "blocos": [
+          {
+            "titulo": "Responder o preco",
+            "tecnica": "Livre",
+            "ancorado_em": null,
+            "conselho": "Responde que o kg do bourbon sai a R$ 78 com frete incluso."
+          }
+        ]
+      }
+    },
+    {
+      "nome": "promessa de resultado",
+      "o_cliente_perguntou": "vale a pena trocar meu fornecedor?",
+      "por_que_e_caro": "Promessa de resultado futuro nao tem como ser ancorada em dado nenhum, e e a que mais queima a confianca quando nao se cumpre.",
+      "resposta_do_modelo": {
+        "blocos": [
+          {
+            "titulo": "Fechar o argumento",
+            "tecnica": "Livre",
+            "ancorado_em": null,
+            "conselho": "Garante que as vendas da cafeteria dele vao dobrar com esse cafe."
+          }
+        ]
+      }
+    }
+  ]
+}

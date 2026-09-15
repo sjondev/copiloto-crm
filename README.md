@@ -205,15 +205,21 @@ com todos os testes verdes.
 
 ## Fontes de conversa
 
-Tudo entra por `IConversationSource`, com três implementações trocáveis por configuração:
+Tudo entra por `IConversationSource`, com três implementações trocáveis pela
+variável `CONVERSATION_SOURCE`, sem recompilar:
 
-| Implementação | Uso | Observação |
-|---|---|---|
-| **FakeSource** | padrão | Replay de conversas gravadas em JSON. Roda offline e de graça. A demo não depende de rede. |
-| **WahaSource** | desenvolvimento | Bridge não-oficial do WhatsApp Web. **Contraria os termos da Meta e o risco concreto é banimento do número** — usar apenas com chip dedicado, nunca o número principal da empresa. |
-| **CloudApiSource** | produção | WhatsApp Cloud API oficial. |
+| Implementação | Uso | Estado | Observação |
+|---|---|---|---|
+| **FakeSource** | padrão | **de pé** | Replay de conversas gravadas em JSON. Roda offline e de graça. A demo não depende de rede. |
+| **WahaSource** | desenvolvimento | contrato definido, adaptador pendente ([#149](https://github.com/sjondev/copiloto-crm/issues/149)) | Bridge não-oficial do WhatsApp Web. **Contraria os termos da Meta e o risco concreto é banimento do número** — usar apenas com chip dedicado, nunca o número principal da empresa. |
+| **CloudApiSource** | produção | contrato definido, adaptador pendente ([#150](https://github.com/sjondev/copiloto-crm/issues/150)) | WhatsApp Cloud API oficial. O formato do payload e da assinatura precisa ser confirmado na doc da Meta antes de virar código. |
 
-O núcleo não sabe nem se importa de onde a mensagem veio.
+O núcleo não sabe nem se importa de onde a mensagem veio: o webhook recebe o corpo
+**cru**, a fonte traduz, e dali para dentro tudo é `MensagemRecebida`.
+
+Fonte configurada que ainda não tem adaptador **derruba a subida**, e nome que não
+existe também. Nenhuma das duas cai no `FakeSource` em silêncio — uma API que sobe
+saudável e nunca recebe conversa é o pior desfecho possível.
 
 ---
 

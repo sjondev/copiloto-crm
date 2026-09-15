@@ -19,4 +19,19 @@ public record MensagemRecebida(
     string De,
     string Para,
     string Texto,
-    DateTimeOffset EnviadaEm);
+    DateTimeOffset EnviadaEm)
+{
+    /// <summary>
+    /// O que impede a fala de entrar na fila, ou <c>null</c> se nada impede.
+    ///
+    /// A regra e do NUCLEO e nao do endpoint: vale igual para a fala que veio
+    /// do webhook da Meta, do WAHA ou do seed, e cada fonte nova herdaria a
+    /// checagem de graca — ou esqueceria dela, se ela morasse no handler.
+    /// </summary>
+    public string? PorQueNaoEntra() =>
+        string.IsNullOrWhiteSpace(ProviderMessageId)
+            ? "sem ProviderMessageId: a reentrega nao teria como ser reconhecida"
+            : string.IsNullOrWhiteSpace(De) || string.IsNullOrWhiteSpace(Para)
+                ? "sem De/Para: nao ha como dizer quem falou"
+                : null;
+}

@@ -1,3 +1,4 @@
+using System.Reflection;
 using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Dossies;
 using Copiloto.Dominio.Planos;
@@ -125,5 +126,49 @@ public class AncoragemTeste
         conversa.Registrar(new Mensagem(Guid.NewGuid(), Autor.Vendedor, "claro!", Agora.AddDays(1)));
 
         Assert.Equal(TimeSpan.FromDays(4), conversa.SilencioDoCliente(Agora.AddDays(4)));
+    }
+
+    [Fact]
+    public void Silencio_nao_depende_da_ordem_em_que_o_banco_devolveu_as_falas()
+    {
+        // O "sumiu ha N dias" saia errado e plausivel: 9 dias onde eram 8,
+        // porque a ultima fala do cliente era lida por posicao na lista e a
+        // lista vinda do banco nao tem ordem nenhuma garantida (#136).
+        var conversa = new Conversa(Guid.NewGuid(), Guid.NewGuid());
+        var perguntou = new Mensagem(Guid.NewGuid(), Autor.Cliente, "qual o valor?", Agora.AddDays(-9));
+        var respondeu = new Mensagem(Guid.NewGuid(), Autor.Vendedor, "mando a tabela", Agora.AddDays(-9).AddHours(1));
+        var sumiu = new Mensagem(Guid.NewGuid(), Autor.Cliente, "vou pensar", Agora.AddDays(-8));
+
+        MaterializarComoOBanco(conversa, respondeu, sumiu, perguntou);
+
+        Assert.Equal("vou pensar", conversa.UltimaDoCliente!.Texto);
+        Assert.Equal(TimeSpan.FromDays(8), conversa.SilencioDoCliente(Agora));
+    }
+
+    [Fact]
+    public void Falas_lidas_do_banco_saem_em_ordem_cronologica()
+    {
+        var conversa = new Conversa(Guid.NewGuid(), Guid.NewGuid());
+        var antes = new Mensagem(Guid.NewGuid(), Autor.Cliente, "qual o valor?", Agora);
+        var depois = new Mensagem(Guid.NewGuid(), Autor.Cliente, "vou pensar", Agora.AddMinutes(5));
+
+        MaterializarComoOBanco(conversa, depois, antes);
+
+        Assert.Equal("qual o valor?", conversa.Mensagens[0].Texto);
+        Assert.Equal("vou pensar", conversa.Mensagens[1].Texto);
+    }
+
+    /// <summary>
+    /// Enche a colecao como o EF Core faz ao materializar a entidade: direto no
+    /// campo, sem passar por <c>Registrar</c> — que e o unico lugar que ordena.
+    /// A ordem do provedor e reproduzida aqui de proposito, para o teste nao
+    /// depender da sorte de uma consulta real.
+    /// </summary>
+    private static void MaterializarComoOBanco(Conversa conversa, params Mensagem[] naOrdemDoBanco)
+    {
+        var campo = typeof(Conversa)
+            .GetField("_mensagens", BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        ((List<Mensagem>)campo.GetValue(conversa)!).AddRange(naOrdemDoBanco);
     }
 }

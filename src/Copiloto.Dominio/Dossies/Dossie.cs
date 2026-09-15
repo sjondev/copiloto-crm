@@ -1,3 +1,5 @@
+using Copiloto.Dominio.Conversas;
+
 namespace Copiloto.Dominio.Dossies;
 
 /// <summary>
@@ -39,6 +41,32 @@ public class Dossie
     {
         if (string.IsNullOrWhiteSpace(pergunta)) return;
         _lacunas.Add(pergunta.Trim());
+    }
+
+    /// <summary>
+    /// Declara, como lacuna, a midia que esta leitura nao interpretou (#23).
+    ///
+    /// Uma lacuna por TIPO e nao por mensagem: sete audios viram uma linha
+    /// dizendo sete, e nao sete linhas iguais empurrando as outras lacunas —
+    /// as de verdade, sobre o cliente — para fora da tela.
+    ///
+    /// Sem isto o dossie leria a conversa pela metade sem dizer que era pela
+    /// metade, e "o cliente nao explicou o orcamento" sairia igual quer ele
+    /// tenha ficado calado, quer tenha mandado dois minutos de audio.
+    /// </summary>
+    public void DeclararMidiaNaoInterpretada(IEnumerable<Mensagem> analisadas)
+    {
+        ArgumentNullException.ThrowIfNull(analisadas);
+
+        var porTipo = analisadas
+            .Where(m => m.NaoInterpretada)
+            .GroupBy(m => m.Midia!.Tipo)
+            .OrderBy(g => g.Key);
+
+        foreach (var tipo in porTipo)
+        {
+            RegistrarLacuna(Midia.Lacuna(tipo.Key, tipo.Count()));
+        }
     }
 
     /// <summary>

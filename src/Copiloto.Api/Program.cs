@@ -31,6 +31,11 @@ builder.Services.AddSingleton(_ => FonteDeConversa.Escolher(builder.Configuratio
 builder.Services.AddSingleton(_ => ProvedorDeModelo.Escolher(
     builder.Configuration, builder.Environment.ContentRootPath));
 
+// O orcamento de contexto (#31) tambem vem de fora: o teto muda quando o
+// modelo muda, e quem opera aperta o gasto sem esperar deploy.
+builder.Services.AddSingleton(_ => new MontadorDeContexto(
+    OrcamentoDeContextoConfig.Carregar(builder.Configuration)));
+
 // A cascata amarra router e provedor (#30). Ela nao levanta excecao quando se
 // esgota: erro na tela no meio de uma venda e pior que dado desatualizado.
 builder.Services.AddSingleton<CascataDeModelos>();

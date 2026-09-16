@@ -55,3 +55,37 @@ jobs:
 
       - name: Testar
         run: dotnet test --no-build --configuration Release --nologo
+
+  # O front tem esteira propria e nao depende do backend: sao dois artefatos
+  # independentes, e encadea-los faria um erro de CSS segurar o merge de uma
+  # correcao de dominio.
+  front:
+    name: Front
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar o Node
+        uses: actions/setup-node@v4
+        with:
+          # Mesma faixa do desenvolvimento (24.15.0).
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # `npm ci` e nao `npm install`: instala EXATAMENTE o lock, e falha se o
+      # package.json divergir dele. Install resolveria a divergencia em silencio
+      # e a esteira passaria a testar arvore diferente da do desenvolvedor.
+      - name: Instalar
+        run: npm ci
+
+      # `build` roda `tsc --noEmit` antes do bundle, entao erro de tipo reprova
+      # aqui e nao vira defeito de runtime na tela do vendedor.
+      - name: Compilar
+        run: npm run build

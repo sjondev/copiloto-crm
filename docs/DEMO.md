@@ -4,11 +4,13 @@ Roteiro para mostrar o Copiloto sem internet, sem chave de provedor e sem infrae
 além do que já está na máquina (#55).
 
 **Os números aqui foram medidos**, nesta ordem, em 04/09/2026: a API sobe em ~1s, o webhook
-responde **202 em 25ms**, `dotnet build` leva 2,6s e a suíte inteira — 237 testes — roda em
-**5,2s**. Os tempos de fala são estimativa; os de comando, não.
+responde **202 em 25ms** e `dotnet build` leva 2,6s. A contagem da suíte foi reconferida em
+16/09/2026: **396 testes em ~3s**. Os tempos de fala são estimativa; os de comando, não.
 
-> **O que esta demo não mostra**, e é melhor dizer antes de alguém perguntar: não há tela
-> (#50), botão "por que essa sugestão" (#51) nem painel de ROI. O pipeline de modelo também
+> **O que esta demo não mostra**, e é melhor dizer antes de alguém perguntar: não há botão
+> "por que essa sugestão" (#51) nem painel de ROI. A tela existe desde a #50 e tem os
+> estados em Storybook (#170), mas este roteiro roda no terminal de propósito — o que ele
+> defende são as garantias, e elas não aparecem na tela. O pipeline de modelo também
 > não existe ainda — o que existe são as garantias em volta dele, que é justamente o que
 > este projeto tem de diferente.
 
@@ -96,11 +98,11 @@ dotnet test --filter "FatoOuImpressaoTeste|FichaSobLgpdTeste"
 
 ```bash
 docker ps            # nenhum contêiner do projeto no ar
-dotnet test          # 237 testes, ~5s, sem rede
+dotnet test          # 396 testes, ~3s, sem rede
 ```
 
 > "Reparem que **o Postgres nunca subiu** nesta demo. O webhook respondeu, o worker
-> processou, e a suíte inteira passa — 237 testes em cinco segundos, offline. O que quebra
+> processou, e a suíte inteira passa — 396 testes em três segundos, offline. O que quebra
 > quando a infraestrutura cai está resolvido por desenho, não por sorte: fila fora faz o
 > webhook devolver 503 para o WhatsApp **reentregar**, em vez de aceitar e perder."
 
@@ -119,7 +121,7 @@ Se quiser encerrar com o argumento mais curto do projeto:
 | Porta 5199 ocupada | `--urls http://localhost:5299`. Diga que a porta é configuração, não código |
 | `dotnet run` demora | O build ficou para trás; rode `dotnet build` antes e siga pelo Ato 3, que não depende da API |
 | Um teste falha | **Mostre a falha.** Uma suíte que reprova é o argumento, não o constrangimento — leia a mensagem do teste em voz alta e diga o que ela protege |
-| Perguntarem pela tela | "Não existe ainda, é a #50. O que existe é o que decide se a tela vale alguma coisa" |
+| Perguntarem pela tela | Ela existe (#50), com os estados em Storybook (#170) — mostre depois do Ato 5, porque o que decide se a tela vale alguma coisa é o que vem antes dela |
 
 ## O que entra quando existir
 

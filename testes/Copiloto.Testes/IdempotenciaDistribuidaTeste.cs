@@ -196,6 +196,16 @@ public class IdempotenciaDistribuidaTeste : IDisposable
         await worker.StartAsync(default);
         await fila.Publicar(Fala(), default);
         await fila.Publicar(Fala(), default);
+
+        // Esperar a fila ESVAZIAR antes de desligar, em vez de contar com o
+        // StopAsync para drenar. Sob suite paralela o pool fica disputado, o
+        // laco do worker pode nem ter comecado a consumir quando o desligamento
+        // chega, e o teste reprovava com zero processadas — defeito do teste, e
+        // nao do worker: sem paralelismo os mesmos 551 passavam.
+        var limite = DateTime.UtcNow.AddSeconds(10);
+        while (fila.Aguardando > 0 && DateTime.UtcNow < limite)
+            await Task.Delay(10);
+
         await worker.StopAsync(default);
 
         Assert.Equal(1, log.Processadas);

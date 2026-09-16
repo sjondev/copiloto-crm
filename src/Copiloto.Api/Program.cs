@@ -4,6 +4,7 @@ using Copiloto.Api.Infra;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Leitura;
 using Copiloto.Api.TempoReal;
+using Copiloto.Api.Mcp;
 using Copiloto.Api.Persistencia;
 using Copiloto.Api.Vigia;
 using Copiloto.Dominio.Ia;
@@ -121,6 +122,20 @@ builder.Services.AddScoped<Saude>();
 // evento nenhum — ele so fica parado (#53).
 builder.Services.AddHostedService<JobDoVigia>();
 
+// O CRM como servidor MCP (#56), DESLIGADO por padrao.
+//
+// Escopo e autenticacao sao a #58, e ate la o servidor e superficie de leitura
+// de dado de cliente sem porteiro. Ligar por padrao seria abrir essa porta para
+// quem so fez `docker compose up` — a demo nao precisa dela de pe, e quem for
+// experimentar liga de proposito.
+var mcpLigado = builder.Configuration.GetValue("MCP_HABILITADO", false);
+if (mcpLigado)
+{
+    builder.Services.AddMcpServer()
+        .WithHttpTransport(o => o.Stateless = true)
+        .WithToolsFromAssembly();
+}
+
 var app = builder.Build();
 
 // Cada dependencia separada, e nao um "ok" agregado: health check que responde
@@ -150,6 +165,7 @@ app.MapHub<DossieHub>(DossieHub.Rota);
 // Quanto a triagem poupou (#37). O painel de ROI que vai consumir isto e a #3;
 // aqui fica so o numero, sem tela.
 app.MapGet("/triagem/economia", (ContadorDeTriagem contador) => Results.Ok(contador.Agora()));
+if (mcpLigado) app.MapMcp();
 
 // O webhook responde na hora e nao processa nada (#40). O 202 e' deliberado: 200
 // diria "processado", e o que aconteceu foi "recebido e enfileirado".

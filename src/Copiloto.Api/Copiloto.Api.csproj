@@ -23,9 +23,13 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
-  <!-- A fila duravel (#69) e borda, como o EF. -->
+  <!--
+    A fila duravel (#69) e o servidor MCP (#56) sao borda, como o EF: o dominio
+    nao sabe que nenhum dos dois existe.
+  -->
   <ItemGroup>
     <PackageReference Include="RabbitMQ.Client" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
   </ItemGroup>
 
 </Project>

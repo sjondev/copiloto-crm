@@ -72,6 +72,18 @@ builder.Services.AddSingleton(sp => new AgenteDeLeitura(
         ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "prompts"),
         "a1-leitura.md")),
     sp.GetRequiredService<ILogger<AgenteDeLeitura>>()));
+// Rate limit e cache de analise dividem o mesmo estado compartilhado (#71): com
+// contador local, o limite viraria limite vezes o numero de replicas.
+builder.Services.AddSingleton(sp => new LimitadorDeTaxa(
+    sp.GetRequiredService<IDistributedState>(),
+    int.TryParse(builder.Configuration["RATE_LIMIT_POR_USUARIO"], out var teto) ? teto : 60,
+    TimeSpan.FromMinutes(1)));
+
+builder.Services.AddSingleton(sp => new CacheDeAnalise(
+    sp.GetRequiredService<IDistributedState>(),
+    double.TryParse(builder.Configuration["CACHE_ANALISE_HORAS"], out var validade)
+        ? TimeSpan.FromHours(validade)
+        : null));
 
 // A janela de dedupe e configuravel porque o prazo real de reentrega do webhook
 // nao foi verificado na fonte (#67): conferir muda a variavel, nao o codigo.

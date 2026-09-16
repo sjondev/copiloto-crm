@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Copiloto.Api.Ia;
+using Copiloto.Api.Infra;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Leitura;
 using Copiloto.Api.TempoReal;
@@ -24,7 +25,10 @@ builder.Services.AddSingleton(_ => new RoteadorDeModelo(
 
 builder.Services.AddSignalR();
 
-builder.Services.AddSingleton<FilaDeMensagens>();
+// Estado e fila vem da variavel de ambiente, com `inmemory` como padrao (#66).
+// Sem .env, sem Redis e sem RabbitMQ, a aplicacao sobe inteira.
+builder.Services.AddSingleton(_ => Backends.Fila<MensagemRecebida>(builder.Configuration));
+builder.Services.AddSingleton(_ => Backends.Estado(builder.Configuration));
 
 // A fonte de conversa e escolha de configuracao, nao de codigo (#17): o
 // nucleo daqui para dentro so conhece MensagemRecebida.
@@ -103,7 +107,8 @@ app.MapGet("/triagem/economia", (ContadorDeTriagem contador) => Results.Ok(conta
 // atras dele esta a Cloud API, o WAHA ou o seed — e e' isso que permite trocar
 // de provedor mudando uma variavel de ambiente.
 app.MapPost("/webhook/whatsapp", async (
-    HttpRequest requisicao, IConversationSource fonte, FilaDeMensagens fila, CancellationToken ct) =>
+    HttpRequest requisicao, IConversationSource fonte, IQueue<MensagemRecebida> fila,
+    CancellationToken ct) =>
 {
     using var leitor = new StreamReader(requisicao.Body);
     var corpo = await leitor.ReadToEndAsync(ct);

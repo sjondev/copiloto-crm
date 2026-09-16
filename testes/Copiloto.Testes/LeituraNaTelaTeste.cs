@@ -1,5 +1,6 @@
 using System.Reflection;
 using Copiloto.Api.Ia;
+using Copiloto.Api.Infra;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Leitura;
 using Copiloto.Api.Persistencia;
@@ -81,7 +82,7 @@ public class LeituraNaTelaTeste : IDisposable
     /// <summary>A conversa do cafe, entrando pelo caminho de verdade.</summary>
     private async Task<Guid> IngerirAConversaDoCafe()
     {
-        var fila = new FilaDeMensagens();
+        var fila = new ChannelQueue<MensagemRecebida>();
         var processador = new ProcessadorDeMensagens(
             fila,
             _servicos.GetRequiredService<IServiceScopeFactory>(),

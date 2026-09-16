@@ -89,3 +89,9 @@ jobs:
       # aqui e nao vira defeito de runtime na tela do vendedor.
       - name: Compilar
         run: npm run build
+
+      # O Storybook compila junto (#170). Story so vale enquanto acompanha o
+      # componente: sem isto, um estado que deixou de existir continuaria
+      # listado, e alguem olharia uma tela que o produto nao tem mais.
+      - name: Compilar o Storybook
+        run: npm run build-storybook

@@ -21,15 +21,19 @@ public class AgenteDeLeitura
 {
     private readonly CascataDeModelos _cascata;
     private readonly MontadorDeContexto _contexto;
+    private readonly PrecoDoModelo _preco;
     private readonly string _identidade;
     private readonly ILogger<AgenteDeLeitura> _log;
 
     public AgenteDeLeitura(
         CascataDeModelos cascata,
         MontadorDeContexto contexto,
+        PrecoDoModelo preco,
         string identidade,
         ILogger<AgenteDeLeitura> log)
     {
+        ArgumentNullException.ThrowIfNull(preco);
+
         if (string.IsNullOrWhiteSpace(identidade))
             throw new ArgumentException(
                 "O agente sem a camada C0 nao sabe que nao pode inventar. "
@@ -37,6 +41,7 @@ public class AgenteDeLeitura
 
         _cascata = cascata;
         _contexto = contexto;
+        _preco = preco;
         _identidade = identidade;
         _log = log;
     }
@@ -45,7 +50,17 @@ public class AgenteDeLeitura
     /// Le a conversa. Devolve <c>null</c> quando a cascata se esgotou — a tela
     /// mantem o dossie anterior, e degradar em silencio e a decisao da #30.
     /// </summary>
-    public async Task<Dossie?> Ler(
+    /// <summary>
+    /// O dossie e a MEDICAO da chamada (#1).
+    ///
+    /// A medicao vem mesmo quando nao ha dossie: o provedor cobra pelo token
+    /// gasto antes de degradar, e ledger que so conta acerto esconde exatamente
+    /// o custo que ninguem esperava ter. Nula so quando o modelo nem chegou a
+    /// ser chamado — conversa vazia nao gasta nada.
+    /// </summary>
+    public record Leitura(Dossie? Dossie, MedicaoDaChamada? Medicao);
+
+    public async Task<Leitura> Ler(
         Conversa conversa, Guid dealId, string playbook, string ficha, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(conversa);
@@ -55,22 +70,26 @@ public class AgenteDeLeitura
             // Conversa vazia nao tem o que ler, e um dossie vazio na tela
             // pareceria leitura feita. O modo abordagem inicial e a #87.
             _log.LogInformation("Conversa {Conversa} sem falas: nada a ler", conversa.Id);
-            return null;
+            return new Leitura(null, null);
         }
 
         var falas = AgrupadorDeFalas.Agrupar(conversa.Mensagens);
         var contexto = _contexto.Montar(_identidade, playbook, ficha, falas);
 
-        var resultado = await _cascata.Pedir(Tarefa.Leitura, contexto.Texto, ct);
+        var (resultado, latenciaMs) = await Ledger.Cronometrar(
+            () => _cascata.Pedir(Tarefa.Leitura, contexto.Texto, ct));
+
+        var medicao = Ledger.Medir(resultado, latenciaMs, _preco);
+
         if (resultado.Degradou)
         {
             _log.LogWarning(
                 "Leitura da conversa {Conversa} degradou apos {Falhas} degrau(s)",
                 conversa.Id, resultado.Falhas.Count);
-            return null;
+            return new Leitura(null, medicao);
         }
 
-        return Montar(resultado.Resposta!.Conteudo, conversa, dealId);
+        return new Leitura(Montar(resultado.Resposta!.Conteudo, conversa, dealId), medicao);
     }
 
     private Dossie? Montar(string json, Conversa conversa, Guid dealId)

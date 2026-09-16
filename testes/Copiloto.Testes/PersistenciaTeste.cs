@@ -95,8 +95,8 @@ public class PersistenciaTeste : BancoEmMemoria
         // O vinculo da #2 atravessando o banco: sem isso, "quanto custou fechar
         // este negocio?" viraria uma consulta que alguem escreve errado depois.
         var deal = new Deal(Guid.NewGuid(), Guid.NewGuid(), Agora);
-        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), "fake", 0.15m, Agora, deal.Id));
-        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), "fake", 0.004m, Agora, deal.Id));
+        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), Tarefa.Leitura, new MedicaoDaChamada("fake", 100, 40, 12, 1, true, 0.15m), Agora, deal.Id));
+        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), Tarefa.Leitura, new MedicaoDaChamada("fake", 100, 40, 12, 1, true, 0.004m), Agora, deal.Id));
 
         using (var ctx = Novo()) { ctx.Deals.Add(deal); ctx.SaveChanges(); }
 
@@ -115,7 +115,10 @@ public class PersistenciaTeste : BancoEmMemoria
         // casas faria o acumulado divergir da soma, que e o que o teste da #2
         // confere — e a divergencia so apareceria depois de milhares delas.
         var deal = new Deal(Guid.NewGuid(), Guid.NewGuid(), Agora);
-        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), "fake", 0.000125m, Agora, deal.Id));
+        deal.RegistrarInvocacao(new AiInvocation(
+            Guid.NewGuid(), Tarefa.Leitura,
+            new MedicaoDaChamada("fake", 100, 40, 12, 1, true, 0.000125m),
+            Agora, deal.Id));
 
         using (var ctx = Novo()) { ctx.Deals.Add(deal); ctx.SaveChanges(); }
 

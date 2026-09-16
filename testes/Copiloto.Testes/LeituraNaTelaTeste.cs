@@ -57,6 +57,7 @@ public class LeituraNaTelaTeste : IDisposable
         servicos.AddSingleton(sp => new AgenteDeLeitura(
             sp.GetRequiredService<CascataDeModelos>(),
             new MontadorDeContexto(),
+            new PrecoDoModelo([new ModeloDisponivel("fake-mini", "fake", 0m, 1, [Tarefa.Leitura])]),
             File.ReadAllText(Path.Combine(raiz, "prompts", "a1-leitura.md")),
             NullLogger<AgenteDeLeitura>.Instance));
 

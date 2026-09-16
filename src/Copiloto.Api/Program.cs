@@ -94,6 +94,7 @@ builder.Services.AddSingleton(_ => new PrecoDoModelo(
 // frequente depois que o produto esta no ar.
 builder.Services.AddSingleton(sp => new AgenteDePlano(
     sp.GetRequiredService<CascataDeModelos>(),
+    sp.GetRequiredService<PrecoDoModelo>(),
     File.ReadAllText(Path.Combine(
         builder.Configuration["PROMPTS_DIR"] is { Length: > 0 } dir
             ? dir
@@ -104,6 +105,7 @@ builder.Services.AddSingleton(sp => new AgenteDePlano(
 builder.Services.AddSingleton(sp => new AgenteDeLeitura(
     sp.GetRequiredService<CascataDeModelos>(),
     sp.GetRequiredService<MontadorDeContexto>(),
+    sp.GetRequiredService<PrecoDoModelo>(),
     File.ReadAllText(Path.Combine(
         builder.Configuration["PROMPTS_DIR"]
         ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "prompts"),

@@ -112,31 +112,28 @@ public static class EndpointsDoPlano
     /// </summary>
     public static async Task<IResult> Sugerir(
         Guid id, string bloco, CopilotoDbContext ctx, AgenteDePlano agente,
-        PrecoDoModelo preco, ClaimsPrincipal? quem = null, CancellationToken ct = default)
+        ClaimsPrincipal? quem = null, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(ctx);
         ArgumentNullException.ThrowIfNull(agente);
-        ArgumentNullException.ThrowIfNull(preco);
 
         var (erro, plano, qual) = await Abrir(id, bloco, ctx, quem, ct);
         if (erro is not null) return erro;
 
         var sugestao = await agente.Sugerir(qual, await Contexto(ctx, id, ct), ct);
 
-        if (sugestao is not null)
-        {
-            plano!.Sugerir(qual, sugestao.Texto, DateTimeOffset.UtcNow);
+        if (sugestao.Texto is { } texto) plano!.Sugerir(qual, texto, DateTimeOffset.UtcNow);
 
-            // O custo entra no ledger AMARRADO ao negocio (#1, #2). Sem o Deal,
-            // a invocacao existe e nao responde a unica pergunta que o ledger
-            // existe para responder: quanto custou ESTA venda.
-            var deal = await ctx.Deals.FirstOrDefaultAsync(d => d.Id == plano.DealId, ct);
+        // O custo entra no ledger AMARRADO ao negocio, TENHA OU NAO vindo
+        // sugestao (#1, #2): o provedor cobra pelo token gasto antes de falhar.
+        // Sem o Deal, a invocacao nao responde a unica pergunta que o ledger
+        // existe para responder — quanto custou ESTA venda.
+        if (sugestao.Medicao is not null)
+        {
+            var deal = await ctx.Deals.FirstOrDefaultAsync(d => d.Id == plano!.DealId, ct);
             deal?.RegistrarInvocacao(new AiInvocation(
-                Guid.NewGuid(),
-                sugestao.Modelo,
-                preco.De(sugestao.Modelo, sugestao.TokensTotais),
-                DateTimeOffset.UtcNow,
-                plano.DealId));
+                Guid.NewGuid(), Tarefa.Plano, sugestao.Medicao,
+                DateTimeOffset.UtcNow, plano!.DealId));
         }
 
         await ctx.SaveChangesAsync(ct);

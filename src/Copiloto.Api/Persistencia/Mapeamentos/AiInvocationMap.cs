@@ -21,5 +21,26 @@ public class AiInvocationMap : IEntityTypeConfiguration<AiInvocation>
         // isso o construtor ja recusa (#2).
         builder.Property(i => i.DealId);
         builder.HasIndex(i => i.DealId).HasDatabaseName("ix_ai_invocations_deal");
+
+        // O agente como TEXTO, e nao numero: a coluna e lida em investigacao e
+        // em consulta manual, e um `1` obriga quem le a abrir o codigo — a mesma
+        // razao ja escrita na Relacao do Lead (#85).
+        builder.Property(i => i.Agente).HasConversion<string>().HasMaxLength(20).IsRequired();
+
+        builder.Property(i => i.TokensEntrada).IsRequired();
+        builder.Property(i => i.TokensSaida).IsRequired();
+        builder.Property(i => i.LatenciaMs).IsRequired();
+        builder.Property(i => i.Tentativas).IsRequired();
+        builder.Property(i => i.Sucesso).IsRequired();
+
+        // Calculada: coluna guardaria a soma de dois campos que ja estao aqui, e
+        // uma soma persistida e uma soma que pode divergir.
+        builder.Ignore(i => i.TokensTotais);
+
+        builder.Property(i => i.CorrelationId).HasMaxLength(64);
+
+        // O indice de quem PAGOU sem receber: relatorio de custo perdido comeca
+        // por aqui, e sem indice ele varre a tabela inteira (#3).
+        builder.HasIndex(i => i.Sucesso).HasDatabaseName("ix_ai_invocations_sucesso");
     }
 }

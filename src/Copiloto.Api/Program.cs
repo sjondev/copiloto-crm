@@ -232,6 +232,7 @@ app.MapGet("/saude", async (Saude saude, CancellationToken ct) =>
 
 // As rotas que a tela chama (#161).
 app.MapearLeitura();
+app.MapearFila();
 
 // O canal que empurra a leitura pronta (#50). O polling do front continua
 // existindo como degradacao: quando isto cai, a tela fica desatualizada, nao

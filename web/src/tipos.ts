@@ -49,3 +49,21 @@ export interface Fala {
   /** "Audio", "Imagem", "Documento", "Outro" — ou null quando e texto puro. */
   midia: string | null;
 }
+
+/** Uma linha da fila de atendimento (#174). */
+export interface LinhaDaFila {
+  leadId: string;
+  nome: string | null;
+  telefone: string;
+  estagio: string | null;
+  /** "morna e esfriando" — ja pronto pelo backend. */
+  temperatura: string | null;
+  objecao: string | null;
+  /** "ClienteEmSilencio", "PropostaEnvelhecendo", "NegocioParado" — ou null. */
+  alerta: string | null;
+  /** O texto do alerta, com a fala que o originou. */
+  motivo: string | null;
+  ultimaFala: string | null;
+  diasEmSilencio: number | null;
+  analiseSuspensa: boolean;
+}

@@ -1,7 +1,7 @@
 using System.Reflection;
 using Copiloto.Api.Ia;
-using Microsoft.Extensions.Configuration;
 using Copiloto.Dominio.Ia;
+using Microsoft.Extensions.Configuration;
 
 namespace Copiloto.Testes;
 

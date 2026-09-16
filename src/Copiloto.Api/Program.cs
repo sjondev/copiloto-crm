@@ -215,8 +215,6 @@ app.MapPost("/auth/login", async (
     });
 });
 
-app.MapGet("/saude", () => Results.Ok(new { ok = true }));
-
 // O webhook responde na hora e nao processa nada (#40). O 202 e' deliberado: 200
 // diria "processado", e o que aconteceu foi "recebido e enfileirado".
 //

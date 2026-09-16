@@ -1,0 +1,51 @@
+# Gatilhos de KISS e DRY (#75). Este gate NAO reprova o PR — ele avisa.
+#
+# A escolha e deliberada e esta no CLAUDE.md: gate que reprova build por um
+# metodo de 42 linhas vira gate que todo mundo aprende a contornar, e a partir
+# dai ele nao mede mais nada. O que a politica cobra ao bater um gatilho e
+# abrir issue com `kiss-dry` + `refatoracao` e SEGUIR o trabalho.
+#
+# A medicao roda no repositorio INTEIRO, e nao so no diff. Gate que so vale
+# para codigo novo deixa o passivo existente invisivel para sempre — e passivo
+# invisivel e o que faz uma politica de tamanho parecer cumprida.
+name: Gatilhos
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gatilhos-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gatilhos:
+    name: Gatilhos de KISS e DRY
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar o SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Cache de pacote NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # A ferramenta escreve tres saidas: o texto no log, a anotacao que o
+      # GitHub gruda na linha do arquivo dentro do PR e a tabela no resumo do
+      # job. A anotacao e a que muda alguma coisa — relatorio dentro do log
+      # exige que alguem abra o log.
+      - name: Medir
+        run: dotnet run --project ferramentas/Gatilhos --configuration Release -- .

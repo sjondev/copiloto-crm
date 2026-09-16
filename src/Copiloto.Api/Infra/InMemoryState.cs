@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 
 namespace Copiloto.Api.Infra;
 
@@ -13,7 +14,7 @@ namespace Copiloto.Api.Infra;
 /// </summary>
 public class InMemoryState : IDistributedState
 {
-    private record Valor(string Conteudo, DateTimeOffset ExpiraEm);
+    private sealed record Valor(string Conteudo, DateTimeOffset ExpiraEm);
 
     private readonly ConcurrentDictionary<string, Valor> _itens = new();
     private readonly Func<DateTimeOffset> _agora;
@@ -86,8 +87,8 @@ public class InMemoryState : IDistributedState
                 // vencimento antigo faria o contador expirar no meio da janela
                 // nova, e o limite deixaria de significar uma taxa.
                 ? new Valor("1", agora + janela)
-                : antigo with { Conteudo = (long.Parse(antigo.Conteudo) + 1).ToString() });
+                : antigo with { Conteudo = (long.Parse(antigo.Conteudo, CultureInfo.InvariantCulture) + 1).ToString(CultureInfo.InvariantCulture) });
 
-        return Task.FromResult(long.Parse(atualizado.Conteudo));
+        return Task.FromResult(long.Parse(atualizado.Conteudo, CultureInfo.InvariantCulture));
     }
 }

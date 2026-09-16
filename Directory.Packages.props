@@ -22,12 +22,10 @@
          mapeamento sem exigir Postgres de pe. -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.19" />
 
-    <!-- Fila duravel (#69). Conferidos em 04/09/2026 via `dotnet package search`:
-         RabbitMQ.Client 7.2.2 e Xunit.SkippableFact 1.5.85. O segundo existe
-         para o teste que exige broker PULAR em vez de passar quando nao ha um:
-         teste que passa por nao ter rodado e pior que teste vermelho. -->
+    <!-- Fila duravel (#69). Conferido em 04/09/2026 via `dotnet package search`:
+         RabbitMQ.Client 7.2.2. O SkippableFact que o teste dela usa esta
+         declarado uma vez so, junto dos pacotes de teste. -->
     <PackageVersion Include="RabbitMQ.Client" Version="7.2.2" />
-    <PackageVersion Include="Xunit.SkippableFact" Version="1.5.85" />
     <!-- Servidor MCP (#56). Conferido em 04/09/2026 via `dotnet package search`:
          ModelContextProtocol 2.2.0 e ModelContextProtocol.AspNetCore 2.2.0 sao as
          versoes correntes. A issue citava 2.1.0, levantada em outra data — o
@@ -45,6 +43,11 @@
          backup, a mesma transacao e a mesma credencial. -->
     <PackageVersion Include="Pgvector" Version="0.3.2" />
     <PackageVersion Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
+    <!-- So a ferramenta de gatilhos (#75) usa. 4.14.0 e a ultima que traz
+         alvo net9.0 de verdade; a 5.x so tem net10.0 e netstandard2.0, e cair
+         no netstandard num SDK 9 e usar o caminho de compatibilidade sem
+         precisar. Conferida em api.nuget.org em 04/09/2026. -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
 
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />

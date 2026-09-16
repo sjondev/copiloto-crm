@@ -1,6 +1,5 @@
 using Copiloto.Api.Infra;
 using Copiloto.Api.Ingestao;
-using Xunit;
 
 namespace Copiloto.Testes;
 

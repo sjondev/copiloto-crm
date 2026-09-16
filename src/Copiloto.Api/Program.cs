@@ -4,10 +4,9 @@ using Copiloto.Api.Ia;
 using Copiloto.Api.Infra;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Leitura;
-using Copiloto.Api.TempoReal;
-using Copiloto.Api.Mcp;
 using Copiloto.Api.Persistencia;
 using Copiloto.Api.Rag;
+using Copiloto.Api.TempoReal;
 using Copiloto.Api.Vigia;
 using Copiloto.Dominio.Ia;
 using Copiloto.Dominio.Rag;
@@ -215,8 +214,6 @@ app.MapPost("/auth/login", async (
         perfil = usuario.Perfil.ToString(),
     });
 });
-
-app.MapGet("/saude", () => Results.Ok(new { ok = true }));
 
 // O webhook responde na hora e nao processa nada (#40). O 202 e' deliberado: 200
 // diria "processado", e o que aconteceu foi "recebido e enfileirado".

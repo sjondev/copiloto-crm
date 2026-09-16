@@ -35,7 +35,7 @@ public class SaudeEDegradacaoTeste : IDisposable
     public void Dispose() => _conexao.Dispose();
 
     /// <summary>Um estado que cai quando mandam cair.</summary>
-    private class EstadoQueCai : IDistributedState
+    private sealed class EstadoQueCai : IDistributedState
     {
         public bool NoChao { get; set; }
         public int Chamadas { get; private set; }

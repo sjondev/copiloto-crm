@@ -1,5 +1,5 @@
-using Copiloto.Api.Ingestao;
 using Copiloto.Api.Infra;
+using Copiloto.Api.Ingestao;
 
 namespace Copiloto.Testes;
 

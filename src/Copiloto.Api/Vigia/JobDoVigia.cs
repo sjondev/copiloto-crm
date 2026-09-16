@@ -41,18 +41,18 @@ public class JobDoVigia : BackgroundService
         _log = log;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken ct)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var relogio = new PeriodicTimer(Intervalo);
 
-        while (!ct.IsCancellationRequested)
+        while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 using var escopo = _escopos.CreateScope();
                 var ctx = escopo.ServiceProvider.GetRequiredService<CopilotoDbContext>();
 
-                foreach (var alerta in await Varrer(ctx, DateTimeOffset.UtcNow, ct))
+                foreach (var alerta in await Varrer(ctx, DateTimeOffset.UtcNow, stoppingToken))
                 {
                     // O alerta vai para o log ate a tela existir (#50): o valor
                     // ja e verificavel, e prender a varredura ao SignalR faria
@@ -71,7 +71,7 @@ public class JobDoVigia : BackgroundService
 
             try
             {
-                await relogio.WaitForNextTickAsync(ct);
+                await relogio.WaitForNextTickAsync(stoppingToken);
             }
             catch (OperationCanceledException)
             {
@@ -85,7 +85,7 @@ public class JobDoVigia : BackgroundService
     /// chamar sem subir a aplicacao nem esperar uma hora.
     /// </summary>
     public async Task<IReadOnlyList<Alerta>> Varrer(
-        CopilotoDbContext ctx, DateTimeOffset agora, CancellationToken ct)
+        CopilotoDbContext ctx, DateTimeOffset agora, CancellationToken stoppingToken)
     {
         // Deals fechados nao entram na consulta, e nao so no filtro do dominio:
         // e a diferenca entre varrer o funil ativo e varrer o historico inteiro
@@ -93,7 +93,7 @@ public class JobDoVigia : BackgroundService
         var abertos = await ctx.Deals
             .AsNoTracking()
             .Where(d => d.FechadoEm == null)
-            .ToListAsync(ct);
+            .ToListAsync(stoppingToken);
 
         if (abertos.Count == 0) return [];
 
@@ -102,7 +102,7 @@ public class JobDoVigia : BackgroundService
             .AsNoTracking()
             .Include(c => c.Mensagens)
             .Where(c => leads.Contains(c.LeadId))
-            .ToListAsync(ct);
+            .ToListAsync(stoppingToken);
 
         var achados = abertos.SelectMany(deal => Dominio.Vigia.Vigia.Varrer(
             deal, conversas.FirstOrDefault(c => c.LeadId == deal.LeadId), agora));

@@ -12,19 +12,19 @@ public class FichaClienteMap : IEntityTypeConfiguration<FichaCliente>
     private static readonly JsonSerializerOptions Json =
         new() { Converters = { new AnotacaoJson() } };
 
-    public void Configure(EntityTypeBuilder<FichaCliente> e)
+    public void Configure(EntityTypeBuilder<FichaCliente> builder)
     {
-        e.ToTable("fichas_cliente");
+        builder.ToTable("fichas_cliente");
         // O id nasce no dominio, nunca no banco (#158). Ver ConversaMap.
-        e.Property(f => f.Id).ValueGeneratedNever();
-        e.HasKey(f => f.Id);
-        e.Property(f => f.LeadId).IsRequired();
-        e.Property(f => f.CriadaEm).IsRequired();
-        e.Property(f => f.AtualizadaEm).IsRequired();
+        builder.Property(f => f.Id).ValueGeneratedNever();
+        builder.HasKey(f => f.Id);
+        builder.Property(f => f.LeadId).IsRequired();
+        builder.Property(f => f.CriadaEm).IsRequired();
+        builder.Property(f => f.AtualizadaEm).IsRequired();
 
         // Uma ficha por lead: a ficha E o que se sabe daquele cliente, e duas
         // seriam duas versoes da verdade sem criterio de desempate.
-        e.HasIndex(f => f.LeadId).IsUnique().HasDatabaseName("ux_fichas_lead");
+        builder.HasIndex(f => f.LeadId).IsUnique().HasDatabaseName("ux_fichas_lead");
 
         // Os tres blocos e o historico vao como JSON, por conversor.
         //
@@ -48,21 +48,21 @@ public class FichaClienteMap : IEntityTypeConfiguration<FichaCliente>
         var (deNegocio, comparaNegocio) = ComoJson<SobreONegocio>();
         var (deHistorico, comparaHistorico) = ComoJson<List<VersaoDaFicha>>();
 
-        e.Property(f => f.Empresa).HasColumnName("empresa")
+        builder.Property(f => f.Empresa).HasColumnName("empresa")
             .HasConversion(deEmpresa, comparaEmpresa);
-        e.Property(f => f.Pessoa).HasColumnName("pessoa")
+        builder.Property(f => f.Pessoa).HasColumnName("pessoa")
             .HasConversion(dePessoa, comparaPessoa);
-        e.Property(f => f.Negocio).HasColumnName("negocio")
+        builder.Property(f => f.Negocio).HasColumnName("negocio")
             .HasConversion(deNegocio, comparaNegocio);
 
-        e.Property<List<VersaoDaFicha>>("_historico")
+        builder.Property<List<VersaoDaFicha>>("_historico")
             .HasColumnName("historico")
             .HasConversion(deHistorico, comparaHistorico);
 
-        e.Ignore(f => f.Historico);
-        e.Ignore(f => f.Preenchidos);
-        e.Ignore(f => f.Fatos);
-        e.Ignore(f => f.Impressoes);
+        builder.Ignore(f => f.Historico);
+        builder.Ignore(f => f.Preenchidos);
+        builder.Ignore(f => f.Fatos);
+        builder.Ignore(f => f.Impressoes);
     }
 
     /// <summary>

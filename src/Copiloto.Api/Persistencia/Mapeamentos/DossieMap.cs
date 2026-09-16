@@ -6,27 +6,27 @@ namespace Copiloto.Api.Persistencia.Mapeamentos;
 
 public class DossieMap : IEntityTypeConfiguration<Dossie>
 {
-    public void Configure(EntityTypeBuilder<Dossie> e)
+    public void Configure(EntityTypeBuilder<Dossie> builder)
     {
-        e.ToTable("dossies");
+        builder.ToTable("dossies");
 
         // O id nasce no dominio, nunca no banco (#158). Ver ConversaMap.
-        e.Property(d => d.Id).ValueGeneratedNever();
-        e.HasKey(d => d.Id);
+        builder.Property(d => d.Id).ValueGeneratedNever();
+        builder.HasKey(d => d.Id);
 
-        e.Property(d => d.DealId).IsRequired();
-        e.Property(d => d.GeradoEm).IsRequired();
+        builder.Property(d => d.DealId).IsRequired();
+        builder.Property(d => d.GeradoEm).IsRequired();
 
         // A leitura entra decomposta e volta montada pela propriedade.
-        e.Property(d => d.TemperaturaLida).HasConversion<string>().HasMaxLength(20);
-        e.Property(d => d.DirecaoLida).HasConversion<string>().HasMaxLength(20);
-        e.Ignore(d => d.Termometro);
+        builder.Property(d => d.TemperaturaLida).HasConversion<string>().HasMaxLength(20);
+        builder.Property(d => d.DirecaoLida).HasConversion<string>().HasMaxLength(20);
+        builder.Ignore(d => d.Termometro);
 
         // As lacunas sao texto solto e so fazem sentido dentro do dossie que as
         // gerou: viram JSON numa coluna, e nao tabela. Tabela pediria chave para
         // uma frase, e frase nao tem identidade — "nao sabemos o orcamento" de
         // ontem e de hoje sao a mesma frase e coisas diferentes.
-        e.PrimitiveCollection(d => d.Lacunas).HasField("_lacunas");
+        builder.PrimitiveCollection(d => d.Lacunas).HasField("_lacunas");
 
         // Sinal e objeto de VALOR: nao tem id proprio, nao existe fora do dossie
         // e nunca e consultado sozinho — a tela sempre pede o dossie inteiro.
@@ -37,7 +37,7 @@ public class DossieMap : IEntityTypeConfiguration<Dossie>
         // identidade para algo que nao tem, e quebra no SQLite da suite, onde
         // coluna int dentro de chave composta nao auto-incrementa. Teste que so
         // roda contra Postgres nao roda.
-        e.OwnsMany(d => d.Sinais, s =>
+        builder.OwnsMany(d => d.Sinais, s =>
         {
             s.ToJson("sinais");
 
@@ -49,7 +49,7 @@ public class DossieMap : IEntityTypeConfiguration<Dossie>
 
         // Mesma razao dos sinais: objeto de valor, sem id proprio, sempre lido
         // junto do dossie.
-        e.OwnsMany(d => d.Objecoes, o =>
+        builder.OwnsMany(d => d.Objecoes, o =>
         {
             o.ToJson("objecoes");
 
@@ -60,10 +60,10 @@ public class DossieMap : IEntityTypeConfiguration<Dossie>
             o.Property(x => x.PorComportamento).IsRequired();
         });
 
-        e.Navigation(d => d.Sinais).UsePropertyAccessMode(PropertyAccessMode.Field);
-        e.Navigation(d => d.Objecoes).UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.Navigation(d => d.Sinais).UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.Navigation(d => d.Objecoes).UsePropertyAccessMode(PropertyAccessMode.Field);
 
         // A tela sempre pede o dossie MAIS RECENTE de um negocio.
-        e.HasIndex(d => new { d.DealId, d.GeradoEm }).HasDatabaseName("ix_dossies_deal_gerado");
+        builder.HasIndex(d => new { d.DealId, d.GeradoEm }).HasDatabaseName("ix_dossies_deal_gerado");
     }
 }

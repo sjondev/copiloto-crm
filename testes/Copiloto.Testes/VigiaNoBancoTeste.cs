@@ -37,7 +37,7 @@ public class VigiaNoBancoTeste : IDisposable
     private static JobDoVigia Job() => new(new EscopoFalso(), NullLogger<JobDoVigia>.Instance);
 
     /// <summary>O job so usa a fabrica no laco do timer; a varredura recebe o contexto.</summary>
-    private class EscopoFalso : IServiceScopeFactory
+    private sealed class EscopoFalso : IServiceScopeFactory
     {
         public IServiceScope CreateScope() => throw new NotSupportedException(
             "A varredura do teste recebe o DbContext direto, sem passar pelo laco.");
@@ -116,7 +116,7 @@ public class VigiaNoBancoTeste : IDisposable
     }
 
     [Fact]
-    public async Task O_estagio_desde_sobrevive_ao_banco()
+    public Task O_estagio_desde_sobrevive_ao_banco()
     {
         // Sem esta coluna, "parado ha 12 dias" nao teria como ser dito depois
         // de um restart.
@@ -135,5 +135,6 @@ public class VigiaNoBancoTeste : IDisposable
         using var leitura = new CopilotoDbContext(_opcoes);
 
         Assert.Equal(T0.AddDays(2), leitura.Deals.Single(d => d.Id == id).EstagioDesde);
+        return Task.CompletedTask;
     }
 }

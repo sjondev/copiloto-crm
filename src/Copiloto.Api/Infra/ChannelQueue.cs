@@ -3,7 +3,7 @@ using System.Threading.Channels;
 namespace Copiloto.Api.Infra;
 
 /// <summary>
-/// A fila em processo, com `Channel<T>` — o padrao (#40, #66).
+/// A fila em processo, com <c>Channel&lt;T&gt;</c> — o padrao (#40, #66).
 ///
 /// E o padrao pelo mesmo motivo do `FakeSource`: a aplicacao sobe inteira sem
 /// broker, e a demo nao tem cinco conteineres para falhar ao vivo. RabbitMQ

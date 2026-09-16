@@ -4,8 +4,6 @@ using Copiloto.Dominio.Rag;
 using Copiloto.Dominio.Vendas;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Pgvector.EntityFrameworkCore;
-using Xunit;
 
 namespace Copiloto.Testes;
 

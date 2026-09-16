@@ -95,8 +95,8 @@ public class MidiaTeste
         ]);
 
         Assert.Equal(2, dossie.Lacunas.Count);
-        Assert.Contains(dossie.Lacunas, l => l.StartsWith("3 audios nao foram transcritos"));
-        Assert.Contains(dossie.Lacunas, l => l.StartsWith("1 imagem nao foi interpretada"));
+        Assert.Contains(dossie.Lacunas, l => l.StartsWith("3 audios nao foram transcritos", StringComparison.Ordinal));
+        Assert.Contains(dossie.Lacunas, l => l.StartsWith("1 imagem nao foi interpretada", StringComparison.Ordinal));
     }
 
     [Fact]

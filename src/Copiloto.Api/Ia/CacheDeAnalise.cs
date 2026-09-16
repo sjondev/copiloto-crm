@@ -20,7 +20,7 @@ namespace Copiloto.Api.Ia;
 /// </summary>
 public class CacheDeAnalise
 {
-    private record Guardado(Guid LeadId, string Conteudo);
+    private sealed record Guardado(Guid LeadId, string Conteudo);
 
     private static readonly JsonSerializerOptions Json = new();
 

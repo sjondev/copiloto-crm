@@ -31,20 +31,29 @@ public class InMemoryState : IDistributedState
         var agora = _agora();
         var novo = new Valor("1", agora + validade);
 
-        // AddOrUpdate resolve o vencido e o inexistente no mesmo passo atomico:
-        // testar `ContainsKey` antes abriria a janela que a operacao fecha.
-        var marcouAgora = false;
-        _itens.AddOrUpdate(chave,
-            _ => { marcouAgora = true; return novo; },
-            (_, antigo) =>
-            {
-                if (antigo.ExpiraEm > agora) return antigo;
+        // NAO usar AddOrUpdate aqui. Ele nao garante que a fabrica rode uma vez
+        // so: sob concorrencia, duas chamadas executam a fabrica de insercao, e
+        // cada uma marcaria o seu proprio "fui eu" — so uma grava, mas as duas
+        // devolvem true. Com 50 entregas simultaneas isso aparece como duas
+        // vencedoras, e em producao como a cobranca dupla que a #67 existe para
+        // impedir.
+        //
+        // TryAdd e TryUpdate sao comparacao-e-troca de verdade: exatamente um
+        // chamador ganha, e quem perde descobre pelo retorno.
+        while (true)
+        {
+            if (_itens.TryAdd(chave, novo)) return Task.FromResult(true);
 
-                marcouAgora = true;
-                return novo;
-            });
+            // Entre o TryAdd e a leitura a chave pode ter sido removida por um
+            // Ler que a viu vencida. Tentar de novo e' o certo: o estado mudou.
+            if (!_itens.TryGetValue(chave, out var existente)) continue;
 
-        return Task.FromResult(marcouAgora);
+            if (existente.ExpiraEm > agora) return Task.FromResult(false);
+
+            // Vencida: so quem trocar ESTA versao ganha. Quem perder a troca
+            // volta ao laco e vai encontrar a marcacao do vencedor.
+            if (_itens.TryUpdate(chave, novo, existente)) return Task.FromResult(true);
+        }
     }
 
     public Task<string?> Ler(string chave, CancellationToken ct)

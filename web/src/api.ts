@@ -1,4 +1,4 @@
-import type { Dossie, Fala, LinhaDaFila } from "./tipos";
+import type { Dossie, Fala, LinhaDaFila, PlanoDoLead } from "./tipos";
 import { tokenGuardado } from "./sessao";
 
 /**
@@ -57,3 +57,31 @@ export const buscarConversa = (leadId: string, sinal: AbortSignal) =>
  */
 export const buscarFila = async (sinal: AbortSignal) =>
   (await buscar<LinhaDaFila[]>("/leads", sinal)) ?? [];
+
+/**
+ * O plano de abordagem daquele lead (#12).
+ *
+ * `null` quando o lead ainda nao tem negocio aberto — a tela mostra o aviso, e
+ * nao um editor que nao tem onde salvar.
+ */
+export const buscarPlano = (leadId: string, sinal: AbortSignal) =>
+  buscar<PlanoDoLead>(`/leads/${leadId}/plano`, sinal);
+
+/** Salva um bloco e devolve o plano inteiro, ja com a versao nova. */
+export async function escreverBloco(leadId: string, bloco: string, texto: string) {
+  const token = tokenGuardado();
+
+  const resposta = await fetch(`/leads/${leadId}/plano/${bloco}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ texto }),
+  });
+
+  if (resposta.status === 401 || resposta.status === 403) throw new SessaoExpirada();
+  if (!resposta.ok) throw new FalhaDeRede(resposta.status);
+
+  return (await resposta.json()) as PlanoDoLead;
+}

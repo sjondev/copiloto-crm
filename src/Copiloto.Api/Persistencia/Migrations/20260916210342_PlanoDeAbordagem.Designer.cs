@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Copiloto.Api.Persistencia;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -13,9 +14,11 @@ using Pgvector;
 namespace Copiloto.Api.Persistencia.Migrations
 {
     [DbContext(typeof(CopilotoDbContext))]
-    partial class CopilotoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260916210342_PlanoDeAbordagem")]
+    partial class PlanoDeAbordagem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

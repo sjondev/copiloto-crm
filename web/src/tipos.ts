@@ -67,3 +67,20 @@ export interface LinhaDaFila {
   diasEmSilencio: number | null;
   analiseSuspensa: boolean;
 }
+
+/** Um bloco do plano de abordagem (#12). */
+export interface BlocoDoPlano {
+  /** "Objetivo", "PrecisoDescobrir", "ObjecaoProvavel", "ProximoPasso". */
+  bloco: string;
+  texto: string;
+  /** O que a IA propos, em campo separado. Hoje sempre null. */
+  sugestao: string | null;
+}
+
+export interface PlanoDoLead {
+  planoId: string;
+  dealId: string;
+  /** Quantas vezes o VENDEDOR mexeu. Sugestao nao conta. */
+  versao: number;
+  blocos: BlocoDoPlano[];
+}

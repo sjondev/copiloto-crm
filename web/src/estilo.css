@@ -395,3 +395,52 @@ body {
   opacity: 0.55;
   border-bottom: 1px solid var(--borda, #262626);
 }
+
+/* As abas do painel direito (#12): a leitura e o plano dividem o mesmo espaço. */
+.aba {
+  font: inherit;
+  font-size: inherit;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.45;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 1rem;
+}
+
+.aba--ativa { opacity: 1; }
+.aba:hover { opacity: 0.8; }
+
+/* O plano de abordagem. Quatro perguntas, quatro campos, nada mais. */
+.plano { padding: 0.5rem 0 1.5rem; display: flex; flex-direction: column; gap: 1.1rem; }
+
+.plano__bloco { display: flex; flex-direction: column; gap: 0.35rem; }
+
+/* A PERGUNTA é o rótulo: ela é que decide o que o vendedor escreve. */
+.plano__pergunta { font-size: 0.8rem; opacity: 0.7; }
+
+.plano__bloco textarea {
+  font: inherit;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--borda, #333);
+  background: var(--fundo-campo, #1a1a1a);
+  color: inherit;
+  resize: vertical;
+}
+
+.plano__salvando,
+.plano__versao { font-size: 0.72rem; opacity: 0.45; }
+
+.plano__versao { margin: 0; }
+
+.plano__erro { margin: 0; font-size: 0.75rem; color: var(--erro, #ff8a8a); }
+
+/* A sugestão da IA, quando existir: separada do texto dele, nunca por cima. */
+.plano__sugestao {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  border-left: 2px solid var(--realce, #2b5cff);
+  padding-left: 0.5rem;
+}

@@ -1,4 +1,5 @@
 using Copiloto.Api.Seguranca;
+using Copiloto.Dominio.Seguranca;
 
 namespace Copiloto.Testes;
 

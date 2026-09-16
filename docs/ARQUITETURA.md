@@ -185,6 +185,35 @@ do vencimento — prazo que ninguém mede só aparece depois de vencido, e o que
 disso não é um lembrete, é uma notificação da ANPD. Pedido atendido não vence depois:
 alarme falso esconde os que ainda importam.
 
+### 7.36 A Ficha do Cliente é dado de um terceiro que não sabe que existe
+
+O vendedor pesquisa o João no LinkedIn, no site da empresa, pergunta a um conhecido, e
+escreve. **O titular da ficha não está na conversa** e não sabe que há um registro sobre
+ele. Isso é legítimo em B2B — é o que todo CRM faz — mas tem consequências que precisam
+estar tratadas, e não ignoradas (#89).
+
+**Categoria sensível não entra, e o bloqueio é do domínio.** Religião, saúde, orientação
+sexual, opinião política e origem racial são exatamente o que alguém "pesca" sem procurar
+ao abrir um perfil de rede social — e anotar isso é problema de outra magnitude: exige
+consentimento específico, que ninguém pediu ao titular antes de pesquisá-lo. Por isso a
+regra do que é dado sensível **mora no domínio** e é cobrada no único método que altera a
+ficha, em vez de depender de alguém validar antes de gravar.
+
+**O bloco da empresa fica de fora do bloqueio, e a diferença é jurídica, não de rigor:**
+dado sensível é sobre *pessoa natural*. "Ramo: igreja" ou "Como chegou: indicação do
+sindicato" descreve o cliente PJ — bloquear isso impediria o vendedor de registrar quem
+ele atende, e é o tipo de bloqueio que faz a informação ir para outro campo, onde o
+controle deixa de existir sem deixar de incomodar.
+
+**O aviso na tela vale mais que a política escrita.** "O cliente pode pedir para ler o que
+está escrito aqui" faz o vendedor escrever *"prefere objetividade"* em vez de *"chato pra
+caramba"* — e o primeiro continua útil para vender, só para de ser passivo.
+
+**Retenção própria:** ficha de negócio ativo não expira (a finalidade está viva); ficha de
+lead perdido sai depois de 12 meses, que é o horizonte em que o cliente que disse "agora
+não" costuma voltar. Menos que isso jogaria fora exatamente o caso que a ficha resolve;
+mais que isso é dado de terceiro guardado sem finalidade.
+
 ### 7.4 Controles de engenharia
 
 - **PII Shield** mascarando antes da saída da rede, com teste que **falha o build** se

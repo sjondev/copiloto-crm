@@ -44,6 +44,19 @@ builder.Services.AddSingleton(_ => new MontadorDeContexto(
 // esgota: erro na tela no meio de uma venda e pior que dado desatualizado.
 builder.Services.AddSingleton<CascataDeModelos>();
 
+// O triador A0 (#37). O custo vem da tabela: e o modelo de LEITURA que ele
+// evita acordar, entao e o preco dele que entra na conta da economia.
+builder.Services.AddSingleton(sp =>
+{
+    var escolha = sp.GetRequiredService<RoteadorDeModelo>().Escolher(Tarefa.Leitura);
+    var tabela = TabelaDeModelos.Carregar(builder.Configuration);
+    var custo = tabela.FirstOrDefault(m => m.Nome == escolha?.Modelo)?.CustoPorMilTokens ?? 0m;
+
+    return new ContadorDeTriagem(custo);
+});
+
+builder.Services.AddSingleton<Triador>();
+
 // O agente A1 (#13). A camada C0 vem de ARQUIVO e nao de string em codigo:
 // ajustar o que o agente sabe e a operacao mais frequente depois que o produto
 // esta no ar, e em codigo cada ajuste vira deploy.
@@ -78,6 +91,10 @@ app.MapearLeitura();
 // existindo como degradacao: quando isto cai, a tela fica desatualizada, nao
 // vazia.
 app.MapHub<DossieHub>(DossieHub.Rota);
+
+// Quanto a triagem poupou (#37). O painel de ROI que vai consumir isto e a #3;
+// aqui fica so o numero, sem tela.
+app.MapGet("/triagem/economia", (ContadorDeTriagem contador) => Results.Ok(contador.Agora()));
 
 // O webhook responde na hora e nao processa nada (#40). O 202 e' deliberado: 200
 // diria "processado", e o que aconteceu foi "recebido e enfileirado".

@@ -8,6 +8,14 @@ namespace Copiloto.Api.Leitura;
 /// <summary>Um sinal como a tela precisa dele: com a frase, sempre.</summary>
 public record SinalNaTela(string Tipo, string Descricao, string TrechoCitado, Guid MensagemId);
 
+/// <param name="PorComportamento">
+/// Detectada pela forma da conversa, nao pelo que foi dito. A tela marca essas
+/// de outro jeito: e a leitura que o vendedor NAO faria sozinho, e e o que ele
+/// precisa aprender a confiar.
+/// </param>
+public record ObjecaoNaTela(
+    string Tipo, string Descricao, string TrechoCitado, Guid MensagemId, bool PorComportamento);
+
 /// <summary>O dossie que a tela dividida mostra (#50).</summary>
 public record DossieNaTela(
     Guid Id,
@@ -18,6 +26,7 @@ public record DossieNaTela(
     string? Resumo,
     IReadOnlyList<SinalNaTela> SinaisDeCompra,
     IReadOnlyList<SinalNaTela> SinaisDeFuga,
+    IReadOnlyList<ObjecaoNaTela> Objecoes,
     IReadOnlyList<string> Lacunas);
 
 /// <summary>Uma fala da conversa.</summary>
@@ -64,6 +73,7 @@ public static class EndpointsDeLeitura
         // entao o que vem para a memoria e o historico de UM negocio.
         var doLead = await ctx.Dossies
             .Include(d => d.Sinais)
+            .Include(d => d.Objecoes)
             .Where(d => ctx.Deals.Any(deal => deal.Id == d.DealId && deal.LeadId == id))
             .ToListAsync();
 
@@ -111,6 +121,8 @@ public static class EndpointsDeLeitura
             dossie.Termometro?.Resumo,
             Montar(dossie.SinaisDe(TipoDeSinal.Compra)),
             Montar(dossie.SinaisDe(TipoDeSinal.Fuga)),
+            dossie.Objecoes.Select(o => new ObjecaoNaTela(
+                o.Tipo.ToString(), o.Descricao, o.TrechoCitado, o.MensagemId, o.PorComportamento)).ToList(),
             dossie.Lacunas);
 
     private static IReadOnlyList<SinalNaTela> Montar(IEnumerable<Sinal> sinais) =>

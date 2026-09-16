@@ -14,6 +14,13 @@ JSON, e nada alem dele:
   "direcao": "esfriando | estavel | esquentando",
   "sinais": [
     { "tipo": "compra | fuga", "descricao": "...", "trecho_citado": "..." }
+  ],
+  "objecoes": [
+    {
+      "tipo": "preco | timing | autoridade | concorrente | necessidade | confianca",
+      "descricao": "...",
+      "trecho_citado": "..."
+    }
   ]
 }
 ```
@@ -38,6 +45,22 @@ Menciona uso concreto ("pra minha cafeteria"). Traz outra pessoa para a decisao.
 
 Adiamento ("vou pensar", "depois te falo"). Resposta monossilabica depois de
 mensagem longa. Silencio apos pergunta direta. Objecao vaga que nao vira pedido.
+
+## Objecao: classifique de ONDE vem a resistencia
+
+- **preco**: acha caro, pede desconto, compara valor
+- **timing**: nao e agora, "mes que vem", orcamento do proximo trimestre
+- **autoridade**: quem decide e outra pessoa ("vou ver com meu socio")
+- **concorrente**: ja compra de alguem, esta cotando
+- **necessidade**: nao viu por que precisa disso
+- **confianca**: duvida que voce entregue o que promete
+
+Cada uma pede coisa DIFERENTE do vendedor, e tratar uma como a outra queima a
+conversa. Quando nao der para dizer qual e, **nao escolha** — omita a objecao e
+deixe o sinal de fuga falar. Chutar "preco" porque e o mais comum mandaria o
+vendedor defender valor quando o problema era que ele nem falava com quem decide.
+
+Objecao tambem CITA a fala, pela mesma regra dos sinais.
 
 ## Temperatura tem direcao
 

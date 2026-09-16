@@ -105,7 +105,33 @@ public class AgenteDeLeitura
 
         dossie.DeclararMidiaNaoInterpretada(conversa.Mensagens);
 
+        // A leitura de comportamento roda SEMPRE, com modelo ou sem ele: e
+        // aritmetica sobre a conversa (#9). Entra antes das objecoes que o
+        // modelo apontou porque, empatando tipo e trecho, a versao que nao
+        // alucina e a que fica.
+        dossie.DetectarObjecoes(conversa, DateTimeOffset.UtcNow);
+
         var inventados = 0;
+
+        foreach (var bruto in Lista(lido, "objecoes"))
+        {
+            var trecho = Texto(bruto, "trecho_citado");
+            var descricao = Texto(bruto, "descricao");
+            if (string.IsNullOrWhiteSpace(trecho) || string.IsNullOrWhiteSpace(descricao)) continue;
+
+            // Mesma conferencia dos sinais: a frase citada tem que existir na
+            // conversa. Objecao inventada seria pior que sinal inventado — ela
+            // manda o vendedor tratar uma resistencia que o cliente nao tem.
+            var origem = QuemDisse(conversa, trecho);
+            if (origem is null)
+            {
+                inventados++;
+                continue;
+            }
+
+            dossie.Registrar(new Objecao(
+                LerTipoDeObjecao(bruto), descricao, trecho, origem.Id, PorComportamento: false));
+        }
 
         foreach (var bruto in Lista(lido, "sinais"))
         {
@@ -164,6 +190,17 @@ public class AgenteDeLeitura
     private static Termometro LerTermometro(JsonElement lido) =>
         new(Enum.TryParse<Temperatura>(Texto(lido, "temperatura"), true, out var t) ? t : Temperatura.Morna,
             Enum.TryParse<Direcao>(Texto(lido, "direcao"), true, out var d) ? d : Direcao.Estavel);
+
+    /// <summary>
+    /// Tipo que nao reconhecemos vira <see cref="TipoDeObjecao.NaoClassificada"/>.
+    ///
+    /// Chutar "preco" porque e o mais comum mandaria o vendedor defender valor
+    /// quando o problema era que ele nem falava com quem decide.
+    /// </summary>
+    private static TipoDeObjecao LerTipoDeObjecao(JsonElement bruto) =>
+        Enum.TryParse<TipoDeObjecao>(Texto(bruto, "tipo"), true, out var tipo)
+            ? tipo
+            : TipoDeObjecao.NaoClassificada;
 
     private static TipoDeSinal LerTipo(JsonElement bruto) =>
         Enum.TryParse<TipoDeSinal>(Texto(bruto, "tipo"), true, out var tipo) ? tipo : TipoDeSinal.Compra;

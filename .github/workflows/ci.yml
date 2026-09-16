@@ -1,15 +1,17 @@
 # Esteira base: compila e testa. Os gates especializados (segredo #47, KISS/DRY
 # #75) sao workflows proprios e assumem este aqui de pe.
 #
-# Sem Postgres no job de proposito: a suite roda offline por decisao
-# (MODEL_PROVIDER=fake, CONVERSATION_SOURCE=fake), e o mapeamento e conferido em
-# SQLite na memoria.
+# A suite roda offline por decisao (MODEL_PROVIDER=fake, CONVERSATION_SOURCE=fake),
+# e o mapeamento comum e conferido em SQLite na memoria.
 #
-# RabbitMQ e a excecao, e ela chegou com a #69: durabilidade nao tem como ser
-# provada contra uma fila em memoria. Sem o servico, os testes daquela fila
-# PULAM — e teste que pula em silencio na esteira e garantia que ninguem
-# confere. O servico entrou junto com o primeiro teste que precisava dele, como
-# esta regra sempre previu.
+# Dois servicos sao excecao, e os dois entraram pela mesma regra que ja estava
+# aqui: servico entra junto com o PRIMEIRO teste que precisa dele.
+#
+#   RabbitMQ (#69) — durabilidade nao tem como ser provada contra fila em memoria.
+#   Postgres com pgvector (#60) — similaridade nao tem equivalente em SQLite.
+#
+# Sem eles, aqueles testes PULAM — e teste que pula em silencio na esteira e
+# garantia que ninguem confere.
 name: CI
 
 on:
@@ -45,6 +47,19 @@ jobs:
         # conexao, e a falha aparece como teste intermitente.
         options: >-
           --health-cmd "rabbitmq-diagnostics -q ping"
+      # Postgres COM pgvector (#60). A mesma imagem do docker-compose: o teste
+      # que confere o indice de similaridade precisa da extensao, e SQLite nao
+      # substitui — fingir que substitui seria testar outra coisa.
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: copiloto
+          POSTGRES_PASSWORD: teste
+          POSTGRES_DB: copiloto
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U copiloto -d copiloto"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
@@ -78,6 +93,8 @@ jobs:
         env:
           # Com esta variavel, os testes da fila duravel RODAM em vez de pular.
           RABBITMQ_URL: amqp://guest:guest@localhost:5672
+          # Com esta variavel os testes de pgvector RODAM em vez de pular.
+          POSTGRES_URL: "Host=localhost;Port=5432;Database=copiloto;Username=copiloto;Password=teste"
         run: dotnet test --no-build --configuration Release --nologo
 
   # O front tem esteira propria e nao depende do backend: sao dois artefatos

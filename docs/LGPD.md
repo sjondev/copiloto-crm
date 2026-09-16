@@ -118,6 +118,33 @@ salvaguarda proporcionalmente mais forte.
 
 ---
 
+## 2.85 O aviso ao titular, no tamanho que ele lê
+
+Transparência é princípio expresso (art. 6) e, aqui, **condição da base legal**: o titular
+só pode se opor à análise se souber que ela existe (#80).
+
+O desafio não é jurídico, é de formato — ninguém lê termo de quatro parágrafos no WhatsApp.
+Aviso que o cliente pula cumpre a formalidade e falha na finalidade. Por isso o aviso curto
+é o principal, com teto de 220 caracteres, e o completo mora atrás de um link:
+
+> Oi! Esta conversa fica registrada na *[empresa]* e usamos IA para organizar o
+> atendimento. **Quem responde aqui é uma pessoa.** Detalhes e seus direitos: *[link]*
+
+A ordem da frase é decidida: primeiro o que acontece com a conversa, depois a
+tranquilização que só este produto pode dar, e por último o link. Começar pelo link faria o
+resto não ser lido; terminar pela pessoa deixaria o aviso soando como robô se desculpando.
+Se o nome da empresa e o link não couberem, a construção **falha** — o erro aparece para
+quem instala, e não para quem compra.
+
+Uma decisão que precisa estar dita: **o aviso não é a IA falando com o cliente.** É texto
+fixo da empresa, escrito uma vez e revisado por gente; nenhum modelo o gera nem o altera. A
+tese continua inteira.
+
+E ele é enviado **uma vez por pessoa**, não por conversa: repetir a cada retomada
+transforma transparência em ruído, que é a forma mais eficiente de não ser lido.
+
+---
+
 ## 2.9 O registro das operações
 
 Cada tratamento — ingestão, cadastro, ficha, análise, ledger, log, varredura, índice e
@@ -164,6 +191,5 @@ vocabulário jurídico. Convenção que depende de alguém lembrar tem prazo de 
 | Onde o provedor de IA processa (transferência internacional) | #79 |
 | Direitos do titular além da exclusão | #81 |
 | Dado sensível em regime próprio | #82 |
-| Aviso de transparência ao titular | #80 |
 | Resposta a incidente e log de auditoria | #84 |
 | Dado de terceiro na Ficha do Cliente | #89 |

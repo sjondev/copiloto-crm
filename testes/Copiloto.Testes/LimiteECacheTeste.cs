@@ -47,6 +47,26 @@ public class LimiteECacheTeste
         Assert.NotNull(nome);
     }
 
+    /// <summary>
+    /// O teto sob concorrencia real, que e' onde o limitador vive.
+    ///
+    /// Cem chamadas ao mesmo tempo num teto de dez: se o contador perder
+    /// incremento, passam mais que dez — e o limite deixa de ser limite sem
+    /// levantar erro nenhum. E o mesmo modo de falhar da #67: caro e calado.
+    /// </summary>
+    [Fact]
+    public async Task Cem_chamadas_ao_mesmo_tempo_respeitam_o_teto()
+    {
+        var limitador = new LimitadorDeTaxa(new InMemoryState(() => T0), 10, Minuto);
+        var usuario = Guid.NewGuid();
+
+        var tentativas = await Task.WhenAll(
+            Enumerable.Range(0, 100).Select(_ =>
+                Task.Run(() => limitador.Permite(usuario, CancellationToken.None))));
+
+        Assert.Equal(10, tentativas.Count(passou => passou));
+    }
+
     [Fact]
     public async Task Cada_usuario_tem_o_proprio_balde()
     {

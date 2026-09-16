@@ -83,13 +83,14 @@ public static class ConsultasDoCrm
 
         var silencio = ultima is null ? (int?)null : (int)(agora - ultima.EnviadaEm).TotalDays;
 
-        // `Anotado` e um dicionario chato de proposito: nesta base a ficha ainda
-        // guarda texto simples. Quando a #88 entrar, cada linha passa a dizer se
-        // e FATO ou IMPRESSAO, com a fonte — e a ferramenta ganha a distincao
-        // sem mudar de forma, porque quem chama ja recebe rotulo e valor.
+        // A #88 entrou, e cada linha agora diz se e FATO ou IMPRESSAO, com a
+        // procedencia. A ferramenta nao mudou de forma, como estava previsto
+        // aqui: `Rotulado()` devolve rotulo e valor na MESMA string, porque
+        // quem le e' um modelo — separar os dois em campos e' exatamente como a
+        // impressao do vendedor volta para ele como conclusao do sistema.
         return new FichaDoLead(
             lead.Id, lead.Nome, lead.Telefone,
-            ficha?.Preenchidos.ToDictionary(a => a.Key, a => a.Value)
+            ficha?.Preenchidos.ToDictionary(a => a.Key, a => a.Value.Rotulado())
                 ?? new Dictionary<string, string>(),
             ficha?.Lacunas() ?? [],
             deal?.Estagio.ToString(),

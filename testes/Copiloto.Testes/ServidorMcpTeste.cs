@@ -59,7 +59,7 @@ public class ServidorMcpTeste : IDisposable
         ctx.Conversas.Add(conversa);
 
         var ficha = new FichaCliente(Guid.NewGuid(), leadId, T0.AddDays(-30));
-        ficha.Atualizar(T0.AddDays(-30), empresa: new SobreAEmpresa(Ramo: "cafeteria de bairro"));
+        ficha.Atualizar(T0.AddDays(-30), empresa: new SobreAEmpresa(Ramo: Anotacao.Fato("cafeteria de bairro")));
         ctx.Fichas.Add(ficha);
 
         ctx.SaveChanges();
@@ -111,7 +111,10 @@ public class ServidorMcpTeste : IDisposable
         var ficha = await ConsultasDoCrm.ObterFicha(ctx, leadId, T0, default);
 
         Assert.NotNull(ficha);
-        Assert.Equal("cafeteria de bairro", ficha!.Anotado["Ramo"]);
+        // O rotulo vai JUNTO do valor desde a #88: a ferramenta entrega ao modelo
+        // "valor [fato]", e nao o valor pelado. Separar os dois e' como a
+        // impressao do vendedor volta para ele como conclusao do sistema.
+        Assert.Equal("cafeteria de bairro [fato]", ficha!.Anotado["Ramo"]);
         Assert.Contains("Cargo", ficha.Lacunas);
         Assert.Equal("Qualificacao", ficha.Estagio);
         Assert.Equal(20, ficha.DiasNoEstagio);

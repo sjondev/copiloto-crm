@@ -1,4 +1,8 @@
+using System.Security.Claims;
+using Copiloto.Api.Auth;
 using Copiloto.Api.Persistencia;
+using Copiloto.Dominio.Acesso;
+using Copiloto.Dominio.Vendas;
 using Microsoft.EntityFrameworkCore;
 
 namespace Copiloto.Api.Leitura;
@@ -37,11 +41,17 @@ public static class EndpointsDaFila
     }
 
     public static async Task<IResult> FilaDeAtendimento(
-        CopilotoDbContext ctx, CancellationToken ct)
+        CopilotoDbContext ctx, ClaimsPrincipal? quem, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(ctx);
 
-        return Results.Ok(await Montar(ctx, DateTimeOffset.UtcNow, ct));
+        var usuario = await UsuarioAtual.De(quem, ctx, ct);
+
+        // Token valido de usuario que nao existe mais: fila vazia, e nao a fila
+        // inteira. Errar para o lado de mostrar nada.
+        if (usuario is null) return Results.Ok(Array.Empty<LeadNaFila>());
+
+        return Results.Ok(await Montar(ctx, DateTimeOffset.UtcNow, usuario, ct));
     }
 
     /// <summary>
@@ -58,11 +68,16 @@ public static class EndpointsDaFila
     /// DealAberto. Ordenar no banco aqui quebraria a suite offline.
     /// </summary>
     public static async Task<IReadOnlyList<LeadNaFila>> Montar(
-        CopilotoDbContext ctx, DateTimeOffset agora, CancellationToken ct)
+        CopilotoDbContext ctx, DateTimeOffset agora, Usuario usuario, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(ctx);
 
-        var leads = await ctx.Leads.AsNoTracking().ToListAsync(ct);
+        // O filtro vai no BANCO (#176). Trazer tudo e descartar em memoria
+        // funcionaria e seria pior: o dado do outro vendedor teria saido do
+        // banco, passado pela rede e chegado ao processo — tres lugares a mais
+        // onde ele pode aparecer num log.
+        var leads = await EscopoDeLeitura.Visiveis(ctx.Leads.AsNoTracking(), usuario)
+            .ToListAsync(ct);
         var deals = await ctx.Deals.AsNoTracking().ToListAsync(ct);
         var dossies = await ctx.Dossies.AsNoTracking().ToListAsync(ct);
         var conversas = await ctx.Conversas.AsNoTracking()

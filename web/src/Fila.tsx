@@ -48,7 +48,17 @@ export function Fila({ aoEscolher }: { aoEscolher: (leadId: string) => void }) {
   }
 
   return (
-    <ul className="fila">
+    <>
+      {/*
+        O vendedor precisa SABER que a chefia le a conversa dele (#176).
+        Monitoramento sem aviso e o que transforma uma funcionalidade legitima
+        em passivo trabalhista — e o aviso custa uma linha.
+      */}
+      <p className="fila__aviso">
+        As conversas desta fila podem ser lidas pela gestão, e cada leitura fica registrada.
+      </p>
+
+      <ul className="fila">
       {linhas.map((linha) => (
         <li key={linha.leadId}>
           <button type="button" className="fila__linha" onClick={() => aoEscolher(linha.leadId)}>
@@ -85,7 +95,8 @@ export function Fila({ aoEscolher }: { aoEscolher: (leadId: string) => void }) {
             {linha.motivo && <span className="fila__motivo">{linha.motivo}</span>}
           </button>
         </li>
-      ))}
-    </ul>
+        ))}
+      </ul>
+    </>
   );
 }

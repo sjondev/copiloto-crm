@@ -114,7 +114,7 @@ public class LeituraNaTelaTeste : IDisposable
 
         using var ctx = Ctx();
         var resposta = Assert.IsType<Ok<DossieNaTela>>(
-            await EndpointsDeLeitura.DossieDoLead(leadId, ctx));
+            await EndpointsDeLeitura.DossieDoLead(leadId, ctx, QuemPede.Principal(QuemPede.Gestor(ctx))));
 
         var dossie = resposta.Value!;
         Assert.Equal("Morna", dossie.Temperatura);
@@ -131,7 +131,7 @@ public class LeituraNaTelaTeste : IDisposable
 
         using var ctx = Ctx();
         var dossie = Assert.IsType<Ok<DossieNaTela>>(
-            await EndpointsDeLeitura.DossieDoLead(leadId, ctx)).Value!;
+            await EndpointsDeLeitura.DossieDoLead(leadId, ctx, QuemPede.Principal(QuemPede.Gestor(ctx)))).Value!;
 
         Assert.All(dossie.SinaisDeCompra.Concat(dossie.SinaisDeFuga), s =>
         {
@@ -178,7 +178,7 @@ public class LeituraNaTelaTeste : IDisposable
 
         using var ctx = Ctx();
         var falas = Assert.IsType<Ok<FalaNaTela[]>>(
-            await EndpointsDeLeitura.ConversaDoLead(leadId, ctx)).Value!;
+            await EndpointsDeLeitura.ConversaDoLead(leadId, ctx, QuemPede.Principal(QuemPede.Gestor(ctx)))).Value!;
 
         Assert.Equal(3, falas.Length);
         Assert.Equal("qual o valor do kg?", falas[0].Texto);
@@ -192,8 +192,8 @@ public class LeituraNaTelaTeste : IDisposable
     {
         using var ctx = Ctx();
 
-        Assert.Equal(404, Status(await EndpointsDeLeitura.DossieDoLead(Guid.NewGuid(), ctx)));
-        Assert.Equal(404, Status(await EndpointsDeLeitura.ConversaDoLead(Guid.NewGuid(), ctx)));
+        Assert.Equal(404, Status(await EndpointsDeLeitura.DossieDoLead(Guid.NewGuid(), ctx, QuemPede.Principal(QuemPede.Gestor(ctx)))));
+        Assert.Equal(404, Status(await EndpointsDeLeitura.ConversaDoLead(Guid.NewGuid(), ctx, QuemPede.Principal(QuemPede.Gestor(ctx)))));
     }
 
     [Fact]
@@ -210,7 +210,7 @@ public class LeituraNaTelaTeste : IDisposable
         using var ctx = Ctx();
         var lead = ctx.Leads.Single();
 
-        Assert.Equal(404, Status(await EndpointsDeLeitura.DossieDoLead(lead.Id, ctx)));
+        Assert.Equal(404, Status(await EndpointsDeLeitura.DossieDoLead(lead.Id, ctx, QuemPede.Principal(QuemPede.Gestor(ctx)))));
     }
 
     [Fact]
@@ -228,7 +228,7 @@ public class LeituraNaTelaTeste : IDisposable
         var lead = ctx.Leads.Single();
 
         var falas = Assert.IsType<Ok<FalaNaTela[]>>(
-            await EndpointsDeLeitura.ConversaDoLead(lead.Id, ctx)).Value!;
+            await EndpointsDeLeitura.ConversaDoLead(lead.Id, ctx, QuemPede.Principal(QuemPede.Gestor(ctx)))).Value!;
 
         Assert.Empty(falas);
     }
@@ -250,7 +250,7 @@ public class LeituraNaTelaTeste : IDisposable
 
         using var ctx = Ctx();
         var dossie = Assert.IsType<Ok<DossieNaTela>>(
-            await EndpointsDeLeitura.DossieDoLead(leadId, ctx)).Value!;
+            await EndpointsDeLeitura.DossieDoLead(leadId, ctx, QuemPede.Principal(QuemPede.Gestor(ctx)))).Value!;
 
         Assert.Equal("Morna", dossie.Temperatura);
     }

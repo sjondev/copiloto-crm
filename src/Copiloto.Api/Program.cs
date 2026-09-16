@@ -26,6 +26,11 @@ builder.Services.AddSingleton<FilaDeMensagens>();
 // nucleo daqui para dentro so conhece MensagemRecebida.
 builder.Services.AddSingleton(_ => FonteDeConversa.Escolher(builder.Configuration));
 
+// O provedor de modelo segue a mesma regra (#27), e o padrao e o fake: a suite
+// e a demo rodam offline e de graca, e o primeiro clone nao gasta dinheiro.
+builder.Services.AddSingleton(_ => ProvedorDeModelo.Escolher(
+    builder.Configuration, builder.Environment.ContentRootPath));
+
 // O numero da empresa e o que decide quem falou em cada mensagem, entao ele e
 // configuracao e nao constante: cada instalacao tem o seu.
 builder.Services.AddSingleton(_ => new ResolvedorDeLead(

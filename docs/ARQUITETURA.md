@@ -226,6 +226,26 @@ Isso muda a natureza do guardrail: a ancoragem deixa de ser uma instrução no p
 existe o dado no contexto, então não há o que inventar). É a diferença entre pedir
 para o modelo se comportar e tornar o mau comportamento impossível.
 
+**O que já existe (#57).** `IFerramentasDeAncoragem` no domínio declara as cinco
+ferramentas (`consultar_estoque`, `preco_vigente`, `politica_desconto`,
+`clientes_semelhantes_que_compraram`, `prazo_entrega`), e o `MontadorAncorado`
+monta o bloco consultando antes de afirmar: nenhum método dele aceita o número
+que vai ser dito ao cliente, então não há assinatura por onde um valor inventado
+entre. Cada consulta entra na lista `Chamadas` com ferramenta, argumento, se
+achou e latência.
+
+Duas consequências que só aparecem no código: **dado que existe e não sustenta a
+fala barra a sugestão do mesmo jeito que dado ausente** — com 140kg em estoque, o
+caminho de escassez fica fechado, e é o teste que prova isso que dá sentido à
+seção inteira; e **prova social abaixo de cinco compradores não é devolvida pela
+ferramenta**, porque agregado pequeno identifica gente.
+
+A fonte hoje é `FerramentasFake`, um catálogo em processo com os produtos e os
+preços do `seed/` — a suíte e a demo rodam offline. O **transporte** MCP (servidor
+em #56, cliente com laço de tool-calling em #59) troca a implementação sem tocar
+no domínio, que só conhece o contrato. Persistir as chamadas no ledger junto das
+invocações de modelo entra com o orquestrador, em #110.
+
 ---
 
 ## 11. RAG: onde entra e — mais importante — onde não entra

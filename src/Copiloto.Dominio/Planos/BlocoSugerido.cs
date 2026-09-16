@@ -3,8 +3,11 @@ namespace Copiloto.Dominio.Planos;
 /// <summary>
 /// Tatica que precisa de dado do CRM para poder ser sugerida (#15, #16).
 /// Fora desta lista, a sugestao e livre — nao ha o que ancorar.
+///
+/// `Preco` entra em #57: preco dito errado ao cliente e o erro que a empresa
+/// tem de honrar depois, entao ele exige a mesma ancora que a escassez.
 /// </summary>
-public enum Tatica { Escassez = 0, ProvaSocial = 1, Desconto = 2, Prazo = 3, Livre = 4 }
+public enum Tatica { Escassez = 0, ProvaSocial = 1, Desconto = 2, Prazo = 3, Livre = 4, Preco = 5 }
 
 /// <summary>
 /// Um item do plano de abordagem: ou sugestao ancorada, ou pergunta ao vendedor.

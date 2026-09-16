@@ -53,6 +53,7 @@ public class IngestaoAteOBancoTeste : IDisposable
     private ProcessadorDeMensagens Processador(IQueue<MensagemRecebida> fila) =>
         new(fila,
             _servicos.GetRequiredService<IServiceScopeFactory>(),
+            new GuardaDeReentrega(new InMemoryState()),
             NullLogger<ProcessadorDeMensagens>.Instance);
 
     /// <summary>Empurra as falas pela fila e espera o worker drenar, como em producao.</summary>

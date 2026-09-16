@@ -1,5 +1,9 @@
 using Copiloto.Api.Infra;
 using Copiloto.Api.Ingestao;
+using Copiloto.Api.Persistencia;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Copiloto.Testes;
@@ -12,9 +16,42 @@ namespace Copiloto.Testes;
 /// so existe quando ha replica, e se manifesta como fatura maior — nunca como
 /// erro.
 /// </summary>
-public class IdempotenciaDistribuidaTeste
+public class IdempotenciaDistribuidaTeste : IDisposable
 {
     private const string Id = "wamid.HBgNNTUxMTk4ODg4MTExMRUCABIYFjNBMD";
+    private const string NumeroDaEmpresa = "+55 11 3333-4444";
+
+    private readonly SqliteConnection _conexao;
+    private readonly ServiceProvider _servicos;
+
+    /// <summary>
+    /// O worker persiste desde a #158, entao o teste de ponta a ponta precisa
+    /// de banco. As duas provas de cima continuam sem ele: elas exercitam a
+    /// GUARDA, que nao sabe o que e' um DbContext.
+    /// </summary>
+    public IdempotenciaDistribuidaTeste()
+    {
+        _conexao = new SqliteConnection("DataSource=:memory:");
+        _conexao.Open();
+
+        var servicos = new ServiceCollection();
+        servicos.AddDbContext<CopilotoDbContext>(o => o.UseSqlite(_conexao));
+        servicos.AddScoped<IRepositorioDeLeads, LeadsNoBanco>();
+        servicos.AddScoped(sp => new ResolvedorDeLead(
+            NumeroDaEmpresa, sp.GetRequiredService<IRepositorioDeLeads>()));
+
+        _servicos = servicos.BuildServiceProvider();
+
+        using var escopo = _servicos.CreateScope();
+        escopo.ServiceProvider.GetRequiredService<CopilotoDbContext>().Database.EnsureCreated();
+    }
+
+    public void Dispose()
+    {
+        _servicos.Dispose();
+        _conexao.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     [Fact]
     public async Task A_mesma_mensagem_entregue_as_duas_instancias_processa_uma_vez()
@@ -131,7 +168,9 @@ public class IdempotenciaDistribuidaTeste
             Func<TState, Exception?, string> formatar)
         {
             var linha = formatar(estado, erro);
-            if (linha.Contains("processada fora do webhook")) Processadas++;
+            // A linha mudou na #158, quando o worker passou a gravar a fala:
+            // antes ele so anunciava que tinha processado.
+            if (linha.Contains("guardada na conversa")) Processadas++;
             if (linha.Contains("reentrega ignorada")) Ignoradas++;
         }
     }
@@ -149,8 +188,10 @@ public class IdempotenciaDistribuidaTeste
         var log = new LogEspiao();
         var fila = new ChannelQueue<MensagemRecebida>();
         var worker = new ProcessadorDeMensagens(
-            fila, new ResolvedorDeLead("+55 11 3333-4444"),
-            new GuardaDeReentrega(new InMemoryState()), log);
+            fila,
+            _servicos.GetRequiredService<IServiceScopeFactory>(),
+            new GuardaDeReentrega(new InMemoryState()),
+            log);
 
         await worker.StartAsync(default);
         await fila.Publicar(Fala(), default);

@@ -228,7 +228,25 @@ Duas regras de la que mudam o trabalho de todo dia:
 
 ## Fora de escopo, por decisao
 
-Multi-tenant · importacao de planilha · relatorios · permissao granular ·
+Multi-tenant · importacao de planilha · importacao da agenda do celular ·
 transcricao de audio · **envio automatico de mensagem ao cliente**.
 
 O ultimo e a tese do produto, nao uma limitacao. O vendedor escreve.
+
+A agenda do celular entrou nesta lista em 16/09/2026, e o motivo nao e tecnico:
+ela tem parente do dono, medico e fornecedor — gente sem relacao com a empresa,
+sem finalidade e sem base legal. O nucleo de contatos sai de quem CONVERSOU
+(#177). Se a importacao entrar um dia, entra com base legal propria e como
+enriquecimento de quem ja e lead, nunca como carga inicial.
+
+### O que SAIU desta lista em 16/09/2026
+
+**Relatorios** e **permissao granular** eram fora de escopo e deixaram de ser. O
+produto ganhou uma central: o gestor acompanha as conversas da equipe em tempo
+real e extrai relatorio delas (#176). Sem os dois, essa central nao existe.
+
+Isto muda o peso de decisoes que ja estavam tomadas, e por isso esta escrito aqui
+e nao so na issue: a #49 (perfis), a #84 (trilha de auditoria) e a #77 (base legal
+por finalidade) deixam de ser infraestrutura de seguranca e passam a ser o que
+sustenta uma funcionalidade que a chefia usa todo dia. Acesso de gestor a conversa
+alheia e monitoramento, e monitoramento sem aviso ao vendedor vira passivo.

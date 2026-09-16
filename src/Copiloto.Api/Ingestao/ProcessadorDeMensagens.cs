@@ -1,8 +1,11 @@
 using Copiloto.Api.Ia;
+using Copiloto.Api.Leitura;
 using Copiloto.Api.Persistencia;
+using Copiloto.Api.TempoReal;
 using Copiloto.Dominio.Dossies;
 using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Vendas;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Copiloto.Api.Ingestao;
@@ -63,6 +66,7 @@ public class ProcessadorDeMensagens : BackgroundService
         var resolvedor = escopo.ServiceProvider.GetRequiredService<ResolvedorDeLead>();
         var ctx = escopo.ServiceProvider.GetRequiredService<CopilotoDbContext>();
         var agente = escopo.ServiceProvider.GetService<AgenteDeLeitura>();
+        var tela = escopo.ServiceProvider.GetService<IHubContext<DossieHub>>();
 
         var doCliente = resolvedor.TelefoneDoCliente(bruta);
         if (doCliente is null)
@@ -77,7 +81,7 @@ public class ProcessadorDeMensagens : BackgroundService
 
         try
         {
-            await Guardar(ctx, resolvedor, agente, bruta, doCliente);
+            await Guardar(ctx, resolvedor, agente, tela, bruta, doCliente);
         }
         catch (DbUpdateException e)
         {
@@ -94,6 +98,7 @@ public class ProcessadorDeMensagens : BackgroundService
         CopilotoDbContext ctx,
         ResolvedorDeLead resolvedor,
         AgenteDeLeitura? agente,
+        IHubContext<DossieHub>? tela,
         MensagemRecebida bruta,
         Telefone doCliente)
     {
@@ -135,7 +140,7 @@ public class ProcessadorDeMensagens : BackgroundService
             "Fala {Id} de {Autor} guardada na conversa {Conversa} do lead {Lead}",
             bruta.ProviderMessageId, autor, conversa.Id, lead.Id);
 
-        await Reler(ctx, agente, conversa, deal);
+        await Reler(ctx, agente, tela, conversa, deal, lead.Id);
     }
 
     /// <summary>
@@ -174,7 +179,12 @@ public class ProcessadorDeMensagens : BackgroundService
     /// mostrando o dossie anterior — e essa e a decisao da #30, nao um descuido.
     /// </summary>
     private async Task Reler(
-        CopilotoDbContext ctx, AgenteDeLeitura? agente, Conversa conversa, Deal deal)
+        CopilotoDbContext ctx,
+        AgenteDeLeitura? agente,
+        IHubContext<DossieHub>? tela,
+        Conversa conversa,
+        Deal deal,
+        Guid leadId)
     {
         // Agente opcional de proposito: guardar a fala e o que nao pode falhar.
         // Uma instalacao sem camada de IA configurada continua sendo um CRM que
@@ -188,10 +198,26 @@ public class ProcessadorDeMensagens : BackgroundService
             return;
         }
 
+        var grupo = tela?.Clients.Group(DossieHub.Grupo(leadId));
+
         try
         {
+            // O aviso sai ANTES da leitura. O intervalo entre a fala chegar e o
+            // dossie ficar pronto e visivel a olho nu, e tela parada nesse
+            // intervalo parece tela quebrada.
+            if (grupo is not null)
+                await grupo.SendAsync(DossieHub.Analisando, leadId, CancellationToken.None);
+
             var dossie = await agente.Ler(conversa, deal.Id, "", "", CancellationToken.None);
-            if (dossie is null) return;
+            if (dossie is null)
+            {
+                // Degradou (#30). O aviso de "analisando" precisa ser desfeito,
+                // senao a tela fica girando para sempre por causa de uma
+                // leitura que nunca vai chegar.
+                if (grupo is not null)
+                    await grupo.SendAsync(DossieHub.DossieAtualizado, null, CancellationToken.None);
+                return;
+            }
 
             ctx.Dossies.Add(dossie);
             await ctx.SaveChangesAsync();
@@ -199,11 +225,24 @@ public class ProcessadorDeMensagens : BackgroundService
             _log.LogInformation(
                 "Dossie {Dossie} gerado para o deal {Deal}: {Sinais} sinal(is), {Lacunas} lacuna(s)",
                 dossie.Id, deal.Id, dossie.Sinais.Count, dossie.Lacunas.Count);
+
+            if (grupo is not null)
+            {
+                await grupo.SendAsync(
+                    DossieHub.DossieAtualizado,
+                    EndpointsDeLeitura.ParaTela(dossie, leadId),
+                    CancellationToken.None);
+            }
         }
         catch (Exception e)
         {
             _log.LogError(e,
                 "Leitura falhou no deal {Deal}, mas a fala ja esta guardada", deal.Id);
+
+            // Mesma razao do caso degradado: a tela nao pode ficar presa no
+            // "analisando" por causa de um erro que ela nao tem como saber.
+            if (grupo is not null)
+                await grupo.SendAsync(DossieHub.DossieAtualizado, null, CancellationToken.None);
         }
     }
 

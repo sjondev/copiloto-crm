@@ -10,6 +10,10 @@ export default defineConfig({
     proxy: {
       "/leads": "http://localhost:5000",
       "/saude": "http://localhost:5000",
+      // `ws: true` e obrigatorio: o SignalR negocia e sobe para WebSocket, e um
+      // proxy so de HTTP deixaria a conexao cair de volta para long polling sem
+      // avisar — funcionaria, mais devagar, e ninguem descobriria por que.
+      "/tempo-real": { target: "http://localhost:5000", ws: true },
     },
   },
 });

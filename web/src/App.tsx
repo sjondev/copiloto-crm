@@ -18,7 +18,7 @@ export function App() {
     new URLSearchParams(window.location.search).get("lead") ?? ""
   );
 
-  const { conversa, dossie, carregando, erro } = usarLeitura(leadId);
+  const { conversa, dossie, carregando, analisando, canal, erro } = usarLeitura(leadId);
 
   return (
     <div className="tela">
@@ -34,6 +34,22 @@ export function App() {
             spellCheck={false}
           />
         </label>
+
+        {/*
+          O canal aparece SEMPRE, e nao so quando quebra. "verificando" nao e
+          aviso de erro: e o estado honesto de quem esta buscando de tempos em
+          tempos em vez de receber na hora — e o vendedor merece saber a
+          diferenca antes de confiar que a tela esta em dia.
+        */}
+        {leadId && (
+          <span className={`canal canal--${canal}`} title={
+            canal === "ao-vivo"
+              ? "recebendo a leitura assim que ela fica pronta"
+              : "sem tempo real: verificando a cada poucos segundos"
+          }>
+            {canal === "ao-vivo" ? "ao vivo" : "verificando"}
+          </span>
+        )}
 
         {/*
           O erro aparece como aviso e a tela CONTINUA mostrando o que ja tinha.
@@ -56,7 +72,16 @@ export function App() {
           </section>
 
           <section className="painel__lado painel__lado--dossie">
-            <h2 className="painel__titulo">O que lemos</h2>
+            <h2 className="painel__titulo">
+              O que lemos
+              {/*
+                O intervalo entre a fala chegar e o dossie ficar pronto e visivel
+                a olho nu. Tela parada nesse intervalo parece tela quebrada: o
+                vendedor recarrega, nada acontece, e ele conclui que a ferramenta
+                nao funciona.
+              */}
+              {analisando && <span className="analisando" role="status">analisando…</span>}
+            </h2>
             <PainelDoDossie dossie={dossie} />
           </section>
         </main>

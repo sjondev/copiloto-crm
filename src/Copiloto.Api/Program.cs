@@ -2,6 +2,7 @@ using System.Text.Json;
 using Copiloto.Api.Ia;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Leitura;
+using Copiloto.Api.TempoReal;
 using Copiloto.Api.Persistencia;
 using Copiloto.Dominio.Ia;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,8 @@ builder.Services.AddScoped<IRepositorioDeLeads, LeadsNoBanco>();
 // O router e a tabela dele: a tabela vem do appsettings, nunca de codigo.
 builder.Services.AddSingleton(_ => new RoteadorDeModelo(
     TabelaDeModelos.Carregar(builder.Configuration)));
+
+builder.Services.AddSignalR();
 
 builder.Services.AddSingleton<FilaDeMensagens>();
 
@@ -70,6 +73,11 @@ app.MapGet("/saude", () => Results.Ok(new { ok = true }));
 
 // As rotas que a tela chama (#161).
 app.MapearLeitura();
+
+// O canal que empurra a leitura pronta (#50). O polling do front continua
+// existindo como degradacao: quando isto cai, a tela fica desatualizada, nao
+// vazia.
+app.MapHub<DossieHub>(DossieHub.Rota);
 
 // O webhook responde na hora e nao processa nada (#40). O 202 e' deliberado: 200
 // diria "processado", e o que aconteceu foi "recebido e enfileirado".

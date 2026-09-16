@@ -92,6 +92,16 @@ public static class EndpointsDeLeitura
             : conversa.Mensagens.OrderBy(m => m.EnviadaEm).Select(Montar).ToArray());
     }
 
+    /// <summary>
+    /// O dossie no formato da tela.
+    ///
+    /// Publico porque o tempo real (#50) empurra exatamente o mesmo payload que
+    /// o GET devolve. Dois formatos para o mesmo dado dariam duas telas
+    /// possiveis para o mesmo dossie, e a diferenca so apareceria quando um dos
+    /// caminhos mudasse — provavelmente em producao.
+    /// </summary>
+    public static DossieNaTela ParaTela(Dossie dossie, Guid leadId) => Montar(dossie, leadId);
+
     private static DossieNaTela Montar(Dossie dossie, Guid leadId) =>
         new(dossie.Id,
             leadId,

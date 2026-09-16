@@ -52,7 +52,52 @@ body {
   font-size: 12px;
 }
 
-.cabecalho__erro { margin-left: auto; color: var(--erro); font-size: 13px; }
+/*
+  O canal fica sempre visivel. "verificando" e estado honesto, nao alarme: usa
+  cor neutra, porque pintar de vermelho o funcionamento normal com polling
+  ensinaria o vendedor a ignorar a cor quando ela importar.
+*/
+.canal {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--texto-fraco);
+}
+
+.canal::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--texto-fraco);
+}
+
+.canal--ao-vivo::before { background: var(--compra); }
+.canal--verificando::before { background: var(--fuga); }
+
+.cabecalho__erro { margin-left: 16px; color: var(--erro); font-size: 13px; }
+
+.analisando {
+  margin-left: 10px;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--lacuna);
+  animation: pulsar 1.4s ease-in-out infinite;
+}
+
+@keyframes pulsar {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+/* Quem prefere menos movimento nao precisa de um texto piscando na tela. */
+@media (prefers-reduced-motion: reduce) {
+  .analisando { animation: none; opacity: 1; }
+}
 
 .aviso { padding: 32px 20px; color: var(--texto-fraco); }
 

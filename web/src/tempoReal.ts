@@ -1,6 +1,7 @@
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import type { HubConnection } from "@microsoft/signalr";
 import type { Dossie } from "./tipos";
+import { tokenGuardado } from "./sessao";
 
 export const ROTA = "/tempo-real/dossie";
 
@@ -27,7 +28,10 @@ const RETOMADA_MS = 30_000;
 
 export function conectar(leadId: string, ouvintes: Ouvintes): () => void {
   const conexao: HubConnection = new HubConnectionBuilder()
-    .withUrl(ROTA)
+    // O token vai pela QUERY, e nao por header: o handshake de WebSocket nao
+    // carrega header, e o proprio SignalR o converte em `access_token`. O
+    // servidor so aceita dessa forma na rota do hub (#182).
+    .withUrl(ROTA, { accessTokenFactory: () => tokenGuardado() ?? "" })
     .withAutomaticReconnect([0, 2000, 5000, 10000, 30000, 30000, 60000])
     .configureLogging(LogLevel.Warning)
     .build();

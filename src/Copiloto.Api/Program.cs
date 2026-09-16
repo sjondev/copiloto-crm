@@ -170,12 +170,46 @@ var tokens = new Tokens(builder.Configuration["JWT_SEGREDO"] ?? "");
 builder.Services.AddSingleton(tokens);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(o => o.TokenValidationParameters = tokens.Validacao());
+    .AddJwtBearer(o =>
+    {
+        o.TokenValidationParameters = tokens.Validacao();
+
+        // O SignalR nao consegue mandar header no handshake de WebSocket: ele
+        // manda o token na QUERY, como `access_token`. Sem isto, o hub fica
+        // protegido no papel e recusa todo mundo — ou, pior, alguem "resolve"
+        // tirando a protecao dele, e sobra a porta que ninguem olha (#182).
+        o.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = contexto =>
+            {
+                var daQuery = contexto.Request.Query["access_token"];
+
+                if (!string.IsNullOrEmpty(daQuery) &&
+                    contexto.HttpContext.Request.Path.StartsWithSegments(DossieHub.Rota))
+                {
+                    contexto.Token = daQuery;
+                }
+
+                return Task.CompletedTask;
+            },
+        };
+    });
 
 builder.Services.AddAuthorization(o =>
     o.AddPolicy("gestor", p => p.RequireRole(nameof(PerfilDeAcesso.Gestor))));
 
 var app = builder.Build();
+
+// Sem isto o sistema sobe TRANCADO: a tela pede login e o banco nao tem ninguem
+// para logar. So roda com a tabela vazia (#182).
+using (var escopoDeSubida = app.Services.CreateScope())
+{
+    await PrimeiroGestor.Garantir(
+        escopoDeSubida.ServiceProvider.GetRequiredService<CopilotoDbContext>(),
+        builder.Configuration,
+        escopoDeSubida.ServiceProvider.GetRequiredService<ILogger<Program>>(),
+        CancellationToken.None);
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -202,11 +236,12 @@ app.MapearLeitura();
 // O canal que empurra a leitura pronta (#50). O polling do front continua
 // existindo como degradacao: quando isto cai, a tela fica desatualizada, nao
 // vazia.
-app.MapHub<DossieHub>(DossieHub.Rota);
+app.MapHub<DossieHub>(DossieHub.Rota).RequireAuthorization();
 
 // Quanto a triagem poupou (#37). O painel de ROI que vai consumir isto e a #3;
 // aqui fica so o numero, sem tela.
-app.MapGet("/triagem/economia", (ContadorDeTriagem contador) => Results.Ok(contador.Agora()));
+app.MapGet("/triagem/economia", (ContadorDeTriagem contador) => Results.Ok(contador.Agora()))
+    .RequireAuthorization();
 if (mcpLigado) app.MapMcp();
 
 // O login e o unico caminho que aceita senha, e ele responde a mesma coisa para

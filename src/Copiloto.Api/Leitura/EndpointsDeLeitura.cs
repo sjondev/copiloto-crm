@@ -48,8 +48,12 @@ public static class EndpointsDeLeitura
 {
     public static void MapearLeitura(this WebApplication app)
     {
-        app.MapGet("/leads/{id:guid}/dossie", DossieDoLead);
-        app.MapGet("/leads/{id:guid}/conversa", ConversaDoLead);
+        // Exigem credencial (#182). O que sai daqui nao e cadastro: e a conversa
+        // do cliente e a LEITURA que a IA fez dele. O aviso de transparencia da
+        // #80 diz ao titular que a conversa e registrada e analisada — e esse
+        // aviso era falso enquanto qualquer um lia sem token.
+        app.MapGet("/leads/{id:guid}/dossie", DossieDoLead).RequireAuthorization();
+        app.MapGet("/leads/{id:guid}/conversa", ConversaDoLead).RequireAuthorization();
     }
 
     /// <summary>

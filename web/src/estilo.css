@@ -271,3 +271,66 @@ body {
 @media (max-width: 900px) {
   .painel { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
 }
+
+/* A porta (#182). Centralizada e curta: quem chega aqui quer sair daqui. */
+.entrar {
+  max-width: 22rem;
+  margin: 12vh auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 2rem;
+}
+
+.entrar__marca {
+  margin: 0 0 0.6rem;
+  font-size: 1.3rem;
+  letter-spacing: 0.02em;
+}
+
+.entrar__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  text-transform: lowercase;
+  opacity: 0.75;
+}
+
+.entrar__campo input {
+  font: inherit;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--borda, #333);
+  background: var(--fundo-campo, #1a1a1a);
+  color: inherit;
+}
+
+.entrar button {
+  font: inherit;
+  padding: 0.55rem;
+  border-radius: 6px;
+  border: 1px solid var(--borda, #333);
+  background: var(--realce, #2b5cff);
+  color: #fff;
+  cursor: pointer;
+}
+
+.entrar button:disabled { opacity: 0.6; cursor: default; }
+
+.entrar__erro { color: var(--erro, #ff6b6b); font-size: 0.8rem; margin: 0; }
+
+/* "sair" e um link discreto: ele nao disputa atencao com a conversa. */
+.cabecalho__sair {
+  font: inherit;
+  font-size: 0.78rem;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.cabecalho__sair:hover { opacity: 1; }

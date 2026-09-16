@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Copiloto.Api.Auth;
 using Copiloto.Api.Persistencia;
 using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Dossies;
@@ -63,10 +65,14 @@ public static class EndpointsDeLeitura
     /// direto, sem subir a aplicacao e sem pacote de teste de integracao. Rota
     /// que so pode ser exercitada por HTTP acaba sendo rota sem teste.
     /// </summary>
-    public static async Task<IResult> DossieDoLead(Guid id, CopilotoDbContext ctx)
+    public static async Task<IResult> DossieDoLead(
+        Guid id, CopilotoDbContext ctx, ClaimsPrincipal? quem = null,
+        CancellationToken ct = default)
     {
-        if (!await ctx.Leads.AnyAsync(l => l.Id == id))
-            return Results.NotFound(new { erro = "lead nao encontrado" });
+        // O porteiro responde 404 tambem para lead ALHEIO (#176): dizer
+        // "proibido" confirmaria que ele existe.
+        var barrado = await Porteiro.Barrar(id, await UsuarioAtual.De(quem, ctx, ct), ctx, ct);
+        if (barrado is not null) return barrado;
 
         // O dossie de um lead e o do negocio dele, e o MAIS RECENTE: leitura
         // antiga na tela e pior que tela vazia, porque parece atual.
@@ -79,7 +85,7 @@ public static class EndpointsDeLeitura
             .Include(d => d.Sinais)
             .Include(d => d.Objecoes)
             .Where(d => ctx.Deals.Any(deal => deal.Id == d.DealId && deal.LeadId == id))
-            .ToListAsync();
+            .ToListAsync(ct);
 
         var dossie = doLead.MaxBy(d => d.GeradoEm);
 
@@ -90,14 +96,16 @@ public static class EndpointsDeLeitura
             : Results.Ok(Montar(dossie, id));
     }
 
-    public static async Task<IResult> ConversaDoLead(Guid id, CopilotoDbContext ctx)
+    public static async Task<IResult> ConversaDoLead(
+        Guid id, CopilotoDbContext ctx, ClaimsPrincipal? quem = null,
+        CancellationToken ct = default)
     {
-        if (!await ctx.Leads.AnyAsync(l => l.Id == id))
-            return Results.NotFound(new { erro = "lead nao encontrado" });
+        var barrado = await Porteiro.Barrar(id, await UsuarioAtual.De(quem, ctx, ct), ctx, ct);
+        if (barrado is not null) return barrado;
 
         var conversa = await ctx.Conversas
             .Include(c => c.Mensagens)
-            .FirstOrDefaultAsync(c => c.LeadId == id);
+            .FirstOrDefaultAsync(c => c.LeadId == id, ct);
 
         // Conversa vazia E uma resposta valida aqui, diferente do dossie: o lead
         // existe e ainda nao falou, e a tela mostra isso sem mentir.

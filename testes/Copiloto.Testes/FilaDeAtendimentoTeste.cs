@@ -63,10 +63,15 @@ public class FilaDeAtendimentoTeste : BancoEmMemoria
         return lead.Id;
     }
 
-    private IReadOnlyList<LeadNaFila> Fila()
+    /// <summary>Um gestor: enxerga tudo, entao os testes de ORDEM nao viram testes de escopo.</summary>
+    private static Usuario Gestor() => new(
+        Guid.NewGuid(), "Gestor", "gestor@copiloto.local",
+        new string('h', Usuario.TamanhoMinimoDoHash), PerfilDeAcesso.Gestor);
+
+    private IReadOnlyList<LeadNaFila> Fila(Usuario? quem = null)
     {
         using var ctx = NovoContexto();
-        return EndpointsDaFila.Montar(ctx, Agora, CancellationToken.None).Result;
+        return EndpointsDaFila.Montar(ctx, Agora, quem ?? Gestor(), CancellationToken.None).Result;
     }
 
     // --- A ordem ---

@@ -28,7 +28,7 @@ montado em camadas com orçamento de tokens:
 |---|---|---|---|
 | **C0** | Identidade do agente, o que pode afirmar, regra de ancoragem | ~200 | **nunca** |
 | **C1** | Playbook da empresa: produto, preço, política de desconto, tom | ~800 | não |
-| **C2** | Ficha do negócio: lead, valor, estágio, dias parado, proposta | ~1000 | parcial |
+| **C2** | Ficha do cliente: o que o vendedor já sabia, em fatos e impressões separados | ~1000 | parcial |
 | **C3** | A conversa: mensagens literais + resumo progressivo do que veio antes | resto | sim |
 
 **Regra de corte:** estourou o orçamento, corta C3 do mais antigo para o mais novo,
@@ -38,6 +38,32 @@ substituindo mensagens literais por resumo. C0 nunca é cortada.
 por escrito") só sobrevivem no literal. Resumir a conversa recente destrói exatamente o
 sinal que o dossiê existe para captar. Por isso o resumo progressivo age no passado
 distante, nunca nas últimas mensagens.
+
+**C2 vai dividida em duas seções, e isso não é cosmético (#88):** cada linha da ficha
+nasce marcada como **fato** ("é gerente de compras", com fonte opcional — site, LinkedIn,
+o próprio cliente disse) ou **impressão** ("parece desconfiado", datada, sem fonte, porque
+a fonte é quem anotou). Numa lista única as duas chegam ao modelo com o mesmo peso, e o
+palpite do vendedor volta para ele reembalado como conclusão do sistema — uma câmara de
+eco que confirma o viés original em vez de corrigi-lo, e que ainda cobra um modelo por
+volta.
+
+A separação é estrutural, não uma instrução de prompt: `Anotacao` não tem conversão
+implícita de `string`, então nada entra como fato por omissão, e `BlocoSugerido.AncoradoEm`
+**recusa** impressão em qualquer tática que precise de âncora. Impressão sustenta hipótese
+(tática livre) e nada além disso. A âncora que chega ao vendedor carrega a procedência
+junto — "isso saiu de uma impressão sua de 01/09" é o que lhe dá a chance de discordar.
+
+**Dois modos, e o frio é o difícil (#87).** Sem nenhuma mensagem no fio, o copiloto
+opera em *abordagem inicial*: monta ângulos a partir dos **fatos** da ficha, propõe o
+"por que agora" (só a partir de um fato que justifique o momento — ramo diz quem o
+cliente é, não o que mudou nele), sugere o canal por onde o lead chegou, e pergunta o
+horário, que nenhum campo sustenta.
+
+Ficha sem fato não produz mensagem: o copiloto pede informação, citando o campo. Aqui não
+há segunda chance — a sugestão ruim não é descartada na tela, ela vai para o cliente —, e
+saudação genérica com ficha vazia é pior que copiloto nenhum, porque dá ao vendedor a
+falsa sensação de que a mensagem foi pensada. Com um fato só, sai **um** ângulo: dois
+recortes do mesmo dado são a aparência de escolha sem a escolha.
 
 ---
 
@@ -83,6 +109,26 @@ significa analisar de novo, pagar de novo e possivelmente gerar um dossiê confl
 Cada mensagem entra com um identificador estável da origem; invocações de IA carregam
 `Idempotency-Key` derivada do estado da conversa. Reprocessar é barato e não cobra duas
 vezes.
+
+**Onde o registro mora, e por quê (#67).** Em `IDistributedState`, não num dicionário do
+processo. Com duas instâncias atrás de um balanceador, cada processo teria seu próprio
+registro: a reentrega cai na outra instância, que nunca viu aquele id, e a mensagem é
+analisada de novo e **cobrada** de novo. Esse buraco não aparece em teste de unidade nem
+em desenvolvimento — ele só existe com réplica, e se manifesta como fatura maior, nunca
+como erro. Há um teste que documenta justamente o comportamento errado (dois estados
+separados ⇒ dois processamentos), para que voltar atrás quebre a suíte.
+
+A dedupe roda **no worker, não no webhook**: marcar antes de enfileirar descartaria a
+reentrega de uma mensagem que se perdeu na fila quando o processo caiu — trocaria custo
+duplicado por fala do cliente sumida, que é o desfecho pior. A decisão é uma operação
+atômica só (`TentarMarcar`), porque entre um `ler` e um `gravar` cabe a outra instância
+lendo "não existe".
+
+A janela padrão é de 24h, espelhando a janela de atendimento (§13.2, verificada), e é
+**configurável** por `IDEMPOTENCIA_JANELA_HORAS`: o prazo real de reentrega do webhook
+não foi conferido na fonte, e fixá-lo como constante seria arquitetar em cima de memória.
+Sobreviver a restart depende do backend — com `inmemory` o registro morre junto com o
+processo; a persistência é do Redis com `appendonly`, na #70.
 
 ---
 
@@ -135,13 +181,75 @@ reter para sempre, indexar à vontade e dispensar controle de acesso. Nenhuma da
 coisas é verdade aqui — e isso vale especialmente para o índice de embeddings do RAG,
 que é uma base de dados pessoais como qualquer outra.
 
+### 7.35 Direitos do titular, além da exclusão
+
+Confirmação, acesso, correção, portabilidade, informação sobre compartilhamento e
+oposição (#81). Três decisões que o art. 18 não escreve por você:
+
+**A exportação inclui o que o sistema produziu**, não só o que entrou. O titular tem
+direito de saber que foi classificado como "sensível a preço" ou "esfriando" — é dado
+pessoal sobre ele, gerado por nós, e ele pode contestar. A ficha sai com **natureza e
+procedência**: ver "anotaram uma *impressão* de que eu pareço desconfiada" é outra coisa
+de ver uma lista de campos. E como o dossiê é recalculado, e não guardado, o arquivo
+**diz isso** — senão o titular conclui que aquilo é tudo, e contesta o dado sem poder
+contestar a conclusão.
+
+**Oposição para a análise sem apagar o histórico comercial.** O negócio continua, a
+conversa continua guardada pela mesma finalidade, o vendedor continua vendendo — o que
+para é o dossiê. Se opor-se custasse o histórico, ninguém se oporia, e a base de legítimo
+interesse ficaria frágil justamente por falta de canal real. O estado vive no banco: um
+"parem de me analisar" que vale até a próxima subida não é oposição.
+
+**O prazo mora no código.** 15 dias do art. 19 para a resposta completa, com aviso *antes*
+do vencimento — prazo que ninguém mede só aparece depois de vencido, e o que chega depois
+disso não é um lembrete, é uma notificação da ANPD. Pedido atendido não vence depois:
+alarme falso esconde os que ainda importam.
+
+### 7.36 A Ficha do Cliente é dado de um terceiro que não sabe que existe
+
+O vendedor pesquisa o João no LinkedIn, no site da empresa, pergunta a um conhecido, e
+escreve. **O titular da ficha não está na conversa** e não sabe que há um registro sobre
+ele. Isso é legítimo em B2B — é o que todo CRM faz — mas tem consequências que precisam
+estar tratadas, e não ignoradas (#89).
+
+**Categoria sensível não entra, e o bloqueio é do domínio.** Religião, saúde, orientação
+sexual, opinião política e origem racial são exatamente o que alguém "pesca" sem procurar
+ao abrir um perfil de rede social — e anotar isso é problema de outra magnitude: exige
+consentimento específico, que ninguém pediu ao titular antes de pesquisá-lo. Por isso a
+regra do que é dado sensível **mora no domínio** e é cobrada no único método que altera a
+ficha, em vez de depender de alguém validar antes de gravar.
+
+**O bloco da empresa fica de fora do bloqueio, e a diferença é jurídica, não de rigor:**
+dado sensível é sobre *pessoa natural*. "Ramo: igreja" ou "Como chegou: indicação do
+sindicato" descreve o cliente PJ — bloquear isso impediria o vendedor de registrar quem
+ele atende, e é o tipo de bloqueio que faz a informação ir para outro campo, onde o
+controle deixa de existir sem deixar de incomodar.
+
+**O aviso na tela vale mais que a política escrita.** "O cliente pode pedir para ler o que
+está escrito aqui" faz o vendedor escrever *"prefere objetividade"* em vez de *"chato pra
+caramba"* — e o primeiro continua útil para vender, só para de ser passivo.
+
+**Retenção própria:** ficha de negócio ativo não expira (a finalidade está viva); ficha de
+lead perdido sai depois de 12 meses, que é o horizonte em que o cliente que disse "agora
+não" costuma voltar. Menos que isso jogaria fora exatamente o caso que a ficha resolve;
+mais que isso é dado de terceiro guardado sem finalidade.
+
 ### 7.4 Controles de engenharia
 
 - **PII Shield** mascarando antes da saída da rede, com teste que **falha o build** se
   vazar em log ou payload.
 - **Dado sensível** (saúde, religião, origem racial) chega sozinho em conversa livre.
   Nunca entra no índice, nunca vira inferência de perfil, nunca calibra técnica de
-  persuasão.
+  persuasão — e a garantia é estrutural (#82): a `MolduraDeContexto`, único caminho da
+  fala do cliente até o modelo, troca o trecho por `[SENSIVEL:categoria]` antes de montar
+  o bloco. O que não está lá não calibra nada. O trecho sai, a **frase fica**: em "to com
+  refluxo, posso tomar café?" o pedido está na segunda metade, e descartar a fala inteira
+  perderia a venda junto com o dado. Retenção própria, de 30 dias.
+- **Frequência é sinal de processo, não de cliente.** Dado sensível em cinco *conversas*
+  distintas numa semana dispara alerta ao gestor: quase nunca é coincidência, e costuma
+  ser um formulário, um roteiro de abordagem ou uma campanha pedindo informação que a
+  empresa não precisa. Cinco menções na mesma conversa não disparam nada — é um cliente
+  falante.
 - **Retenção** configurável por finalidade; conversa antiga vira resumo ou é expurgada.
 - **Exclusão em cascata**, incluindo os embeddings — apagar o Lead sem apagar o vetor
   deixa o dado vivo depois de o titular pedir exclusão.
@@ -225,6 +333,26 @@ Isso muda a natureza do guardrail: a ancoragem deixa de ser uma instrução no p
 (que um modelo pode ignorar) e passa a ser uma **propriedade da arquitetura** (não
 existe o dado no contexto, então não há o que inventar). É a diferença entre pedir
 para o modelo se comportar e tornar o mau comportamento impossível.
+
+**O que já existe (#57).** `IFerramentasDeAncoragem` no domínio declara as cinco
+ferramentas (`consultar_estoque`, `preco_vigente`, `politica_desconto`,
+`clientes_semelhantes_que_compraram`, `prazo_entrega`), e o `MontadorAncorado`
+monta o bloco consultando antes de afirmar: nenhum método dele aceita o número
+que vai ser dito ao cliente, então não há assinatura por onde um valor inventado
+entre. Cada consulta entra na lista `Chamadas` com ferramenta, argumento, se
+achou e latência.
+
+Duas consequências que só aparecem no código: **dado que existe e não sustenta a
+fala barra a sugestão do mesmo jeito que dado ausente** — com 140kg em estoque, o
+caminho de escassez fica fechado, e é o teste que prova isso que dá sentido à
+seção inteira; e **prova social abaixo de cinco compradores não é devolvida pela
+ferramenta**, porque agregado pequeno identifica gente.
+
+A fonte hoje é `FerramentasFake`, um catálogo em processo com os produtos e os
+preços do `seed/` — a suíte e a demo rodam offline. O **transporte** MCP (servidor
+em #56, cliente com laço de tool-calling em #59) troca a implementação sem tocar
+no domínio, que só conhece o contrato. Persistir as chamadas no ledger junto das
+invocações de modelo entra com o orquestrador, em #110.
 
 ---
 
@@ -322,13 +450,51 @@ da aplicação**:
 | Mecanismo | O que quebra com duas instâncias |
 |---|---|
 | Idempotência do webhook | Cada instância tem seu próprio registro de mensagens vistas. A reentrega cai na outra instância e é processada de novo — **e cobrada de novo**. |
-| Circuit breaker | Três instâncias, três circuitos independentes. Cada uma precisa falhar N vezes por conta própria antes de proteger. O provedor caído é golpeado 3N vezes. |
-| Rate limit por usuário | O limite vira o limite × número de instâncias. |
-| Cache de análise | Taxa de acerto cai proporcionalmente às instâncias. |
+| Circuit breaker | Três instâncias, três circuitos independentes. Cada uma precisa falhar N vezes por conta própria antes de proteger. O provedor caído é golpeado 3N vezes. **Resolvido em #68.** |
+| Rate limit por usuário | O limite vira o limite × número de instâncias. **Resolvido em #71.** |
+| Cache de análise | Taxa de acerto cai proporcionalmente às instâncias. **Resolvido em #71.** |
 
 Isso não é um problema de volume — é um problema de **corretude**. Um sistema cuja
 proteção contra gasto duplicado depende de rodar em processo único tem uma restrição
 de implantação não declarada.
+
+**O circuito, um só para todas as instâncias (#68).** A instância que abre protege as
+demais na mesma hora, em vez de cada uma descobrir a queda por conta própria.
+
+O detalhe que decide a implementação está no **meio-aberto**: quando a espera passa, o
+estado não volta a "fechado" para todo mundo ao mesmo tempo — isso faria a avalanche
+acontecer por expiração de chave, no pior momento possível, que é o provedor tentando se
+recuperar. A sonda é **disputada**: quem marca primeiro faz a requisição de teste, e as
+demais seguem barradas até haver resposta. A reserva da sonda é curta de propósito, para
+que a instância que morrer no meio do teste não prenda o circuito em meio-aberto.
+
+O contador de falhas tem **janela**: sem ela, três falhas espalhadas por uma semana
+abririam o circuito de um provedor que está de pé, e o sintoma seria "às vezes o sistema
+escolhe o modelo caro". Sucesso zera a contagem pelo mesmo motivo.
+
+O `RoteadorDeModelo` continua sendo regra de domínio e recebe uma função síncrona: quem
+vai chamar o modelo carrega o retrato dos provedores fora do ar — uma leitura por provedor
+da tabela — e entrega ao router. O router decide; ele não consulta infraestrutura.
+
+**Rate limit e cache, agora no estado compartilhado (#71).** O contador do limite vive em
+`IDistributedState`, então três réplicas dividem o mesmo teto em vez de multiplicá-lo —
+limite que se multiplica sozinho não é limite, é sugestão. O contador **continua subindo
+depois do teto**, de propósito: quem insiste além do limite é exatamente quem se quer
+enxergar, e um contador que trava apaga o único sinal de que houve insistência.
+
+O cache de análise é chaveado pelo **estado da conversa** (lead + id da última mensagem +
+versão do prompt), e não pelo texto: guardar por texto faria cada mensagem nova virar uma
+entrada inteira, e guardar só por lead serviria análise velha depois de o cliente falar de
+novo — que é o erro pior, porque a resposta *parece* certa. Trocar a versão do prompt
+também muda a chave, senão a mudança que alguém acabou de fazer ficaria escondida atrás
+de respostas antigas.
+
+E a parte que quebra alto: **o dono é gravado dentro do valor e conferido na leitura**, não
+só embutido na chave. Cache distribuído mal chaveado serve o dossiê de um cliente para
+outro em silêncio — sem erro, sem log, com a tela mostrando um texto plausível sobre a
+pessoa errada. Com a conferência, uma chave colidida vira *miss*, não vazamento. O prefixo
+`analise:<leadId>:` existe para o expurgo por titular (#46) achar o que é dele sem varrer
+o Redis inteiro.
 
 ### 12.2 A fila em memória perde mensagem
 
@@ -360,6 +526,40 @@ Consequência prática, que é o ponto: **a demo continua rodando com um único
 `docker compose up`**, sem broker e sem cache, enquanto o mesmo código roda
 distribuído em produção. Uma demonstração que depende de cinco contêineres no ar tem
 cinco maneiras de falhar ao vivo.
+
+**O que já existe (#66):** as duas interfaces, `ChannelQueue` e `InMemoryState`, e a
+escolha por variável de ambiente com `inmemory` como padrão — sem `.env`, a aplicação
+sobe inteira. As implementações distribuídas ficam para #69 e #70, e até lá pedir
+`STATE_BACKEND=redis` **derruba a subida** com o número da issue no erro. É deliberado:
+cair para memória em silêncio daria uma aplicação que *parece* distribuída, roda com duas
+réplicas e perde idempotência sem nenhum sinal.
+
+A suíte é escrita contra o **contrato**, parametrizada pela implementação: `RedisState` e
+`RabbitMqQueue` entram com uma linha cada e passam a responder pelos mesmos testes. É o
+que impede a segunda implementação de nascer com garantias mais fracas que a primeira sem
+ninguém notar.
+
+### 12.35 Quando a infraestrutura cai (#72)
+
+`/saude` reporta **cada dependência separadamente** — Postgres, fila e estado
+compartilhado, com o motivo da falha junto. Health check que responde só verde ou vermelho
+manda o plantonista procurar do zero.
+
+**Estado compartilhado fora degrada; não derruba.** O vendedor não pode perder o
+atendimento inteiro por causa de um cache. Mas cair para memória em silêncio esconderia
+que idempotência, rate limit e circuito passaram a valer só naquela instância — então o
+decorator **grita enquanto estiver degradado**, e o risco aparece no `/saude` com essa
+frase. Falha silenciosa aqui reaparece semanas depois como fatura maior, sem ninguém ligar
+uma coisa à outra. A reconexão é automática, mas espaçada: tentar o primário a cada chamada
+transformaria toda operação numa espera de timeout, e o remédio ficaria mais caro que a
+doença. O que foi gravado na memória durante a queda **não é promovido** de volta — são
+chaves de validade curta, e reidratar idempotência vencida reintroduziria decisões que já
+expiraram.
+
+**Fila fora é essencial, e aqui está o ponto contraintuitivo:** com a fila fora, *recusar*
+a mensagem é melhor que aceitar. O webhook devolve 503, que provoca reentrega; aceitar com
+202 e perder é exatamente a falha silenciosa que a fila durável existe para eliminar — o
+WhatsApp reentrega o que deu erro, e não reentrega o que ele acha que entregou.
 
 ### 12.4 Redis também é backplane do SignalR
 

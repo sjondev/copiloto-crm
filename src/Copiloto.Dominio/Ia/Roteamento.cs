@@ -121,4 +121,24 @@ public class RoteadorDeModelo
 
         return new DecisaoDeRoteamento(escolhido.Nome, escolhido.Provedor, motivo, descartados);
     }
+
+    /// <summary>
+    /// Todos os candidatos, na ordem em que a cascata deve tenta-los (#30).
+    ///
+    /// Mesmos criterios do <see cref="Escolher"/>, e de proposito: o segundo
+    /// degrau precisa ser o que o router escolheria se o primeiro nao
+    /// existisse. Uma ordem propria aqui faria o fallback tomar decisao
+    /// diferente da principal — e a hora de descobrir isso seria a hora em que
+    /// o provedor caiu, com o cliente digitando do outro lado.
+    ///
+    /// Provedor com circuito aberto fica de fora da lista inteira, nao no fim:
+    /// tentar quem se sabe caido gasta o tempo do vendedor para chegar ao mesmo
+    /// lugar.
+    /// </summary>
+    public IReadOnlyList<ModeloDisponivel> Ordenar(Tarefa tarefa) =>
+        _tabela
+            .Where(m => m.Atende.Contains(tarefa) && !_circuitoAberto(m.Provedor))
+            .OrderBy(m => m.CustoPorMilTokens)
+            .ThenBy(m => m.LatenciaTipicaMs)
+            .ToList();
 }

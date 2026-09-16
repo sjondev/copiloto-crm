@@ -15,7 +15,8 @@ namespace Copiloto.Dominio.Dossies;
 /// </summary>
 public class Sinal
 {
-    public Sinal(string descricao, Guid mensagemId, string trechoCitado)
+    public Sinal(string descricao, Guid mensagemId, string trechoCitado,
+        TipoDeSinal tipo = TipoDeSinal.Compra)
     {
         if (string.IsNullOrWhiteSpace(descricao))
             throw new ArgumentException("Sinal sem descricao.", nameof(descricao));
@@ -33,9 +34,13 @@ public class Sinal
         Descricao = descricao.Trim();
         MensagemId = mensagemId;
         TrechoCitado = trechoCitado.Trim();
+        Tipo = tipo;
     }
 
     public string Descricao { get; }
     public Guid MensagemId { get; }
     public string TrechoCitado { get; }
+
+    /// <summary>O cliente se aproximando da compra, ou se afastando dela.</summary>
+    public TipoDeSinal Tipo { get; }
 }

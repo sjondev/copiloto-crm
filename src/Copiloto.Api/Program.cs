@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Copiloto.Api.Ia;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Persistencia;
@@ -21,6 +22,10 @@ builder.Services.AddSingleton(_ => new RoteadorDeModelo(
 
 builder.Services.AddSingleton<FilaDeMensagens>();
 
+// A fonte de conversa e escolha de configuracao, nao de codigo (#17): o
+// nucleo daqui para dentro so conhece MensagemRecebida.
+builder.Services.AddSingleton(_ => FonteDeConversa.Escolher(builder.Configuration));
+
 // O numero da empresa e o que decide quem falou em cada mensagem, entao ele e
 // configuracao e nao constante: cada instalacao tem o seu.
 builder.Services.AddSingleton(_ => new ResolvedorDeLead(
@@ -33,21 +38,40 @@ app.MapGet("/saude", () => Results.Ok(new { ok = true }));
 
 // O webhook responde na hora e nao processa nada (#40). O 202 e' deliberado: 200
 // diria "processado", e o que aconteceu foi "recebido e enfileirado".
+//
+// O corpo chega CRU e quem o entende e a fonte (#17). O handler nao sabe se
+// atras dele esta a Cloud API, o WAHA ou o seed — e e' isso que permite trocar
+// de provedor mudando uma variavel de ambiente.
 app.MapPost("/webhook/whatsapp", async (
-    MensagemRecebida mensagem, FilaDeMensagens fila, CancellationToken ct) =>
+    HttpRequest requisicao, IConversationSource fonte, FilaDeMensagens fila, CancellationToken ct) =>
 {
-    if (string.IsNullOrWhiteSpace(mensagem.ProviderMessageId))
-        return Results.BadRequest(new { erro = "sem ProviderMessageId: a reentrega nao teria como ser reconhecida" });
-    if (string.IsNullOrWhiteSpace(mensagem.De) || string.IsNullOrWhiteSpace(mensagem.Para))
-        return Results.BadRequest(new { erro = "sem De/Para: nao ha como dizer quem falou" });
+    using var leitor = new StreamReader(requisicao.Body);
+    var corpo = await leitor.ReadToEndAsync(ct);
 
-    var enfileirou = await fila.Publicar(mensagem, ct);
+    IReadOnlyList<MensagemRecebida> falas;
+    try
+    {
+        falas = fonte.Traduzir(corpo);
+    }
+    catch (JsonException e)
+    {
+        return Results.BadRequest(new { erro = $"a fonte '{fonte.Nome}' nao entendeu o payload: {e.Message}" });
+    }
 
-    // 503 e nao 500: o provedor deve REENTREGAR. Dizer 200 com a fila cheia
-    // perderia a fala do cliente em silencio, que e' o pior desfecho possivel.
-    return enfileirou
-        ? Results.Accepted()
-        : Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    if (falas.FirstOrDefault(f => f.PorQueNaoEntra() is not null) is { } incompleta)
+        return Results.BadRequest(new { erro = incompleta.PorQueNaoEntra() });
+
+    // Lote vazio responde 202 e nao 400: confirmacao de leitura e mudanca de
+    // status sao a maior parte do trafego real, e nao ha nada de errado nelas.
+    foreach (var fala in falas)
+    {
+        // 503 e nao 500: o provedor deve REENTREGAR. Dizer 200 com a fila cheia
+        // perderia a fala do cliente em silencio, que e' o pior desfecho possivel.
+        if (!await fila.Publicar(fala, ct))
+            return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    }
+
+    return Results.Accepted();
 });
 
 app.Run();

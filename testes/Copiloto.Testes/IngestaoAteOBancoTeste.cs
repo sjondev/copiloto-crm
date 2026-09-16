@@ -1,3 +1,4 @@
+using Copiloto.Api.Infra;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Persistencia;
 using Copiloto.Dominio.Conversas;
@@ -49,7 +50,7 @@ public class IngestaoAteOBancoTeste : IDisposable
         _conexao.Dispose();
     }
 
-    private ProcessadorDeMensagens Processador(FilaDeMensagens fila) =>
+    private ProcessadorDeMensagens Processador(IQueue<MensagemRecebida> fila) =>
         new(fila,
             _servicos.GetRequiredService<IServiceScopeFactory>(),
             NullLogger<ProcessadorDeMensagens>.Instance);
@@ -57,7 +58,7 @@ public class IngestaoAteOBancoTeste : IDisposable
     /// <summary>Empurra as falas pela fila e espera o worker drenar, como em producao.</summary>
     private async Task Ingerir(params MensagemRecebida[] falas)
     {
-        var fila = new FilaDeMensagens();
+        var fila = new ChannelQueue<MensagemRecebida>();
         var processador = Processador(fila);
 
         await processador.StartAsync(CancellationToken.None);

@@ -27,6 +27,15 @@ public class MensagemMap : IEntityTypeConfiguration<Mensagem>
         e.Property(m => m.Texto).IsRequired();
         e.Property(m => m.EnviadaEm).IsRequired();
 
+        // A midia entra decomposta: o tipo como texto legivel no banco, a
+        // duracao como coluna propria. Ambas nulas quando a fala e texto puro.
+        e.Property(m => m.TipoDeMidia).HasConversion<string>().HasMaxLength(20);
+        e.Property(m => m.DuracaoDaMidia);
+
+        // Midia e a montagem dos dois campos acima, nao uma terceira coluna.
+        e.Ignore(m => m.Midia);
+        e.Ignore(m => m.NaoInterpretada);
+
         // Ordenar por envio e a consulta mais frequente da tela — e foi por ela
         // que a #22 existe: balao fora de ordem faz o dossie ler a conversa ao
         // contrario.

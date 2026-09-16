@@ -67,6 +67,7 @@ public class ProcessadorDeMensagens : BackgroundService
         var ctx = escopo.ServiceProvider.GetRequiredService<CopilotoDbContext>();
         var agente = escopo.ServiceProvider.GetService<AgenteDeLeitura>();
         var tela = escopo.ServiceProvider.GetService<IHubContext<DossieHub>>();
+        var triador = escopo.ServiceProvider.GetService<Triador>();
 
         var doCliente = resolvedor.TelefoneDoCliente(bruta);
         if (doCliente is null)
@@ -81,7 +82,7 @@ public class ProcessadorDeMensagens : BackgroundService
 
         try
         {
-            await Guardar(ctx, resolvedor, agente, tela, bruta, doCliente);
+            await Guardar(ctx, resolvedor, agente, triador, tela, bruta, doCliente);
         }
         catch (DbUpdateException e)
         {
@@ -98,6 +99,7 @@ public class ProcessadorDeMensagens : BackgroundService
         CopilotoDbContext ctx,
         ResolvedorDeLead resolvedor,
         AgenteDeLeitura? agente,
+        Triador? triador,
         IHubContext<DossieHub>? tela,
         MensagemRecebida bruta,
         Telefone doCliente)
@@ -131,7 +133,15 @@ public class ProcessadorDeMensagens : BackgroundService
             ctx.Conversas.Add(conversa);
         }
 
-        conversa.Registrar(new Mensagem(id, autor, bruta.Texto, bruta.EnviadaEm, bruta.Midia));
+        // A fala anterior precisa ser lida ANTES de registrar a nova, senao a
+        // "anterior" seria ela mesma — e a triagem perderia justamente o
+        // contexto que a torna segura.
+        var anterior = conversa.Mensagens.Count > 0
+            ? conversa.Mensagens.MaxBy(m => m.EnviadaEm)
+            : null;
+
+        var nova = new Mensagem(id, autor, bruta.Texto, bruta.EnviadaEm, bruta.Midia);
+        conversa.Registrar(nova);
 
         var deal = await DealAberto(ctx, lead.Id, bruta.EnviadaEm);
         await ctx.SaveChangesAsync();
@@ -139,6 +149,15 @@ public class ProcessadorDeMensagens : BackgroundService
         _log.LogInformation(
             "Fala {Id} de {Autor} guardada na conversa {Conversa} do lead {Lead}",
             bruta.ProviderMessageId, autor, conversa.Id, lead.Id);
+
+        // A fala e SEMPRE guardada; a triagem decide apenas se vale reler (#37).
+        // Guardar depende de ter chegado, nao de ser interessante — e o que faz
+        // "obrigado" continuar na conversa da tela mesmo sem gerar dossie novo.
+        if (triador is not null)
+        {
+            var triagem = await triador.Triar(nova, anterior, CancellationToken.None);
+            if (!triagem.Analisa) return;
+        }
 
         await Reler(ctx, agente, tela, conversa, deal, lead.Id);
     }

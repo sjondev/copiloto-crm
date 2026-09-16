@@ -18,32 +18,45 @@ namespace Copiloto.Api.Ia;
 public class AgenteDePlano
 {
     private readonly CascataDeModelos _cascata;
+    private readonly PrecoDoModelo _preco;
     private readonly string _instrucoes;
     private readonly ILogger<AgenteDePlano> _log;
 
     public AgenteDePlano(
-        CascataDeModelos cascata, string instrucoes, ILogger<AgenteDePlano> log)
+        CascataDeModelos cascata, PrecoDoModelo preco, string instrucoes,
+        ILogger<AgenteDePlano> log)
     {
         ArgumentNullException.ThrowIfNull(cascata);
+        ArgumentNullException.ThrowIfNull(preco);
 
         _cascata = cascata;
+        _preco = preco;
         _instrucoes = instrucoes;
         _log = log;
     }
 
-    /// <summary>A sugestao e o que ela custou, para o ledger (#1).</summary>
-    public record Sugestao(string Texto, string Modelo, int TokensTotais);
+    /// <summary>
+    /// O que saiu da chamada: a sugestao (ou nenhuma) e a MEDICAO.
+    ///
+    /// A medicao vem sempre, inclusive quando nao ha sugestao — o provedor cobra
+    /// pelo token gasto antes de falhar, e ledger que so conta acerto esconde
+    /// justamente o custo que ninguem esperava ter (#1).
+    /// </summary>
+    public record Sugestao(string? Texto, MedicaoDaChamada Medicao);
 
-    public async Task<Sugestao?> Sugerir(
+    public async Task<Sugestao> Sugerir(
         BlocoDoPlano bloco, string contextoDoLead, CancellationToken ct)
     {
         var pedido = $"{_instrucoes}\n\n## Bloco pedido\n\n{bloco}\n\n"
                      + $"## O que sabemos deste cliente\n\n{contextoDoLead}";
 
         ResultadoDaCascata resultado;
+        long latenciaMs;
+
         try
         {
-            resultado = await _cascata.Pedir(Tarefa.Plano, pedido, ct);
+            (resultado, latenciaMs) = await Ledger.Cronometrar(
+                () => _cascata.Pedir(Tarefa.Plano, pedido, ct));
         }
         catch (Exception erro) when (erro is not OperationCanceledException)
         {
@@ -58,25 +71,34 @@ public class AgenteDePlano
             // nao some — ele vai para o log COM o bloco e a excecao, que e o
             // que a #42 pede.
             _log.LogError(erro, "Sugestao do bloco {Bloco} falhou de forma nao prevista", bloco);
-            return null;
+
+            // Sem resultado nao ha o que medir com honestidade: nao se sabe qual
+            // modelo foi chamado nem se ele chegou a gastar token. Uma linha
+            // inventada aqui seria pior que linha nenhuma.
+            return new Sugestao(null, null!);
         }
+
+        var medicao = Ledger.Medir(resultado, latenciaMs, _preco);
 
         if (resultado.Degradou)
         {
             _log.LogWarning(
                 "Sugestao do bloco {Bloco} degradou apos {Falhas} degrau(s)",
                 bloco, resultado.Falhas.Count);
-            return null;
+            return new Sugestao(null, medicao);
         }
 
         var texto = Extrair(resultado.Resposta!.Conteudo, bloco);
         if (texto is null)
         {
+            // A chamada ACONTECEU e custou: a linha entra no ledger mesmo com a
+            // resposta ilegivel. Esconder isso faria o contrato quebrado sair de
+            // graca no relatorio.
             _log.LogWarning("Sugestao do bloco {Bloco} veio em formato ilegivel", bloco);
-            return null;
+            return new Sugestao(null, medicao);
         }
 
-        return new Sugestao(texto, resultado.Modelo!, resultado.Resposta.TokensTotais);
+        return new Sugestao(texto, medicao);
     }
 
     /// <summary>

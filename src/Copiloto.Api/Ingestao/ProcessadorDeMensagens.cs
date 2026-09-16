@@ -5,6 +5,7 @@ using Copiloto.Api.Persistencia;
 using Copiloto.Api.TempoReal;
 using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Fichas;
+using Copiloto.Dominio.Ia;
 using Copiloto.Dominio.Vendas;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -244,7 +245,20 @@ public class ProcessadorDeMensagens : BackgroundService
             if (grupo is not null)
                 await grupo.SendAsync(DossieHub.Analisando, leadId, CancellationToken.None);
 
-            var dossie = await agente.Ler(conversa, deal.Id, "", "", CancellationToken.None);
+            var leitura = await agente.Ler(conversa, deal.Id, "", "", CancellationToken.None);
+
+            // A linha do ledger entra ANTES de qualquer decisao sobre o dossie
+            // (#1): a chamada aconteceu e custou, tenha ela degradado ou nao.
+            // Registrar so no caminho feliz esconderia justamente o gasto que
+            // ninguem esperava ter.
+            if (leitura.Medicao is { } medicao)
+            {
+                deal.RegistrarInvocacao(new AiInvocation(
+                    Guid.NewGuid(), Tarefa.Leitura, medicao, DateTimeOffset.UtcNow, deal.Id));
+                await ctx.SaveChangesAsync();
+            }
+
+            var dossie = leitura.Dossie;
             if (dossie is null)
             {
                 // Degradou (#30). O aviso de "analisando" precisa ser desfeito,

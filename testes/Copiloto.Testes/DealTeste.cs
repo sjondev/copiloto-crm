@@ -85,13 +85,22 @@ public class DealTeste
         Assert.Equal(Estagio.Qualificacao, deal.Estagio);
     }
 
+    /// <summary>
+    /// Uma medicao de teste com o custo que o caso precisa. Os outros campos
+    /// tem valor plausivel e nao importam aqui: o que estes testes provam e a
+    /// SOMA, e nao o que o provedor cobrou por token.
+    /// </summary>
+    private static MedicaoDaChamada Custou(decimal reais) =>
+        new("fake", TokensEntrada: 100, TokensSaida: 40, LatenciaMs: 12,
+            Tentativas: 1, Sucesso: true, CustoEmReais: reais);
+
     [Fact]
     public void Custo_de_ia_acumula_por_invocacao()
     {
         var deal = NovoDeal();
 
-        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), "fake", 0.15m, Agora, deal.Id));
-        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), "fake", 0.25m, Agora, deal.Id));
+        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), Tarefa.Leitura, Custou(0.15m), Agora, deal.Id));
+        deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), Tarefa.Leitura, Custou(0.25m), Agora, deal.Id));
 
         Assert.Equal(0.40m, deal.CustoIaAcumulado);
         Assert.Equal(2, deal.Invocacoes.Count);
@@ -108,7 +117,7 @@ public class DealTeste
         decimal[] custos = [0.07m, 0.13m, 1.20m, 0.004m];
 
         foreach (var c in custos)
-            deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), "fake", c, Agora, deal.Id));
+            deal.RegistrarInvocacao(new AiInvocation(Guid.NewGuid(), Tarefa.Leitura, Custou(c), Agora, deal.Id));
 
         Assert.Equal(deal.Invocacoes.Sum(i => i.CustoEmReais), deal.CustoIaAcumulado);
         Assert.Equal(custos.Sum(), deal.CustoIaAcumulado);
@@ -121,7 +130,7 @@ public class DealTeste
         // outro — e o erro nao apareceria, porque o numero continua com cara
         // de certo.
         var deal = NovoDeal();
-        var deOutro = new AiInvocation(Guid.NewGuid(), "fake", 9.99m, Agora, Guid.NewGuid());
+        var deOutro = new AiInvocation(Guid.NewGuid(), Tarefa.Leitura, Custou(9.99m), Agora, Guid.NewGuid());
 
         Assert.Throws<ArgumentException>(() => deal.RegistrarInvocacao(deOutro));
         Assert.Equal(0m, deal.CustoIaAcumulado);
@@ -133,7 +142,7 @@ public class DealTeste
         // `DealId` nulo e legitimo (diagnostico, teste de provedor), mas nao
         // pertence a negocio nenhum.
         var deal = NovoDeal();
-        var solta = new AiInvocation(Guid.NewGuid(), "fake", 0.50m, Agora);
+        var solta = new AiInvocation(Guid.NewGuid(), Tarefa.Leitura, Custou(0.50m), Agora);
 
         Assert.Throws<ArgumentException>(() => deal.RegistrarInvocacao(solta));
     }
@@ -144,13 +153,13 @@ public class DealTeste
         // Empty passaria por preenchido e o custo seria somado a um Deal que
         // nao existe. Para "sem negocio" existe o null.
         Assert.Throws<ArgumentException>(
-            () => new AiInvocation(Guid.NewGuid(), "fake", 0.10m, Agora, Guid.Empty));
+            () => new AiInvocation(Guid.NewGuid(), Tarefa.Leitura, Custou(0.10m), Agora, Guid.Empty));
     }
 
     [Fact]
     public void Custo_negativo_nao_entra_e_nao_reduz_o_acumulado()
     {
         Assert.Throws<ArgumentOutOfRangeException>(
-            () => new AiInvocation(Guid.NewGuid(), "fake", -1m, Agora));
+            () => new AiInvocation(Guid.NewGuid(), Tarefa.Leitura, Custou(-1m), Agora));
     }
 }

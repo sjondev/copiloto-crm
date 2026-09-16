@@ -58,11 +58,17 @@ public class AgenteDeLeituraTeste
         new(new CascataDeModelos(
                 new RoteadorDeModelo([Mini]), provedor, NullLogger<CascataDeModelos>.Instance),
             new MontadorDeContexto(),
+            new PrecoDoModelo([Mini]),
             Identidade,
             NullLogger<AgenteDeLeitura>.Instance);
 
-    private static Task<Dossie?> Ler(IModelProvider provedor, Conversa? conversa = null) =>
-        Agente(provedor).Ler(conversa ?? ConversaDoCafe(), Guid.NewGuid(), "", "", CancellationToken.None);
+    /// <summary>
+    /// So o dossie. A medicao que a #1 acrescentou tem teste proprio; aqui o
+    /// que importa e o que o agente LEU.
+    /// </summary>
+    private static async Task<Dossie?> Ler(IModelProvider provedor, Conversa? conversa = null) =>
+        (await Agente(provedor).Ler(
+            conversa ?? ConversaDoCafe(), Guid.NewGuid(), "", "", CancellationToken.None)).Dossie;
 
     [Fact]
     public async Task A_leitura_do_seed_vira_dossie_com_os_dois_sinais()
@@ -217,7 +223,8 @@ public class AgenteDeLeituraTeste
         var erro = Assert.Throws<ArgumentException>(() => new AgenteDeLeitura(
             new CascataDeModelos(
                 new RoteadorDeModelo([Mini]), new FakeProvider(), NullLogger<CascataDeModelos>.Instance),
-            new MontadorDeContexto(), "  ", NullLogger<AgenteDeLeitura>.Instance));
+            new MontadorDeContexto(), new PrecoDoModelo([Mini]), "  ",
+            NullLogger<AgenteDeLeitura>.Instance));
 
         Assert.Contains("nao pode inventar", erro.Message);
     }

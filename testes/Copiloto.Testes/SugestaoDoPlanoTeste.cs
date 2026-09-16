@@ -35,10 +35,9 @@ public class SugestaoDoPlanoTeste : BancoEmMemoria
     private static AgenteDePlano Agente(IModelProvider provedor) =>
         new(new CascataDeModelos(
                 new RoteadorDeModelo([Forte]), provedor, NullLogger<CascataDeModelos>.Instance),
+            new PrecoDoModelo([Forte]),
             "instrucoes de teste",
             NullLogger<AgenteDePlano>.Instance);
-
-    private static PrecoDoModelo Preco() => new([Forte]);
 
     private Lead Semear(Guid? dono = null)
     {
@@ -68,7 +67,7 @@ public class SugestaoDoPlanoTeste : BancoEmMemoria
             ctx, QuemPede.Principal(ana));
 
         var resposta = await EndpointsDoPlano.Sugerir(
-            lead.Id, "Objetivo", ctx, AgenteDoSeed(), Preco(), QuemPede.Principal(ana));
+            lead.Id, "Objetivo", ctx, AgenteDoSeed(), QuemPede.Principal(ana));
 
         var objetivo = Bloco(resposta, "Objetivo");
 
@@ -84,10 +83,10 @@ public class SugestaoDoPlanoTeste : BancoEmMemoria
         var lead = Semear(dono: ana.Id);
 
         await EndpointsDoPlano.Sugerir(
-            lead.Id, "Objetivo", ctx, AgenteDoSeed(), Preco(), QuemPede.Principal(ana));
+            lead.Id, "Objetivo", ctx, AgenteDoSeed(), QuemPede.Principal(ana));
 
         var resposta = await EndpointsDoPlano.Sugerir(
-            lead.Id, "ProximoPasso", ctx, AgenteDoSeed(), Preco(), QuemPede.Principal(ana));
+            lead.Id, "ProximoPasso", ctx, AgenteDoSeed(), QuemPede.Principal(ana));
 
         // Quatro campos com a mesma frase seria pior que campo vazio: pareceria
         // ferramenta quebrada.
@@ -102,7 +101,7 @@ public class SugestaoDoPlanoTeste : BancoEmMemoria
         var lead = Semear(dono: ana.Id);
 
         var resposta = await EndpointsDoPlano.Sugerir(
-            lead.Id, "Objetivo", ctx, AgenteDoSeed(), Preco(), QuemPede.Principal(ana));
+            lead.Id, "Objetivo", ctx, AgenteDoSeed(), QuemPede.Principal(ana));
 
         // A versao responde "o que ele tinha escrito", e sugestao que ele ainda
         // nao aceitou nunca fez parte do plano.
@@ -119,7 +118,7 @@ public class SugestaoDoPlanoTeste : BancoEmMemoria
         var lead = Semear(dono: ana.Id);
 
         var sugerida = Bloco(await EndpointsDoPlano.Sugerir(
-            lead.Id, "Objetivo", ctx, AgenteDoSeed(), Preco(), QuemPede.Principal(ana)), "Objetivo");
+            lead.Id, "Objetivo", ctx, AgenteDoSeed(), QuemPede.Principal(ana)), "Objetivo");
 
         var resposta = await EndpointsDoPlano.Aceitar(
             lead.Id, "Objetivo", ctx, QuemPede.Principal(ana));
@@ -141,7 +140,7 @@ public class SugestaoDoPlanoTeste : BancoEmMemoria
         await EndpointsDoPlano.EscreverBloco(
             lead.Id, "Objetivo", new TextoDoBloco("o meu texto"), ctx, QuemPede.Principal(ana));
         await EndpointsDoPlano.Sugerir(
-            lead.Id, "Objetivo", ctx, AgenteDoSeed(), Preco(), QuemPede.Principal(ana));
+            lead.Id, "Objetivo", ctx, AgenteDoSeed(), QuemPede.Principal(ana));
 
         var objetivo = Bloco(await EndpointsDoPlano.Descartar(
             lead.Id, "Objetivo", ctx, QuemPede.Principal(ana)), "Objetivo");
@@ -169,7 +168,7 @@ public class SugestaoDoPlanoTeste : BancoEmMemoria
 
         // Provedor sem nenhuma resposta gravada: a cascata degrada.
         var resposta = await EndpointsDoPlano.Sugerir(
-            lead.Id, "Objetivo", ctx, Agente(new FakeProvider()), Preco(), QuemPede.Principal(ana));
+            lead.Id, "Objetivo", ctx, Agente(new FakeProvider()), QuemPede.Principal(ana));
 
         Assert.Equal(200, Status(resposta));
         Assert.Equal("o meu texto", Bloco(resposta, "Objetivo").Texto);
@@ -191,7 +190,7 @@ public class SugestaoDoPlanoTeste : BancoEmMemoria
         });
 
         var resposta = await EndpointsDoPlano.Sugerir(
-            lead.Id, "Objetivo", ctx, Agente(provedor), Preco(), QuemPede.Principal(ana));
+            lead.Id, "Objetivo", ctx, Agente(provedor), QuemPede.Principal(ana));
 
         Assert.Null(Bloco(resposta, "Objetivo").Sugestao);
     }
@@ -212,7 +211,7 @@ public class SugestaoDoPlanoTeste : BancoEmMemoria
         var lead = Semear(dono: ana.Id);
 
         await EndpointsDoPlano.Sugerir(
-            lead.Id, "Objetivo", ctx, AgenteDoSeed(), Preco(), QuemPede.Principal(ana));
+            lead.Id, "Objetivo", ctx, AgenteDoSeed(), QuemPede.Principal(ana));
 
         using var conferindo = NovoContexto();
         var invocacao = Assert.Single(conferindo.Invocacoes);
@@ -230,7 +229,7 @@ public class SugestaoDoPlanoTeste : BancoEmMemoria
         var lead = Semear(dono: ana.Id);
 
         await EndpointsDoPlano.Sugerir(
-            lead.Id, "Objetivo", ctx, Agente(new FakeProvider()), Preco(), QuemPede.Principal(ana));
+            lead.Id, "Objetivo", ctx, Agente(new FakeProvider()), QuemPede.Principal(ana));
 
         using var conferindo = NovoContexto();
         Assert.Empty(conferindo.Invocacoes);
@@ -247,7 +246,7 @@ public class SugestaoDoPlanoTeste : BancoEmMemoria
         var doBruno = Semear(dono: bruno.Id);
 
         var resposta = await EndpointsDoPlano.Sugerir(
-            doBruno.Id, "Objetivo", ctx, AgenteDoSeed(), Preco(), QuemPede.Principal(ana));
+            doBruno.Id, "Objetivo", ctx, AgenteDoSeed(), QuemPede.Principal(ana));
 
         Assert.Equal(404, Status(resposta));
 

@@ -466,3 +466,23 @@ body {
 .plano__sugerir:disabled { opacity: 0.3; cursor: default; }
 
 .plano__sugestao { display: flex; flex-direction: column; gap: 0.4rem; }
+
+/* "Por quê?" (#51): os números numa linha, e o contexto exato embaixo. */
+.porque { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.3rem; }
+
+.porque__numeros { font-size: 0.7rem; opacity: 0.6; }
+
+.porque__contexto {
+  margin: 0;
+  max-height: 16rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  padding: 0.6rem;
+  border-radius: 6px;
+  background: var(--fundo-campo, #141414);
+  border: 1px solid var(--borda, #2a2a2a);
+  opacity: 0.85;
+}

@@ -30,7 +30,13 @@ public enum BlocoDoPlano
 /// apaga o que ele pensou e transforma "aceitar, editar ou ignorar" em
 /// "desfazer". O texto dele nunca e sobrescrito sem que ele mande.
 /// </summary>
-public record Bloco(string Texto = "", string? Sugestao = null)
+/// <param name="InvocacaoId">
+/// A chamada que gerou a sugestao pendente (#51). E o fio que o "por que essa
+/// sugestao?" segue para achar contexto, modelo, custo e versao do prompt — sem
+/// ele, o botao teria de adivinhar qual chamada produziu qual frase, e erraria
+/// assim que houvesse duas no mesmo negocio.
+/// </param>
+public record Bloco(string Texto = "", string? Sugestao = null, Guid? InvocacaoId = null)
 {
     public bool TemSugestaoPendente => !string.IsNullOrWhiteSpace(Sugestao);
 }
@@ -112,9 +118,21 @@ public class PlanoDeAbordagem
         _blocos[qual] = _blocos[qual] with
         {
             Sugestao = string.IsNullOrWhiteSpace(limpa) ? null : limpa,
+
+            // Sugestao nova zera o vinculo: ele so volta quando quem chamou
+            // disser de qual invocacao ela veio.
+            InvocacaoId = null,
         };
 
         AtualizadoEm = quando;
+    }
+
+    /// <summary>Liga a sugestao pendente a chamada que a produziu (#51).</summary>
+    public void Vincular(BlocoDoPlano qual, Guid invocacaoId)
+    {
+        if (!_blocos[qual].TemSugestaoPendente) return;
+
+        _blocos[qual] = _blocos[qual] with { InvocacaoId = invocacaoId };
     }
 
     /// <summary>
@@ -128,6 +146,9 @@ public class PlanoDeAbordagem
         var bloco = _blocos[qual];
         if (!bloco.TemSugestaoPendente) return;
 
+        // A procedencia sai junto: a frase virou TEXTO DELE. Guardar "isto veio
+        // da IA" criaria duas categorias de frase numa tela que existe para ter
+        // uma — e o plano e dele.
         _blocos[qual] = new Bloco(bloco.Sugestao!);
         Versao++;
         AtualizadoEm = quando;
@@ -141,7 +162,7 @@ public class PlanoDeAbordagem
     {
         if (!_blocos[qual].TemSugestaoPendente) return;
 
-        _blocos[qual] = _blocos[qual] with { Sugestao = null };
+        _blocos[qual] = _blocos[qual] with { Sugestao = null, InvocacaoId = null };
         AtualizadoEm = quando;
     }
 }

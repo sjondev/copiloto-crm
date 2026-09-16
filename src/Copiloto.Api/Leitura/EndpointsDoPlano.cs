@@ -9,13 +9,36 @@ using Microsoft.EntityFrameworkCore;
 namespace Copiloto.Api.Leitura;
 
 /// <summary>Um bloco como a tela o recebe.</summary>
-public record BlocoNaTela(string Bloco, string Texto, string? Sugestao);
+/// <param name="TemProcedencia">
+/// Se da para perguntar "por que essa sugestao?" (#51). Falso nas sugestoes
+/// geradas antes da issue, e a tela nao mostra um botao que responderia 404.
+/// </param>
+public record BlocoNaTela(string Bloco, string Texto, string? Sugestao, bool TemProcedencia);
 
 /// <summary>O plano inteiro, com a versao que responde "o que ele tinha escrito".</summary>
 public record PlanoNaTela(Guid PlanoId, Guid DealId, int Versao, IReadOnlyList<BlocoNaTela> Blocos);
 
 /// <summary>O que o vendedor escreveu num bloco.</summary>
 public record TextoDoBloco(string? Texto);
+
+/// <summary>
+/// O que sustentou a sugestao (#51).
+///
+/// A resposta pronta para "como voce sabe que a IA nao esta inventando?" — e,
+/// para o vendedor, o que constroi confianca: ele ve o texto EXATO que foi ao
+/// modelo, ja mascarado, e o que aquilo custou.
+/// </summary>
+public record PorQueNaTela(
+    string Modelo,
+    string? VersaoDoPrompt,
+    decimal CustoEmReais,
+    int LatenciaMs,
+    int TokensEntrada,
+    int TokensSaida,
+    int Tentativas,
+    bool Sucesso,
+    DateTimeOffset Quando,
+    string? ContextoEnviado);
 
 /// <summary>
 /// O plano de abordagem (#12).
@@ -33,6 +56,7 @@ public static class EndpointsDoPlano
         app.MapPost("/leads/{id:guid}/plano/{bloco}/sugerir", Sugerir).RequireAuthorization();
         app.MapPost("/leads/{id:guid}/plano/{bloco}/aceitar", Aceitar).RequireAuthorization();
         app.MapDelete("/leads/{id:guid}/plano/{bloco}/sugestao", Descartar).RequireAuthorization();
+        app.MapGet("/leads/{id:guid}/plano/{bloco}/porque", PorQue).RequireAuthorization();
     }
 
     /// <summary>
@@ -131,9 +155,17 @@ public static class EndpointsDoPlano
         if (sugestao.Medicao is not null)
         {
             var deal = await ctx.Deals.FirstOrDefaultAsync(d => d.Id == plano!.DealId, ct);
-            deal?.RegistrarInvocacao(new AiInvocation(
+            var invocacao = new AiInvocation(
                 Guid.NewGuid(), Tarefa.Plano, sugestao.Medicao,
-                DateTimeOffset.UtcNow, plano!.DealId));
+                DateTimeOffset.UtcNow, plano!.DealId,
+                procedencia: sugestao.Procedencia);
+
+            deal?.RegistrarInvocacao(invocacao);
+
+            // A sugestao aponta para a invocacao que a gerou (#51): sem esse
+            // fio, o "por que" teria de adivinhar qual chamada produziu qual
+            // frase, e erraria assim que houvesse duas no mesmo negocio.
+            if (sugestao.Texto is not null) plano.Vincular(qual, invocacao.Id);
         }
 
         await ctx.SaveChangesAsync(ct);
@@ -169,6 +201,46 @@ public static class EndpointsDoPlano
         await ctx.SaveChangesAsync(ct);
 
         return Results.Ok(ParaTela(plano));
+    }
+
+    /// <summary>
+    /// De onde saiu a sugestao pendente daquele bloco (#51).
+    ///
+    /// 404 quando nao ha sugestao ou quando ela nao tem vinculo — o que acontece
+    /// com as que foram geradas antes desta issue. Inventar uma procedencia
+    /// plausivel seria pior que dizer que nao ha: o botao existe justamente para
+    /// nao pedir confianca cega.
+    /// </summary>
+    public static async Task<IResult> PorQue(
+        Guid id, string bloco, CopilotoDbContext ctx,
+        ClaimsPrincipal? quem = null, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(ctx);
+
+        var (erro, plano, qual) = await Abrir(id, bloco, ctx, quem, ct);
+        if (erro is not null) return erro;
+
+        var invocacaoId = plano![qual].InvocacaoId;
+        if (invocacaoId is null)
+            return Results.NotFound(new { erro = "esta sugestao nao tem procedencia registrada" });
+
+        var invocacao = await ctx.Invocacoes.AsNoTracking()
+            .FirstOrDefaultAsync(i => i.Id == invocacaoId.Value, ct);
+
+        if (invocacao is null)
+            return Results.NotFound(new { erro = "a chamada que gerou esta sugestao nao esta mais no ledger" });
+
+        return Results.Ok(new PorQueNaTela(
+            invocacao.Modelo,
+            invocacao.VersaoDoPrompt,
+            invocacao.CustoEmReais,
+            invocacao.LatenciaMs,
+            invocacao.TokensEntrada,
+            invocacao.TokensSaida,
+            invocacao.Tentativas,
+            invocacao.Sucesso,
+            invocacao.Quando,
+            invocacao.ContextoEnviado));
     }
 
     /// <summary>
@@ -251,7 +323,9 @@ public static class EndpointsDoPlano
             plano.DealId,
             plano.Versao,
             Enum.GetValues<BlocoDoPlano>()
-                .Select(b => new BlocoNaTela(b.ToString(), plano[b].Texto, plano[b].Sugestao))
+                .Select(b => new BlocoNaTela(
+                    b.ToString(), plano[b].Texto, plano[b].Sugestao,
+                    plano[b].InvocacaoId is not null))
                 .ToList());
     }
 

@@ -30,6 +30,27 @@ public record MedicaoDaChamada(
 }
 
 /// <summary>
+/// O que sustentou a resposta, para o "por que essa sugestao?" (#51).
+///
+/// Separado da medicao porque responde a outra pergunta. A medicao responde
+/// QUANTO custou; isto responde COM BASE EM QUE — e e a segunda que constroi
+/// confianca no vendedor, e a que responde "como voce sabe que a IA nao esta
+/// inventando?".
+/// </summary>
+/// <param name="ContextoEnviado">
+/// O texto que REALMENTE foi ao modelo, ja mascarado pelo escudo (#43). Guardar
+/// o que foi montado depois nao serviria: a pergunta e o que ele viu naquele
+/// momento, e nao o que veria hoje.
+/// </param>
+/// <param name="VersaoDoPrompt">
+/// Hash curto do conteudo das instrucoes. Nao e um numero que alguem incrementa
+/// e esquece: ele muda exatamente quando o prompt muda, e responde "esta
+/// sugestao saiu do mesmo prompt daquela?" sem depender de disciplina. A #36
+/// pode trocar isto por versao em arquivo sem quebrar nada.
+/// </param>
+public record ProcedenciaDaChamada(string? ContextoEnviado, string? VersaoDoPrompt);
+
+/// <summary>
 /// Uma chamada a um modelo: qual, quanto custou, e quanto demorou.
 ///
 /// Guardar o NOME do modelo junto do custo e o que permite a comparacao entre
@@ -47,7 +68,8 @@ public class AiInvocation
     /// </param>
     public AiInvocation(
         Guid id, Tarefa agente, MedicaoDaChamada medicao, DateTimeOffset quando,
-        Guid? dealId = null, string? correlationId = null)
+        Guid? dealId = null, string? correlationId = null,
+        ProcedenciaDaChamada? procedencia = null)
     {
         ArgumentNullException.ThrowIfNull(medicao);
 
@@ -80,6 +102,8 @@ public class AiInvocation
         Sucesso = medicao.Sucesso;
         CustoEmReais = medicao.CustoEmReais;
         CorrelationId = string.IsNullOrWhiteSpace(correlationId) ? null : correlationId.Trim();
+        ContextoEnviado = procedencia?.ContextoEnviado;
+        VersaoDoPrompt = procedencia?.VersaoDoPrompt;
         Quando = quando;
     }
 
@@ -128,6 +152,17 @@ public class AiInvocation
     /// enxertar rastreio em tabela ja povoada exige backfill e adivinhacao.
     /// </summary>
     public string? CorrelationId { get; }
+
+    /// <summary>
+    /// O contexto que foi ao modelo, ja mascarado (#51).
+    ///
+    /// Nulo nas chamadas antigas e nas que nao guardam — e ele E dado pessoal,
+    /// mesmo pseudonimizado (#83). A retencao dele segue a da conversa (#45).
+    /// </summary>
+    public string? ContextoEnviado { get; }
+
+    /// <summary>Hash curto do prompt que gerou a resposta.</summary>
+    public string? VersaoDoPrompt { get; }
 
     public DateTimeOffset Quando { get; }
 }

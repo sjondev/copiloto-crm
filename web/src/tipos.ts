@@ -75,6 +75,8 @@ export interface BlocoDoPlano {
   texto: string;
   /** O que a IA propos, em campo separado. Hoje sempre null. */
   sugestao: string | null;
+  /** Se da para perguntar "por que essa sugestao?" (#51). */
+  temProcedencia: boolean;
 }
 
 export interface PlanoDoLead {
@@ -83,4 +85,18 @@ export interface PlanoDoLead {
   /** Quantas vezes o VENDEDOR mexeu. Sugestao nao conta. */
   versao: number;
   blocos: BlocoDoPlano[];
+}
+
+/** O que sustentou a sugestao (#51). */
+export interface PorQue {
+  modelo: string;
+  versaoDoPrompt: string | null;
+  custoEmReais: number;
+  latenciaMs: number;
+  tokensEntrada: number;
+  tokensSaida: number;
+  tentativas: number;
+  sucesso: boolean;
+  quando: string;
+  contextoEnviado: string | null;
 }

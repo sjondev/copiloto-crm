@@ -254,7 +254,8 @@ public class ProcessadorDeMensagens : BackgroundService
             if (leitura.Medicao is { } medicao)
             {
                 deal.RegistrarInvocacao(new AiInvocation(
-                    Guid.NewGuid(), Tarefa.Leitura, medicao, DateTimeOffset.UtcNow, deal.Id));
+                    Guid.NewGuid(), Tarefa.Leitura, medicao, DateTimeOffset.UtcNow, deal.Id,
+                    procedencia: leitura.Procedencia));
                 await ctx.SaveChangesAsync();
             }
 

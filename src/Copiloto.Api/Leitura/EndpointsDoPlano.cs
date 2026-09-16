@@ -1,0 +1,130 @@
+using System.Security.Claims;
+using Copiloto.Api.Auth;
+using Copiloto.Api.Persistencia;
+using Copiloto.Dominio.Planos;
+using Microsoft.EntityFrameworkCore;
+
+namespace Copiloto.Api.Leitura;
+
+/// <summary>Um bloco como a tela o recebe.</summary>
+public record BlocoNaTela(string Bloco, string Texto, string? Sugestao);
+
+/// <summary>O plano inteiro, com a versao que responde "o que ele tinha escrito".</summary>
+public record PlanoNaTela(Guid PlanoId, Guid DealId, int Versao, IReadOnlyList<BlocoNaTela> Blocos);
+
+/// <summary>O que o vendedor escreveu num bloco.</summary>
+public record TextoDoBloco(string? Texto);
+
+/// <summary>
+/// O plano de abordagem (#12).
+///
+/// A tela onde o vendedor e o protagonista. Nada aqui chama modelo: o criterio
+/// que prova a tese e "funciona sem nunca clicar em sugerir", e sugerir ainda
+/// nem existe.
+/// </summary>
+public static class EndpointsDoPlano
+{
+    public static void MapearPlano(this WebApplication app)
+    {
+        app.MapGet("/leads/{id:guid}/plano", PlanoDoLead).RequireAuthorization();
+        app.MapPut("/leads/{id:guid}/plano/{bloco}", EscreverBloco).RequireAuthorization();
+    }
+
+    /// <summary>
+    /// O plano daquele lead, CRIADO na hora se ainda nao existe.
+    ///
+    /// 404 aqui seria errado: plano que nao existe e plano em branco, e a tela
+    /// precisa abrir com quatro campos vazios para o vendedor escrever. Exigir
+    /// um "criar plano" antes de escrever seria um clique que nao decide nada.
+    /// </summary>
+    public static async Task<IResult> PlanoDoLead(
+        Guid id, CopilotoDbContext ctx, ClaimsPrincipal? quem = null,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(ctx);
+
+        var barrado = await Porteiro.Barrar(id, await UsuarioAtual.De(quem, ctx, ct), ctx, ct);
+        if (barrado is not null) return barrado;
+
+        var deal = await DealDoLead(ctx, id, ct);
+        if (deal is null)
+            return Results.NotFound(new { erro = "este lead ainda nao tem negocio aberto" });
+
+        var plano = await ctx.Planos.FirstOrDefaultAsync(p => p.DealId == deal.Value, ct);
+
+        if (plano is null)
+        {
+            plano = new PlanoDeAbordagem(Guid.NewGuid(), deal.Value, DateTimeOffset.UtcNow);
+            ctx.Planos.Add(plano);
+            await ctx.SaveChangesAsync(ct);
+        }
+
+        return Results.Ok(ParaTela(plano));
+    }
+
+    public static async Task<IResult> EscreverBloco(
+        Guid id, string bloco, TextoDoBloco corpo, CopilotoDbContext ctx,
+        ClaimsPrincipal? quem = null, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(ctx);
+
+        if (!Enum.TryParse<BlocoDoPlano>(bloco, ignoreCase: true, out var qual))
+        {
+            return Results.BadRequest(new
+            {
+                erro = $"'{bloco}' nao e um bloco do plano",
+                blocos = Enum.GetNames<BlocoDoPlano>(),
+            });
+        }
+
+        var barrado = await Porteiro.Barrar(id, await UsuarioAtual.De(quem, ctx, ct), ctx, ct);
+        if (barrado is not null) return barrado;
+
+        var deal = await DealDoLead(ctx, id, ct);
+        if (deal is null)
+            return Results.NotFound(new { erro = "este lead ainda nao tem negocio aberto" });
+
+        var plano = await ctx.Planos.FirstOrDefaultAsync(p => p.DealId == deal.Value, ct);
+        if (plano is null)
+        {
+            plano = new PlanoDeAbordagem(Guid.NewGuid(), deal.Value, DateTimeOffset.UtcNow);
+            ctx.Planos.Add(plano);
+        }
+
+        plano.Escrever(qual, corpo?.Texto, DateTimeOffset.UtcNow);
+        await ctx.SaveChangesAsync(ct);
+
+        return Results.Ok(ParaTela(plano));
+    }
+
+    public static PlanoNaTela ParaTela(PlanoDeAbordagem plano)
+    {
+        ArgumentNullException.ThrowIfNull(plano);
+
+        // A ordem dos blocos e a do enum, e ela e a ordem da CONVERSA: objetivo,
+        // o que descobrir, o que vai travar, como termina. A tela nao reordena.
+        return new PlanoNaTela(
+            plano.Id,
+            plano.DealId,
+            plano.Versao,
+            Enum.GetValues<BlocoDoPlano>()
+                .Select(b => new BlocoNaTela(b.ToString(), plano[b].Texto, plano[b].Sugestao))
+                .ToList());
+    }
+
+    /// <summary>
+    /// O negocio mais recente daquele lead.
+    ///
+    /// Escolhido no CLIENTE porque o SQLite da suite nao aceita DateTimeOffset
+    /// em ORDER BY (TECH-005). O filtro por lead acontece no banco, entao o que
+    /// vem para a memoria sao os deals de UM lead.
+    /// </summary>
+    private static async Task<Guid?> DealDoLead(
+        CopilotoDbContext ctx, Guid leadId, CancellationToken ct)
+    {
+        var doLead = await ctx.Deals.AsNoTracking()
+            .Where(d => d.LeadId == leadId).ToListAsync(ct);
+
+        return doLead.MaxBy(d => d.AbertoEm)?.Id;
+    }
+}

@@ -3,6 +3,7 @@ using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Dossies;
 using Copiloto.Dominio.Fichas;
 using Copiloto.Dominio.Ia;
+using Copiloto.Dominio.Planos;
 using Copiloto.Dominio.Rag;
 using Copiloto.Dominio.Vendas;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,9 @@ public class CopilotoDbContext : DbContext
     public DbSet<Mensagem> Mensagens => Set<Mensagem>();
     public DbSet<FichaCliente> Fichas => Set<FichaCliente>();
     public DbSet<Dossie> Dossies => Set<Dossie>();
+
+    /// <summary>O plano do vendedor para aquele negocio (#12).</summary>
+    public DbSet<PlanoDeAbordagem> Planos => Set<PlanoDeAbordagem>();
 
     /// <summary>A trilha de auditoria (#84): quem tocou no dado de quem.</summary>
     public DbSet<AcessoRegistrado> Acessos => Set<AcessoRegistrado>();

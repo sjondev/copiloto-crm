@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Entrar } from "./Entrar";
 import { Fila } from "./Fila";
+import { Plano } from "./Plano";
 import { esquecer, tokenGuardado } from "./sessao";
 import { PainelDaConversa } from "./Conversa";
 import { PainelDoDossie } from "./Dossie";
@@ -25,6 +26,9 @@ export function App() {
 }
 
 function Copiloto({ aoSair }: { aoSair: () => void }) {
+  // Aba, e nao terceira coluna: a leitura e o plano competem pela mesma
+  // atencao, e tres colunas numa tela de notebook deixam as tres ilegiveis.
+  const [aba, setAba] = useState<"leitura" | "plano">("leitura");
   // Sem router e sem tela de lista ainda: o lead vem da URL, e a #12 e a #50
   // trazem navegacao. Campo na tela porque digitar um Guid na barra de
   // enderecos e pior que cola-lo num input.
@@ -97,16 +101,38 @@ function Copiloto({ aoSair }: { aoSair: () => void }) {
 
           <section className="painel__lado painel__lado--dossie">
             <h2 className="painel__titulo">
-              O que lemos
+              <button
+                type="button"
+                className={`aba ${aba === "leitura" ? "aba--ativa" : ""}`}
+                onClick={() => setAba("leitura")}
+              >
+                O que lemos
+              </button>
+
+              {/*
+                O plano do VENDEDOR (#12). Fica ao lado da leitura porque e onde
+                ele age em cima do que foi lido — e ele e' quem escreve.
+              */}
+              <button
+                type="button"
+                className={`aba ${aba === "plano" ? "aba--ativa" : ""}`}
+                onClick={() => setAba("plano")}
+              >
+                Meu plano
+              </button>
+
               {/*
                 O intervalo entre a fala chegar e o dossie ficar pronto e visivel
                 a olho nu. Tela parada nesse intervalo parece tela quebrada: o
                 vendedor recarrega, nada acontece, e ele conclui que a ferramenta
                 nao funciona.
               */}
-              {analisando && <span className="analisando" role="status">analisando…</span>}
+              {analisando && aba === "leitura" && (
+                <span className="analisando" role="status">analisando…</span>
+              )}
             </h2>
-            <PainelDoDossie dossie={dossie} />
+
+            {aba === "leitura" ? <PainelDoDossie dossie={dossie} /> : <Plano leadId={leadId} />}
           </section>
         </main>
       )}

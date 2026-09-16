@@ -8,6 +8,11 @@ export default defineConfig({
     // backend so por causa do desenvolvimento — e CORS afrouxado em dev tem a
     // mania de sobreviver ate producao.
     proxy: {
+      // `/auth` entrou com o login da #182 e FALTAVA aqui: a tela pedia
+      // credencial e o dev server devolvia o index.html do proprio Vite, entao
+      // o login falhava com erro de JSON em vez de dizer o que houve. So
+      // aparece rodando — teste nenhum passa pelo proxy.
+      "/auth": "http://localhost:5000",
       "/leads": "http://localhost:5000",
       "/saude": "http://localhost:5000",
       // `ws: true` e obrigatorio: o SignalR negocia e sobe para WebSocket, e um

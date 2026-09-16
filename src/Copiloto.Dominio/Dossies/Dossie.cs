@@ -28,6 +28,17 @@ public class Dossie
     public DateTimeOffset GeradoEm { get; }
     public IReadOnlyList<Sinal> Sinais => _sinais;
 
+    /// <summary>
+    /// A temperatura lida, com direcao (#13). Nula enquanto ninguem leu.
+    /// </summary>
+    public Termometro? Termometro { get; private set; }
+
+    public void Ler(Termometro termometro) =>
+        Termometro = termometro ?? throw new ArgumentNullException(nameof(termometro));
+
+    public IReadOnlyList<Sinal> SinaisDe(TipoDeSinal tipo) =>
+        _sinais.Where(s => s.Tipo == tipo).ToList();
+
     /// <summary>O que ainda nao sabemos — perguntas, nao afirmacoes.</summary>
     public IReadOnlyList<string> Lacunas => _lacunas;
 

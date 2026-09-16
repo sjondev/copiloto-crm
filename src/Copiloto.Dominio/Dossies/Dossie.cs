@@ -12,6 +12,7 @@ public class Dossie
 {
     private readonly List<Sinal> _sinais = new();
     private readonly List<string> _lacunas = new();
+    private readonly List<Objecao> _objecoes = new();
 
     public Dossie(Guid id, Guid dealId, DateTimeOffset geradoEm)
     {
@@ -53,6 +54,41 @@ public class Dossie
 
     public IReadOnlyList<Sinal> SinaisDe(TipoDeSinal tipo) =>
         _sinais.Where(s => s.Tipo == tipo).ToList();
+
+    /// <summary>
+    /// A resistencia que o cliente nao declarou (#9).
+    ///
+    /// Separada dos sinais porque tem TIPO — preco, timing, autoridade — e cada
+    /// um pede coisa diferente do vendedor. Um sinal de fuga diz "ele esta
+    /// saindo"; a objecao diz por onde.
+    /// </summary>
+    public IReadOnlyList<Objecao> Objecoes => _objecoes;
+
+    public void Registrar(Objecao objecao)
+    {
+        ArgumentNullException.ThrowIfNull(objecao);
+
+        // A mesma fala pode originar o adiamento E o encurtamento. Repetir a
+        // dupla tipo+trecho na tela seria ruido, e ruido no dossie e o que faz
+        // o vendedor parar de ler as linhas de baixo.
+        if (_objecoes.Any(o => o.Tipo == objecao.Tipo && o.TrechoCitado == objecao.TrechoCitado)) return;
+
+        _objecoes.Add(objecao);
+    }
+
+    /// <summary>
+    /// Le a FORMA da conversa e registra o que ela mostra (#9).
+    ///
+    /// Roda sem modelo nenhum, e por isso e a parte do dossie que nao alucina:
+    /// aritmetica sobre as falas da o mesmo resultado toda vez.
+    /// </summary>
+    public void DetectarObjecoes(Conversa conversa, DateTimeOffset agora)
+    {
+        ArgumentNullException.ThrowIfNull(conversa);
+
+        foreach (var objecao in PadraoDeConversa.Detectar(conversa, agora))
+            Registrar(objecao);
+    }
 
     /// <summary>O que ainda nao sabemos — perguntas, nao afirmacoes.</summary>
     public IReadOnlyList<string> Lacunas => _lacunas;

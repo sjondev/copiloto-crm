@@ -53,11 +53,17 @@ public class FakeProviderTeste
     {
         // Entrada e saida tem precos diferentes em todo provedor real, e um
         // total unico impediria a conta do ledger (#1).
+        //
+        // As asserções são sobre a FORMA e não sobre os números do seed: o
+        // conteúdo do arquivo muda quando o prompt evolui, e um teste preso ao
+        // valor exato quebraria a cada ajuste sem nada de errado ter
+        // acontecido — e teste que quebra à toa é teste que alguém desliga.
         var resposta = await Provedor().Responder(Pedido(), CancellationToken.None);
 
-        Assert.Equal(1240, resposta.TokensEntrada);
-        Assert.Equal(210, resposta.TokensSaida);
-        Assert.Equal(1450, resposta.TokensTotais);
+        Assert.True(resposta.TokensEntrada > 0);
+        Assert.True(resposta.TokensSaida > 0);
+        Assert.NotEqual(resposta.TokensEntrada, resposta.TokensSaida);
+        Assert.Equal(resposta.TokensEntrada + resposta.TokensSaida, resposta.TokensTotais);
     }
 
     [Fact]

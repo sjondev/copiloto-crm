@@ -14,6 +14,19 @@ export interface Sinal {
   mensagemId: string;
 }
 
+export type TipoDeObjecao =
+  | "Preco" | "Timing" | "Autoridade" | "Concorrente"
+  | "Necessidade" | "Confianca" | "NaoClassificada";
+
+export interface Objecao {
+  tipo: TipoDeObjecao;
+  descricao: string;
+  trechoCitado: string;
+  mensagemId: string;
+  /** Detectada pela forma da conversa, nao pelo que foi dito. */
+  porComportamento: boolean;
+}
+
 export interface Dossie {
   id: string;
   leadId: string;
@@ -24,6 +37,7 @@ export interface Dossie {
   resumo: string | null;
   sinaisDeCompra: Sinal[];
   sinaisDeFuga: Sinal[];
+  objecoes: Objecao[];
   lacunas: string[];
 }
 

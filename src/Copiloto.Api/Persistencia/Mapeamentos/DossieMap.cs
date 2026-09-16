@@ -47,7 +47,21 @@ public class DossieMap : IEntityTypeConfiguration<Dossie>
             s.Property(x => x.Tipo).HasConversion<string>().IsRequired();
         });
 
+        // Mesma razao dos sinais: objeto de valor, sem id proprio, sempre lido
+        // junto do dossie.
+        e.OwnsMany(d => d.Objecoes, o =>
+        {
+            o.ToJson("objecoes");
+
+            o.Property(x => x.Tipo).HasConversion<string>().IsRequired();
+            o.Property(x => x.Descricao).IsRequired();
+            o.Property(x => x.TrechoCitado).IsRequired();
+            o.Property(x => x.MensagemId).IsRequired();
+            o.Property(x => x.PorComportamento).IsRequired();
+        });
+
         e.Navigation(d => d.Sinais).UsePropertyAccessMode(PropertyAccessMode.Field);
+        e.Navigation(d => d.Objecoes).UsePropertyAccessMode(PropertyAccessMode.Field);
 
         // A tela sempre pede o dossie MAIS RECENTE de um negocio.
         e.HasIndex(d => new { d.DealId, d.GeradoEm }).HasDatabaseName("ix_dossies_deal_gerado");

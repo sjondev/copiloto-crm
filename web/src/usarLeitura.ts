@@ -1,33 +1,49 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { buscarConversa, buscarDossie } from "./api";
+import { conectar } from "./tempoReal";
 import type { Dossie, Fala } from "./tipos";
+
+export type Canal = "ao-vivo" | "verificando";
 
 export interface Leitura {
   conversa: Fala[];
   dossie: Dossie | null;
-  /** Primeira carga ainda em andamento. Recarga silenciosa nao acende isto. */
   carregando: boolean;
+  /** A releitura comecou e o dossie novo ainda nao chegou. */
+  analisando: boolean;
+  canal: Canal;
   erro: string | null;
 }
 
-const INTERVALO_MS = 4000;
+/** Com tempo real de pe, o polling vira rede de seguranca e espaca. */
+const INTERVALO_AO_VIVO_MS = 30_000;
+const INTERVALO_SEM_TEMPO_REAL_MS = 4_000;
 
 /**
- * Busca conversa e dossie, e repete enquanto a aba estiver visivel.
+ * Busca conversa e dossie, por tempo real quando da e por polling quando nao da.
  *
- * O polling PARA quando a aba sai de foco. Vendedor deixa o CRM aberto o dia
- * inteiro numa aba de fundo; sem isso seriam milhares de requisicoes por dia
- * por pessoa para redesenhar uma tela que ninguem esta olhando — e cada uma
- * delas e uma consulta ao banco.
+ * O polling NAO e desligado quando o SignalR conecta, so espacado. A conexao
+ * pode estar "aberta" e o evento nao chegar — proxy que corta, mensagem perdida
+ * numa reconexao, backplane ausente com duas instancias (#70). Essas falhas nao
+ * se anunciam, e uma verificacao a cada trinta segundos as corrige sozinha.
  *
- * O tempo real e a #50. Este laco continua existindo depois dela: e a
- * degradacao quando o SignalR cai, e nao um rascunho a ser jogado fora.
+ * E ele PARA quando a aba sai de foco: vendedor deixa o CRM aberto o dia inteiro
+ * numa aba de fundo, e cada ciclo e uma consulta ao banco para redesenhar uma
+ * tela que ninguem esta olhando.
  */
 export function usarLeitura(leadId: string): Leitura {
   const [conversa, setConversa] = useState<Fala[]>([]);
   const [dossie, setDossie] = useState<Dossie | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [analisando, setAnalisando] = useState(false);
+  const [aoVivo, setAoVivo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  // O laco le o estado atual sem se reinscrever a cada mudanca: colocar `aoVivo`
+  // nas dependencias do efeito derrubaria e recriaria a conexao toda vez que ela
+  // mudasse de estado, que e exatamente o momento mais delicado.
+  const aoVivoRef = useRef(false);
+  aoVivoRef.current = aoVivo;
 
   useEffect(() => {
     if (!leadId) return;
@@ -47,12 +63,10 @@ export function usarLeitura(leadId: string): Leitura {
 
         setConversa(falas ?? []);
         setDossie(lido);
+        setAnalisando(false);
         setErro(null);
       } catch (e) {
-        // AbortError e desmontagem do componente, nao falha: mostrar erro ali
-        // acenderia aviso vermelho toda vez que alguem troca de lead.
         if (cancelado || (e instanceof DOMException && e.name === "AbortError")) return;
-
         setErro(e instanceof Error ? e.message : "nao foi possivel falar com a API");
       } finally {
         if (!cancelado) setCarregando(false);
@@ -60,23 +74,50 @@ export function usarLeitura(leadId: string): Leitura {
     }
 
     function agendar() {
-      // Fora de foco nao agenda nada. `visibilitychange` religa ao voltar.
-      if (document.visibilityState !== "visible") return;
+      if (cancelado || document.visibilityState !== "visible") return;
+
       timer = window.setTimeout(async () => {
-        // A aba pode ter saido de foco DURANTE a espera. Sem esta checagem o
-        // laco faria exatamente uma requisicao a mais toda vez que alguem troca
-        // de janela — e essa e a troca mais comum do dia.
         if (document.visibilityState === "visible") await buscar();
         agendar();
-      }, INTERVALO_MS);
+      }, aoVivoRef.current ? INTERVALO_AO_VIVO_MS : INTERVALO_SEM_TEMPO_REAL_MS);
     }
 
     function aoVoltarParaAba() {
       if (document.visibilityState !== "visible") return;
-      // Buscar na hora: quem volta para a aba quer o estado de AGORA, nao o de
-      // quatro segundos a frente.
+      window.clearTimeout(timer);
       void buscar().then(agendar);
     }
+
+    const desconectar = conectar(leadId, {
+      aoAtualizar: (novo) => {
+        if (cancelado) return;
+
+        setAnalisando(false);
+        // `null` significa que a leitura degradou: mantem o dossie que estava na
+        // tela em vez de apaga-lo. Dado levemente velho e melhor que tela vazia
+        // no meio de uma venda (#30).
+        if (novo !== null) setDossie(novo);
+
+        // A conversa nao vem no evento: o dossie mudou porque uma fala nova
+        // chegou, e a tela precisa das duas coisas.
+        void buscarConversa(leadId, controle.signal)
+          .then((falas) => { if (!cancelado) setConversa(falas ?? []); })
+          .catch(() => {});
+      },
+      aoAnalisar: () => { if (!cancelado) setAnalisando(true); },
+      aoMudarEstado: (conectado) => {
+        if (cancelado) return;
+
+        setAoVivo(conectado);
+        // Perdeu o tempo real: reagenda AGORA no ritmo apertado, sem esperar o
+        // ciclo lento terminar. Sem isso a tela ficaria ate trinta segundos
+        // parada justamente quando deixou de receber eventos.
+        if (!conectado) {
+          window.clearTimeout(timer);
+          agendar();
+        }
+      },
+    });
 
     void buscar().then(agendar);
     document.addEventListener("visibilitychange", aoVoltarParaAba);
@@ -86,8 +127,16 @@ export function usarLeitura(leadId: string): Leitura {
       controle.abort();
       window.clearTimeout(timer);
       document.removeEventListener("visibilitychange", aoVoltarParaAba);
+      desconectar();
     };
   }, [leadId]);
 
-  return { conversa, dossie, carregando, erro };
+  return {
+    conversa,
+    dossie,
+    carregando,
+    analisando,
+    canal: aoVivo ? "ao-vivo" : "verificando",
+    erro,
+  };
 }

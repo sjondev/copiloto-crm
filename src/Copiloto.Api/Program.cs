@@ -85,6 +85,22 @@ builder.Services.AddSingleton<Triador>();
 // O agente A1 (#13). A camada C0 vem de ARQUIVO e nao de string em codigo:
 // ajustar o que o agente sabe e a operacao mais frequente depois que o produto
 // esta no ar, e em codigo cada ajuste vira deploy.
+// O preco por modelo, para o ledger saber quanto custou (#1).
+builder.Services.AddSingleton(_ => new PrecoDoModelo(
+    TabelaDeModelos.Carregar(builder.Configuration)));
+
+// O A5 por bloco (#189). Mesmo desenho do A1: as instrucoes vem de ARQUIVO, e
+// nao de string em codigo — ajustar o que o agente sabe e a operacao mais
+// frequente depois que o produto esta no ar.
+builder.Services.AddSingleton(sp => new AgenteDePlano(
+    sp.GetRequiredService<CascataDeModelos>(),
+    File.ReadAllText(Path.Combine(
+        builder.Configuration["PROMPTS_DIR"] is { Length: > 0 } dir
+            ? dir
+            : Path.Combine(builder.Environment.ContentRootPath, "..", "..", "prompts"),
+        "a5-plano.md")),
+    sp.GetRequiredService<ILogger<AgenteDePlano>>()));
+
 builder.Services.AddSingleton(sp => new AgenteDeLeitura(
     sp.GetRequiredService<CascataDeModelos>(),
     sp.GetRequiredService<MontadorDeContexto>(),

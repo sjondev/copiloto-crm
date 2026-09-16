@@ -444,3 +444,25 @@ body {
   border-left: 2px solid var(--realce, #2b5cff);
   padding-left: 0.5rem;
 }
+
+/* As ações de sugestão (#189). Discretas: o botão é opcional, e a tela não insiste. */
+.plano__acoes { display: flex; gap: 0.7rem; align-items: center; }
+
+.plano__sugerir,
+.plano__sugestao button {
+  font: inherit;
+  font-size: 0.72rem;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.plano__sugerir:hover,
+.plano__sugestao button:hover { opacity: 1; }
+.plano__sugerir:disabled { opacity: 0.3; cursor: default; }
+
+.plano__sugestao { display: flex; flex-direction: column; gap: 0.4rem; }

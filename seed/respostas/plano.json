@@ -1,0 +1,14 @@
+{
+  "_comentario": "A5 por bloco (#189). O provedor fake responde de ARQUIVO e e' deterministico por decisao: ele guarda os quatro blocos porque a suite e a demo pedem um de cada vez, e uma frase so faria os quatro campos mostrarem o mesmo texto. Modelo de verdade recebe UM bloco e devolve {\"sugestao\": \"...\"}.",
+  "tarefa": "Plano",
+  "tokensEntrada": 1400,
+  "tokensSaida": 60,
+  "resposta": {
+    "sugestoes": {
+      "Objetivo": "Sair desta conversa com a amostra combinada e a data de entrega acertada.",
+      "PrecisoDescobrir": "Quanto café ele usa por mês — sem isso não dá para saber se o preço por kg faz sentido para ele.",
+      "ObjecaoProvavel": "Preço: ele perguntou o valor antes de falar de qualquer outra coisa, e ainda não comparou com o que paga hoje.",
+      "ProximoPasso": "Combinar o envio da amostra e marcar o retorno para depois que ele testar."
+    }
+  }
+}

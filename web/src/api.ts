@@ -85,3 +85,32 @@ export async function escreverBloco(leadId: string, bloco: string, texto: string
 
   return (await resposta.json()) as PlanoDoLead;
 }
+
+/** As tres acoes de sugestao de um bloco (#189). Todas devolvem o plano inteiro. */
+async function acaoNoBloco(
+  leadId: string,
+  bloco: string,
+  caminho: string,
+  metodo: "POST" | "DELETE",
+) {
+  const token = tokenGuardado();
+
+  const resposta = await fetch(`/leads/${leadId}/plano/${bloco}/${caminho}`, {
+    method: metodo,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (resposta.status === 401 || resposta.status === 403) throw new SessaoExpirada();
+  if (!resposta.ok) throw new FalhaDeRede(resposta.status);
+
+  return (await resposta.json()) as PlanoDoLead;
+}
+
+export const sugerirBloco = (leadId: string, bloco: string) =>
+  acaoNoBloco(leadId, bloco, "sugerir", "POST");
+
+export const aceitarSugestao = (leadId: string, bloco: string) =>
+  acaoNoBloco(leadId, bloco, "aceitar", "POST");
+
+export const descartarSugestao = (leadId: string, bloco: string) =>
+  acaoNoBloco(leadId, bloco, "sugestao", "DELETE");

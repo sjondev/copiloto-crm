@@ -125,9 +125,23 @@ builder.Services.AddSingleton(sp => new GuardaDeReentrega(
 // Scoped e nao Singleton (#158): o resolvedor grava Lead, e gravar exige o
 // DbContext do escopo. Como singleton ele caia no LeadsEmMemoria do construtor,
 // e todo Lead criado sumia no restart sem erro nenhum aparecer.
-builder.Services.AddScoped(sp => new ResolvedorDeLead(
-    builder.Configuration["WHATSAPP_NUMERO_EMPRESA"] ?? "+55 11 3333-4444",
-    sp.GetRequiredService<IRepositorioDeLeads>()));
+//
+// A lista e separada por virgula porque a empresa conecta um aparelho por
+// vendedor (#175). `IsNullOrWhiteSpace` e nao `??`: a variavel declarada e
+// VAZIA no .env.example, e string vazia nao e null — o `??` nao dispara, e o
+// padrao nunca entra. Ja derrubou a subida em SEED_RESPOSTAS e PROMPTS_DIR.
+builder.Services.AddScoped(sp =>
+{
+    var configurados = builder.Configuration["WHATSAPP_NUMERO_EMPRESA"];
+    var numeros = string.IsNullOrWhiteSpace(configurados)
+        ? ["+55 11 3333-4444"]
+        : configurados.Split(',', StringSplitOptions.RemoveEmptyEntries
+                                  | StringSplitOptions.TrimEntries);
+
+    return new ResolvedorDeLead(
+        NumerosDaEmpresa.De(numeros),
+        sp.GetRequiredService<IRepositorioDeLeads>());
+});
 builder.Services.AddHostedService<ProcessadorDeMensagens>();
 
 builder.Services.AddScoped<Saude>();

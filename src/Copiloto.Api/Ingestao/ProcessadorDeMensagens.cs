@@ -131,7 +131,9 @@ public class ProcessadorDeMensagens : BackgroundService
             return;
         }
 
-        var lead = resolvedor.Resolver(doCliente, bruta.EnviadaEm);
+        // O dono do aparelho que recebeu a fala vira dono do lead novo (#175).
+        // Lead que ja tem dono nao muda de mao por causa do aparelho.
+        var lead = resolvedor.Resolver(doCliente, bruta.EnviadaEm, resolvedor.VendedorDaTroca(bruta));
         var autor = resolvedor.QuemFalou(Telefone.Normalizar(bruta.De)!);
 
         // A colecao vem junto porque `Registrar` mantem a ordem cronologica

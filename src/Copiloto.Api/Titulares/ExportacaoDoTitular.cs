@@ -131,7 +131,7 @@ public class ExportacaoDoTitular
             + "neste arquivo, e você pode contestar tanto o dado quanto a conclusão.",
         };
 
-        if (anotacoes.Any(a => a.Natureza.StartsWith("impressão")))
+        if (anotacoes.Any(a => a.Natureza.StartsWith("impressão", StringComparison.Ordinal)))
         {
             notas.Add(
                 "Algumas linhas da ficha são IMPRESSÕES de quem atendeu, e não fatos "

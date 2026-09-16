@@ -207,7 +207,7 @@ public class AgenteDeLeituraTeste
 
         var dossie = await Ler(ProvedorDoSeed(), conversa);
 
-        Assert.Contains(dossie!.Lacunas, l => l.StartsWith("1 audio nao foi transcrito"));
+        Assert.Contains(dossie!.Lacunas, l => l.StartsWith("1 audio nao foi transcrito", StringComparison.Ordinal));
     }
 
     [Fact]

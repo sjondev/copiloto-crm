@@ -90,7 +90,7 @@ public class AbordagemInicialTeste
                 Ramo: Anotacao.Fato("cafeteria de bairro"),
                 Momento: Anotacao.Fato("abriu a segunda loja em agosto", "Instagram")));
 
-        var angulos = Montar(ficha).Blocos.Where(b => !b.EhPergunta && b.Texto.StartsWith("Ângulo")).ToList();
+        var angulos = Montar(ficha).Blocos.Where(b => !b.EhPergunta && b.Texto.StartsWith("Ângulo", StringComparison.Ordinal)).ToList();
 
         Assert.Equal(2, angulos.Count);
         Assert.NotEqual(angulos[0].Ancora, angulos[1].Ancora);
@@ -103,7 +103,7 @@ public class AbordagemInicialTeste
         ficha.Atualizar(T0, empresa: new SobreAEmpresa(
             Momento: Anotacao.Fato("abriu a segunda loja em agosto", "Instagram")));
 
-        var angulo = Montar(ficha).Blocos.First(b => b.Texto.StartsWith("Ângulo"));
+        var angulo = Montar(ficha).Blocos.First(b => b.Texto.StartsWith("Ângulo", StringComparison.Ordinal));
 
         Assert.Contains("segunda loja", angulo.Texto);
         Assert.Contains("fato, Instagram", angulo.Ancora);
@@ -118,7 +118,7 @@ public class AbordagemInicialTeste
 
         var plano = Montar(ficha);
 
-        Assert.Single(plano.Blocos, b => b.Texto.StartsWith("Ângulo"));
+        Assert.Single(plano.Blocos, b => b.Texto.StartsWith("Ângulo", StringComparison.Ordinal));
         Assert.Contains(plano.Perguntas, p => p.Texto.Contains("segundo"));
     }
 
@@ -131,7 +131,7 @@ public class AbordagemInicialTeste
 
         var plano = Montar(ficha);
 
-        var porQue = plano.Blocos.First(b => b.Texto.StartsWith("Por que agora"));
+        var porQue = plano.Blocos.First(b => b.Texto.StartsWith("Por que agora", StringComparison.Ordinal));
         Assert.False(porQue.EhPergunta);
         Assert.Contains("segunda loja", porQue.Texto);
     }
@@ -156,7 +156,7 @@ public class AbordagemInicialTeste
         ficha.Atualizar(T0, empresa: new SobreAEmpresa(
             ComoChegou: Anotacao.Fato("respondeu um story no Instagram")));
 
-        var canal = Montar(ficha).Blocos.First(b => b.Texto.StartsWith("Canal"));
+        var canal = Montar(ficha).Blocos.First(b => b.Texto.StartsWith("Canal", StringComparison.Ordinal));
 
         Assert.False(canal.EhPergunta);
         Assert.Contains("Instagram", canal.Texto);

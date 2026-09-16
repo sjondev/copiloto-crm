@@ -131,7 +131,7 @@ public class ObjecaoVeladaTeste
 
         var encurtou = Assert.Single(
             PadraoDeConversa.Detectar(conversa, Inicio.AddMinutes(70)),
-            o => o.PorComportamento && o.Descricao.StartsWith("as respostas encurtaram"));
+            o => o.PorComportamento && o.Descricao.StartsWith("as respostas encurtaram", StringComparison.Ordinal));
 
         Assert.Equal("sei", encurtou.TrechoCitado);
     }
@@ -161,7 +161,7 @@ public class ObjecaoVeladaTeste
 
         Assert.DoesNotContain(
             PadraoDeConversa.Detectar(conversa, Inicio.AddMinutes(10)),
-            o => o.Descricao.StartsWith("as respostas encurtaram"));
+            o => o.Descricao.StartsWith("as respostas encurtaram", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -177,7 +177,7 @@ public class ObjecaoVeladaTeste
 
         var sumico = Assert.Single(
             PadraoDeConversa.Detectar(conversa, Inicio.AddDays(4)),
-            o => o.Descricao.StartsWith("sem responder ha"));
+            o => o.Descricao.StartsWith("sem responder ha", StringComparison.Ordinal));
 
         Assert.Equal("recebi, obrigado", sumico.TrechoCitado);
         Assert.True(sumico.PorComportamento);
@@ -194,7 +194,7 @@ public class ObjecaoVeladaTeste
 
         Assert.DoesNotContain(
             PadraoDeConversa.Detectar(conversa, Inicio.AddHours(6)),
-            o => o.Descricao.StartsWith("sem responder ha"));
+            o => o.Descricao.StartsWith("sem responder ha", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -215,7 +215,7 @@ public class ObjecaoVeladaTeste
 
         Assert.DoesNotContain(
             PadraoDeConversa.Detectar(conversa, Inicio.AddMinutes(10)),
-            o => o.Descricao.StartsWith("as respostas encurtaram"));
+            o => o.Descricao.StartsWith("as respostas encurtaram", StringComparison.Ordinal));
     }
 
     [Fact]

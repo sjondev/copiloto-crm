@@ -20,16 +20,16 @@ namespace Copiloto.Api.Persistencia.Mapeamentos;
 public class AnotacaoJson : JsonConverter<Anotacao>
 {
     /// <summary>A anotacao como ela esta no banco, antes de virar dominio.</summary>
-    private record Bruta(
+    private sealed record Bruta(
         string Valor,
         NaturezaDaInformacao Natureza,
         string? Fonte = null,
         DateTimeOffset? Quando = null);
 
     public override Anotacao? Read(
-        ref Utf8JsonReader reader, Type tipo, JsonSerializerOptions opcoes)
+        ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        var bruta = JsonSerializer.Deserialize<Bruta>(ref reader, SemEsteConversor(opcoes));
+        var bruta = JsonSerializer.Deserialize<Bruta>(ref reader, SemEsteConversor(options));
         if (bruta is null) return null;
 
         return bruta.Natureza == NaturezaDaInformacao.Fato
@@ -38,11 +38,11 @@ public class AnotacaoJson : JsonConverter<Anotacao>
     }
 
     public override void Write(
-        Utf8JsonWriter escritor, Anotacao anotacao, JsonSerializerOptions opcoes) =>
+        Utf8JsonWriter writer, Anotacao value, JsonSerializerOptions options) =>
         JsonSerializer.Serialize(
-            escritor,
-            new Bruta(anotacao.Valor, anotacao.Natureza, anotacao.Fonte, anotacao.Quando),
-            SemEsteConversor(opcoes));
+            writer,
+            new Bruta(value.Valor, value.Natureza, value.Fonte, value.Quando),
+            SemEsteConversor(options));
 
     /// <summary>
     /// `Bruta` e um record comum, mas serializa-lo com as mesmas opcoes traria

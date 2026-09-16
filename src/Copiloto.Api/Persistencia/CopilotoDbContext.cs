@@ -42,9 +42,9 @@ public class CopilotoDbContext : DbContext
     /// <summary>Trechos de conversa vetorizados, para recuperar por semelhanca (#60).</summary>
     public DbSet<Precedente> Precedentes => Set<Precedente>();
 
-    protected override void OnModelCreating(ModelBuilder b)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        b.ApplyConfigurationsFromAssembly(typeof(CopilotoDbContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CopilotoDbContext).Assembly);
 
         // `vector` e tipo de coluna que so o Postgres tem, e o modelo inteiro e
         // conferido em SQLite na memoria (#103) para a suite rodar offline. As
@@ -57,13 +57,13 @@ public class CopilotoDbContext : DbContext
         // vira cobertura que sumiu sem aviso.
         if (!Database.IsNpgsql())
         {
-            b.Ignore<Precedente>();
+            modelBuilder.Ignore<Precedente>();
             return;
         }
 
         // A extensao entra pela MIGRATION, e nao por um comando solto: banco
         // novo sem `vector` habilitado quebra na primeira consulta, e o erro
         // aparece longe de quem esqueceu de rodar o comando (#60).
-        b.HasPostgresExtension("vector");
+        modelBuilder.HasPostgresExtension("vector");
     }
 }

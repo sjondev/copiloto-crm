@@ -19,7 +19,7 @@ public class AncoragemMcpTeste
     /// Ferramenta que responde o que o teste mandar. `Nada` por padrao: o
     /// caminho sem dado e' o mais importante daqui, entao ele e' o default.
     /// </summary>
-    private class FerramentaCombinada : IFerramentasDeAncoragem
+    private sealed class FerramentaCombinada : IFerramentasDeAncoragem
     {
         public Achado Estoque { get; init; } = Achado.Nada;
         public Achado Preco { get; init; } = Achado.Nada;

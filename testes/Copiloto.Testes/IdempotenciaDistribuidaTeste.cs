@@ -155,7 +155,7 @@ public class IdempotenciaDistribuidaTeste : IDisposable
     // --- Com a fila e o worker de verdade ---
 
     /// <summary>Conta quantas vezes o worker disse que PROCESSOU.</summary>
-    private class LogEspiao : ILogger<ProcessadorDeMensagens>
+    private sealed class LogEspiao : ILogger<ProcessadorDeMensagens>
     {
         public int Processadas { get; private set; }
         public int Ignoradas { get; private set; }

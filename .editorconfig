@@ -193,6 +193,24 @@ dotnet_diagnostic.CA1848.severity = suggestion
 # O preco de obedecer e um `if (_log.IsEnabled(...))` em volta de cada chamada —
 # tres linhas de ceremonia para esconder a unica linha que interessa.
 dotnet_diagnostic.CA1873.severity = suggestion
+# Mesma familia das duas de cima. CA1859 quer trocar `IReadOnlyList<T>` por
+# `List<T>` em membro privado para poupar despacho de interface. Nesses quatro
+# casos o tipo da assinatura e INTENCAO — `IReadOnlyList` diz "nao mexa nisto" a
+# quem le —, e o ganho nunca foi medido. Vira `error` no dia em que a #54 mostrar
+# esses metodos no perfil, e nao antes.
+dotnet_diagnostic.CA1859.severity = suggestion
+
+# --- Convencao deste repositorio, e nao descuido ---
+#
+# As regras abaixo mandam desfazer decisao que esta escrita e defendida em outro
+# lugar. Gate que manda desobedecer o CLAUDE.md e gate que ensina a contornar
+# gate — e a partir dai ele nao mede mais nada.
+
+# CA1710 quer sufixo `Exception` em toda excecao. O repositorio escreve em
+# portugues por regra, e `ProvedorForaDoAr` diz o que aconteceu melhor que
+# `ProvedorForaDoArException` — o sufixo em ingles grudado num nome em portugues
+# nao e consistencia, e meia traducao.
+dotnet_diagnostic.CA1710.severity = none
 
 # --- Codigo que a ferramenta escreveu ---
 #
@@ -228,3 +246,39 @@ dotnet_diagnostic.CA1816.severity = none
 # economiza nao aparece em lugar nenhum, e o campo estatico levaria o dado de
 # entrada para longe da asercao que o usa.
 dotnet_diagnostic.CA1861.severity = none
+
+# CA1001 quer que quem tem campo descartavel implemente IDisposable. As classes
+# que ela acusa implementam `IAsyncLifetime`, do xUnit, e descartam no
+# `DisposeAsync` — o analisador nao conhece esse contrato e enxerga o campo sem
+# a limpeza que existe logo abaixo.
+dotnet_diagnostic.CA1001.severity = none
+
+[src/Copiloto.Api/Infra/*.cs]
+
+# CA1711 quer que nada termine em `Queue`, porque no BCL o sufixo pertence a
+# `System.Collections.Queue`. Aqui `IQueue` e `ChannelQueue` sao a fila que o
+# CLAUDE.md nomeia como abstracao consciente da #66, e o nome e o que faz a
+# troca por RabbitMQ ser lida como troca de implementacao. Obedecer custaria
+# renomear uma decisao documentada para agradar uma colecao de 2002.
+dotnet_diagnostic.CA1711.severity = none
+
+# CA1000 desaconselha membro estatico em tipo generico porque quem chama precisa
+# dizer o argumento de tipo. E o caso da fabrica do `RabbitMqQueue<T>`, e dizer
+# o tipo ali e exatamente o que se quer ler na chamada.
+dotnet_diagnostic.CA1000.severity = none
+
+[src/Copiloto.Api/Mcp/*.cs]
+
+# CA1707 quer tirar o `_` de `lead_id`. Esse nome nao e C#: e o parametro que vai
+# na FIACAO do MCP, lido pelo modelo do outro lado, e snake_case e a convencao
+# de la. Renomear para agradar o analisador quebraria o contrato com quem chama
+# a ferramenta — e o modelo nao tem como saber que o nome mudou.
+dotnet_diagnostic.CA1707.severity = none
+
+[src/Copiloto.Api/Program.cs]
+
+# CA1050 quer tipo dentro de namespace. `Program.cs` e top-level program, e os
+# records de payload declarados no fim do arquivo ficam ao lado da rota que os
+# usa. Empurra-los para um namespace separaria o contrato do endpoint do
+# endpoint.
+dotnet_diagnostic.CA1050.severity = none

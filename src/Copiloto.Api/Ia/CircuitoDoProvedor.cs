@@ -33,7 +33,7 @@ public enum EstadoDoCircuito
 public class CircuitoDoProvedor
 {
     /// <summary>O que o estado compartilhado guarda sobre um provedor.</summary>
-    private record Registro(DateTimeOffset? AbertoAte);
+    private sealed record Registro(DateTimeOffset? AbertoAte);
 
     private static readonly JsonSerializerOptions Json = new();
 

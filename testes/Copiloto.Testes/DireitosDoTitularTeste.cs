@@ -43,7 +43,7 @@ public class DireitosDoTitularTeste : BancoEmMemoria
         return leadId;
     }
 
-    private ExportacaoDoTitular Exportador(CopilotoDbContext ctx) =>
+    private static ExportacaoDoTitular Exportador(CopilotoDbContext ctx) =>
         new(ctx, ["Provedor de modelo: nenhum (MODEL_PROVIDER=fake)"]);
 
     // --- Confirmacao e acesso ---
@@ -84,7 +84,7 @@ public class DireitosDoTitularTeste : BancoEmMemoria
         var dados = await Exportador(ctx).Exportar(leadId, default);
 
         Assert.Contains(dados!.FichaDoCliente, a => a.Natureza == "fato" && a.Fonte == "o cliente disse");
-        Assert.Contains(dados.FichaDoCliente, a => a.Natureza.StartsWith("impressão"));
+        Assert.Contains(dados.FichaDoCliente, a => a.Natureza.StartsWith("impressão", StringComparison.Ordinal));
         Assert.Contains(dados.Observacoes, o => o.Contains("IMPRESSÕES"));
     }
 

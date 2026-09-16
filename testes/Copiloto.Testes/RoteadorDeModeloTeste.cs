@@ -64,7 +64,7 @@ public class RoteadorDeModeloTeste
         Assert.Equal("mini", d!.Modelo);
         Assert.Equal("provedor-a", d.Provedor);
         Assert.Contains("mais barato", d.Motivo);
-        Assert.Contains(d.Descartados, x => x.StartsWith("medio"));
+        Assert.Contains(d.Descartados, x => x.StartsWith("medio", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public class RoteadorDeModeloTeste
         var d = Router(p => p == "provedor-a").Escolher(Tarefa.Conselho);
 
         Assert.Equal("medio", d!.Modelo);
-        Assert.Contains(d.Descartados, x => x.StartsWith("forte") && x.Contains("circuito"));
+        Assert.Contains(d.Descartados, x => x.StartsWith("forte", StringComparison.Ordinal) && x.Contains("circuito"));
     }
 
     [Fact]

@@ -37,7 +37,7 @@ public class VigiaNoBancoTeste : IDisposable
     private static JobDoVigia Job() => new(new EscopoFalso(), NullLogger<JobDoVigia>.Instance);
 
     /// <summary>O job so usa a fabrica no laco do timer; a varredura recebe o contexto.</summary>
-    private class EscopoFalso : IServiceScopeFactory
+    private sealed class EscopoFalso : IServiceScopeFactory
     {
         public IServiceScope CreateScope() => throw new NotSupportedException(
             "A varredura do teste recebe o DbContext direto, sem passar pelo laco.");

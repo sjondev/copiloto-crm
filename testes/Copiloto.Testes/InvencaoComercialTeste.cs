@@ -19,7 +19,7 @@ namespace Copiloto.Testes;
 /// </summary>
 public class InvencaoComercialTeste
 {
-    private record Caso(string Nome, string PorQueECaro, JsonElement RespostaDoModelo);
+    private sealed record Caso(string Nome, string PorQueECaro, JsonElement RespostaDoModelo);
 
     private static List<Caso> Casos()
     {
@@ -153,6 +153,6 @@ public class InvencaoComercialTeste
         var plano = LeitorDePlano.Ler("{\"blocos\": [{\"tecn", new Playbook(Guid.NewGuid(), "padrao"));
 
         Assert.Empty(plano.Blocos);
-        Assert.Contains(plano.Recusados, r => r.Motivo.StartsWith("resposta ilegivel"));
+        Assert.Contains(plano.Recusados, r => r.Motivo.StartsWith("resposta ilegivel", StringComparison.Ordinal));
     }
 }

@@ -115,7 +115,7 @@ public class MontadorDeContextoTeste
             .Montar(Identidade, "", "", ConversaDeTresMeses(50));
 
         Assert.Contains("omitidas por orcamento de contexto", contexto.Texto);
-        Assert.Contains(contexto.Cortes, c => c.StartsWith("C3 conversa cortada"));
+        Assert.Contains(contexto.Cortes, c => c.StartsWith("C3 conversa cortada", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class MontadorDeContextoTeste
             .Montar(Identidade, playbook, "", []);
 
         Assert.DoesNotContain("regra 0 da empresa", contexto.Texto);
-        Assert.Contains(contexto.Cortes, c => c.StartsWith("C1 playbook fora"));
+        Assert.Contains(contexto.Cortes, c => c.StartsWith("C1 playbook fora", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -161,7 +161,7 @@ public class MontadorDeContextoTeste
 
         Assert.Contains("Lead: padaria do centro", contexto.Texto);
         Assert.DoesNotContain("observacao acessoria 299", contexto.Texto);
-        Assert.Contains(contexto.Cortes, c => c.StartsWith("C2 ficha cortada"));
+        Assert.Contains(contexto.Cortes, c => c.StartsWith("C2 ficha cortada", StringComparison.Ordinal));
     }
 
     [Fact]

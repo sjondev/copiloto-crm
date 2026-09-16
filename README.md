@@ -90,6 +90,11 @@ configurado** — o teste mede esta aplicação, não a latência da API de um f
 Máquina: i7-1355U (12 threads), 16 GB, .NET 9.0.203, Linux. **RPS sem máquina não compara
 com nada**, e é por isso que ela está aqui.
 
+> **Os números de `/saude` são de antes da #72.** Naquela medição o endpoint devolvia
+> `{"ok":true}`; hoje ele consulta cada dependência e devolve um relatório, então não dá
+> para comparar as duas coisas. Os números do webhook seguem válidos — é ele que recebe
+> tráfego, e o caminho dele não mudou.
+
 O webhook sustenta **p99 de 9 ms com 100 conexões**, bem abaixo do limite de 100 ms que a
 issue pedia. Nenhum erro, nenhum timeout e nenhum não-2xx em 1,19 milhão de requisições: a
 fila absorveu tudo sem precisar recusar.

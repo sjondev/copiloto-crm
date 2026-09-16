@@ -36,6 +36,37 @@ public class ResolvedorSobreBancoTeste : BancoEmMemoria
         }
     }
 
+    /// <summary>
+    /// O cliente que troca de chip (#177), atravessando o banco.
+    ///
+    /// A busca por numero adicional le uma COLECAO, e nao uma coluna comum — se
+    /// a traducao do EF nao funcionar, o teste em memoria passa e este reprova.
+    /// E' por isso que ele existe separado.
+    /// </summary>
+    [Fact]
+    public void O_cliente_que_trocou_de_numero_continua_sendo_o_mesmo_lead()
+    {
+        Guid id;
+        using (var ctx = NovoContexto())
+        {
+            var r = new ResolvedorDeLead(Empresa, new LeadsNoBanco(ctx));
+            var lead = r.Resolver(Telefone.Normalizar("11 98765-4321")!, Agora);
+            lead.TambemFalaPor("11 97777-1111");
+
+            ctx.SaveChanges();
+            id = lead.Id;
+        }
+
+        using (var ctx = NovoContexto())
+        {
+            var r = new ResolvedorDeLead(Empresa, new LeadsNoBanco(ctx));
+            var pelaLinhaNova = r.Resolver(Telefone.Normalizar("11 97777-1111")!, Agora);
+
+            Assert.Equal(id, pelaLinhaNova.Id);
+            Assert.Equal(1, ctx.Leads.Count());
+        }
+    }
+
     [Fact]
     public void O_numero_sem_o_nono_digito_acha_o_lead_que_ja_esta_no_banco()
     {

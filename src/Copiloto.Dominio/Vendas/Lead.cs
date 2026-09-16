@@ -10,6 +10,11 @@ namespace Copiloto.Dominio.Vendas;
 /// </summary>
 public class Lead
 {
+    /// <summary>De onde veio o nome quando ele chega do provedor.</summary>
+    public const string FontePerfilDoWhatsApp = "perfil do WhatsApp";
+
+    private readonly List<string> _outrosNumeros = new();
+
     public Lead(Guid id, string telefone, DateTimeOffset criadoEm, string? nome = null)
     {
         if (id == Guid.Empty) throw new ArgumentException("Lead sem id.", nameof(id));
@@ -17,13 +22,60 @@ public class Lead
             throw new ArgumentException("Lead sem telefone nao tem como ser contatado.", nameof(telefone));
 
         Id = id;
-        Telefone = telefone.Trim();
+
+        // NORMALIZA aqui, e nao no chamador. A regra ja estava escrita no
+        // ResolvedorDeLead — "a resolucao e por telefone normalizado, nunca pela
+        // string que chegou" —, mas vivia na convencao de quem chama: bastava um
+        // caminho novo guardar "(11) 98765-4321" para o mesmo cliente virar dois
+        // leads, e o defeito so apareceria como historico partido no meio.
+        Telefone = Vendas.Telefone.Normalizar(telefone)?.E164
+            ?? throw new ArgumentException(
+                $"'{telefone}' nao e um telefone brasileiro valido, e e por ele que "
+                + "esta pessoa e reconhecida.", nameof(telefone));
         CriadoEm = criadoEm;
         Nome = string.IsNullOrWhiteSpace(nome) ? null : nome.Trim();
     }
 
     public Guid Id { get; }
+
+    /// <summary>
+    /// O numero por onde a pessoa apareceu primeiro. Continua sendo a
+    /// identidade: e nele que esta o indice unico, e e a ele que a conversa que
+    /// ja existe esta amarrada.
+    /// </summary>
     public string Telefone { get; }
+
+    /// <summary>
+    /// Todos os numeros por onde esta pessoa fala (#177).
+    ///
+    /// O WhatsApp nao tem cadastro, entao a identidade pratica e o telefone — e
+    /// quem troca de chip virava um lead novo, com a ficha num e o dossie no
+    /// outro. O antigo NUNCA sai: some-lo trocaria dois leads partidos por um
+    /// lead com historico faltando.
+    /// </summary>
+    public IReadOnlyList<string> Numeros => [Telefone, .. _outrosNumeros];
+
+    /// <summary>Registra mais um numero desta mesma pessoa.</summary>
+    public void TambemFalaPor(string telefone)
+    {
+        var normalizado = Vendas.Telefone.Normalizar(telefone)
+            ?? throw new ArgumentException(
+                $"'{telefone}' nao e um telefone brasileiro valido, e numero torto aqui "
+                + "faria a pessoa deixar de ser reconhecida por ele.", nameof(telefone));
+
+        if (FalaPor(normalizado.E164)) return;
+
+        _outrosNumeros.Add(normalizado.E164);
+    }
+
+    /// <summary>Se esta pessoa e alcancavel por aquele numero, em qualquer formato.</summary>
+    public bool FalaPor(string telefone)
+    {
+        var normalizado = Vendas.Telefone.Normalizar(telefone);
+        if (normalizado is null) return false;
+
+        return Numeros.Contains(normalizado.E164, StringComparer.Ordinal);
+    }
 
     /// <summary>
     /// De que lado da mesa esta esta pessoa (#85).
@@ -87,11 +139,21 @@ public class Lead
 
     public void Liberar() => VendedorId = null;
 
+    /// <summary>
+    /// De onde o nome saiu. O que chega do WhatsApp foi digitado pelo PROPRIO
+    /// cliente no perfil dele, e nao apurado pelo vendedor — a #88 separou fato
+    /// de impressao na ficha pelo mesmo motivo: sem procedencia, tudo entra no
+    /// contexto com o mesmo peso.
+    /// </summary>
+    public string? NomeFonte { get; private set; }
+
     /// <summary>Nome descoberto no meio da conversa, que e como ele costuma chegar.</summary>
-    public void Identificar(string nome)
+    public void Identificar(string nome, string? fonte = null)
     {
         if (string.IsNullOrWhiteSpace(nome)) return;
+
         Nome = nome.Trim();
+        NomeFonte = string.IsNullOrWhiteSpace(fonte) ? null : fonte.Trim();
     }
 
     /// <summary>

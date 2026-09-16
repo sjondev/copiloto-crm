@@ -27,7 +27,7 @@ public class LeadNoPostgresTeste : IAsyncLifetime
 {
     private static readonly DateTimeOffset T0 = new(2026, 9, 16, 10, 0, 0, TimeSpan.Zero);
 
-    private static string? Url => Environment.GetEnvironmentVariable("POSTGRES_URL");
+    private static string? Url => BancoPostgres.Cadeia();
 
     private CopilotoDbContext? _ctx;
 

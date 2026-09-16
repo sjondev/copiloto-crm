@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Entrar } from "./Entrar";
+import { Fila } from "./Fila";
 import { esquecer, tokenGuardado } from "./sessao";
 import { PainelDaConversa } from "./Conversa";
 import { PainelDoDossie } from "./Dossie";
@@ -82,7 +83,9 @@ function Copiloto({ aoSair }: { aoSair: () => void }) {
       </header>
 
       {!leadId ? (
-        <p className="aviso">Informe um lead para ver a conversa e a leitura.</p>
+        // Sem lead escolhido, a porta e a FILA — e nao um campo pedindo Guid
+        // (#174). O campo continua no cabecalho para quem ja tem o id na mao.
+        <Fila aoEscolher={setLeadId} />
       ) : carregando ? (
         <p className="aviso">Carregando…</p>
       ) : (

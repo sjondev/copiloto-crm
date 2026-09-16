@@ -1,4 +1,4 @@
-import type { Dossie, Fala } from "./tipos";
+import type { Dossie, Fala, LinhaDaFila } from "./tipos";
 import { tokenGuardado } from "./sessao";
 
 /**
@@ -48,3 +48,12 @@ export const buscarDossie = (leadId: string, sinal: AbortSignal) =>
 
 export const buscarConversa = (leadId: string, sinal: AbortSignal) =>
   buscar<Fala[]>(`/leads/${leadId}/conversa`, sinal);
+
+/**
+ * A fila de atendimento (#174).
+ *
+ * Lista vazia e resposta legitima — banco novo, ou vendedor sem carteira —,
+ * entao o `?? []` evita a tela tratar "ninguem para atender" como falha.
+ */
+export const buscarFila = async (sinal: AbortSignal) =>
+  (await buscar<LinhaDaFila[]>("/leads", sinal)) ?? [];

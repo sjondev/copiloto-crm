@@ -23,7 +23,7 @@ public class PgvectorTeste : IAsyncLifetime
 {
     private static readonly DateTimeOffset T0 = new(2026, 9, 4, 10, 0, 0, TimeSpan.Zero);
 
-    private static string? Url => Environment.GetEnvironmentVariable("POSTGRES_URL");
+    private static string? Url => BancoPostgres.Cadeia();
 
     private readonly FakeEmbeddingProvider _embedder = new();
     private CopilotoDbContext? _ctx;

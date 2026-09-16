@@ -31,6 +31,10 @@ builder.Services.AddSingleton(_ => FonteDeConversa.Escolher(builder.Configuratio
 builder.Services.AddSingleton(_ => ProvedorDeModelo.Escolher(
     builder.Configuration, builder.Environment.ContentRootPath));
 
+// A cascata amarra router e provedor (#30). Ela nao levanta excecao quando se
+// esgota: erro na tela no meio de uma venda e pior que dado desatualizado.
+builder.Services.AddSingleton<CascataDeModelos>();
+
 // O numero da empresa e o que decide quem falou em cada mensagem, entao ele e
 // configuracao e nao constante: cada instalacao tem o seu.
 builder.Services.AddSingleton(_ => new ResolvedorDeLead(

@@ -39,6 +39,32 @@ public static class GuardaDeSaida
     ];
 
     /// <summary>
+    /// Afirmacoes que so o dado do CRM sustenta (#16).
+    ///
+    /// Conferidas apenas em bloco que AFIRMA sem ancora. A tatica sozinha nao
+    /// pega estes casos: "o kg sai a R$ 78" e "suas vendas vao dobrar" passam
+    /// como Livre, que nao exige ancora nenhuma — e sao exatamente as duas
+    /// invencoes mais caras, porque saem da boca do vendedor como se fossem
+    /// compromisso da empresa.
+    /// </summary>
+    private static readonly (string Motivo, Regex Padrao)[] AfirmacoesQuePrecisamDeDado =
+    [
+        ("afirma preco sem dado do CRM",
+            new Regex(@"R\$\s*\d|\b\d+(?:[.,]\d+)?\s*reais\b",
+                      RegexOptions.Compiled | RegexOptions.IgnoreCase)),
+        ("afirma quantidade sem dado do CRM",
+            new Regex(@"\b(?:restam?|sobrou|sobraram|s[oó]\s+(?:tem|resta[m]?))\s+\d"
+                      + @"|\b\d+\s*(?:unidades?|clientes?|pessoas|empresas|pacotes?|kilos?|quilos?)\b"
+                      + @"|\bmais\s+de\s+\d+\s*(?:mil\s+)?(?:clientes?|empresas|pessoas)\b",
+                      RegexOptions.Compiled | RegexOptions.IgnoreCase)),
+        ("promete resultado futuro",
+            new Regex(@"\b(?:vai|v[aã]o|ir[aá]|ir[aã]o)\s+(?:dobrar|triplicar|aumentar|crescer|subir)\b"
+                      + @"|\bgarant(?:o|imos|ido|ida)\b"
+                      + @"|\bcom\s+certeza\s+(?:vai|v[aã]o|voc[eê])\b",
+                      RegexOptions.Compiled | RegexOptions.IgnoreCase)),
+    ];
+
+    /// <summary>
     /// Filtra os blocos, devolvendo os que passam e os que foram barrados.
     ///
     /// Barrar em vez de corrigir: um bloco reescrito pelo guarda seria texto que
@@ -79,6 +105,16 @@ public static class GuardaDeSaida
         // nada ao cliente, e barra-la calaria justamente a saida segura que a
         // regra de ancoragem oferece.
         if (bloco.EhPergunta) return null;
+
+        // Daqui para baixo o bloco AFIRMA. Sem ancora, numero e promessa de
+        // resultado nao passam nem em tatica Livre: o enum diz de que TIPO e a
+        // persuasao, nao se o que ela afirma tem lastro.
+        if (string.IsNullOrWhiteSpace(bloco.Ancora))
+        {
+            foreach (var (motivo, padrao) in AfirmacoesQuePrecisamDeDado)
+                if (padrao.IsMatch(bloco.Texto))
+                    return motivo;
+        }
 
         // Sugestao ancorada com ancora vazia nao deveria existir (o construtor
         // recusa), mas se um caminho novo aparecer, ela nao passa por aqui.

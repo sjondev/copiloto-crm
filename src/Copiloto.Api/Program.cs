@@ -5,6 +5,7 @@ using Copiloto.Api.Ingestao;
 using Copiloto.Api.Leitura;
 using Copiloto.Api.TempoReal;
 using Copiloto.Api.Persistencia;
+using Copiloto.Api.Vigia;
 using Copiloto.Dominio.Ia;
 using Microsoft.EntityFrameworkCore;
 
@@ -116,6 +117,9 @@ builder.Services.AddScoped(sp => new ResolvedorDeLead(
 builder.Services.AddHostedService<ProcessadorDeMensagens>();
 
 builder.Services.AddScoped<Saude>();
+// O Vigia roda pelo relogio, e nao por requisicao: negocio esquecido nao gera
+// evento nenhum — ele so fica parado (#53).
+builder.Services.AddHostedService<JobDoVigia>();
 
 var app = builder.Build();
 

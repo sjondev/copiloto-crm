@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Entrar } from "./Entrar";
+import { esquecer, tokenGuardado } from "./sessao";
 import { PainelDaConversa } from "./Conversa";
 import { PainelDoDossie } from "./Dossie";
 import { usarLeitura } from "./usarLeitura";
@@ -11,6 +13,17 @@ import { usarLeitura } from "./usarLeitura";
  * caixa de "enviar sugestao" nesta tela, e isso e decisao, nao falta de tempo.
  */
 export function App() {
+  // A credencial vem antes de tudo (#182). Sem ela as rotas de leitura
+  // respondem 401, e a tela mostraria "sem conexao com a API" para um problema
+  // que e de login — o vendedor tentaria recarregar para sempre.
+  const [token, setToken] = useState(() => tokenGuardado());
+
+  if (token === null) return <Entrar aoEntrar={setToken} />;
+
+  return <Copiloto aoSair={() => { esquecer(); setToken(null); }} />;
+}
+
+function Copiloto({ aoSair }: { aoSair: () => void }) {
   // Sem router e sem tela de lista ainda: o lead vem da URL, e a #12 e a #50
   // trazem navegacao. Campo na tela porque digitar um Guid na barra de
   // enderecos e pior que cola-lo num input.
@@ -57,7 +70,15 @@ export function App() {
           vendedor esta lendo por causa de uma requisicao que falhou — e ele
           esta no meio de uma venda.
         */}
-        {erro && <span className="cabecalho__erro" role="status">sem conexao com a API — {erro}</span>}
+        {erro === "a sessao expirou" ? (
+          <span className="cabecalho__erro" role="status">
+            sessao expirada — <button type="button" className="cabecalho__sair" onClick={aoSair}>entrar de novo</button>
+          </span>
+        ) : erro ? (
+          <span className="cabecalho__erro" role="status">sem conexao com a API — {erro}</span>
+        ) : null}
+
+        <button type="button" className="cabecalho__sair" onClick={aoSair}>sair</button>
       </header>
 
       {!leadId ? (

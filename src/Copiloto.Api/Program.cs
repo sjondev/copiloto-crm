@@ -27,8 +27,14 @@ builder.Services.AddSignalR();
 
 // Estado e fila vem da variavel de ambiente, com `inmemory` como padrao (#66).
 // Sem .env, sem Redis e sem RabbitMQ, a aplicacao sobe inteira.
-builder.Services.AddSingleton(_ => Backends.Fila<MensagemRecebida>(builder.Configuration));
-builder.Services.AddSingleton(_ => Backends.Estado(builder.Configuration));
+builder.Services.AddSingleton<IQueue<MensagemRecebida>>(
+    _ => Backends.Fila<MensagemRecebida>(builder.Configuration));
+// O estado distribuido entra embrulhado na degradacao (#72): Redis fora nao
+// pode derrubar o atendimento, mas cair para memoria em silencio esconderia que
+// idempotencia, rate limit e circuito passaram a valer so nesta instancia.
+builder.Services.AddSingleton<IDistributedState>(sp => new EstadoComDegradacao(
+    Backends.Estado(builder.Configuration),
+    sp.GetRequiredService<ILogger<EstadoComDegradacao>>()));
 
 // A fonte de conversa e escolha de configuracao, nao de codigo (#17): o
 // nucleo daqui para dentro so conhece MensagemRecebida.
@@ -109,9 +115,25 @@ builder.Services.AddScoped(sp => new ResolvedorDeLead(
     sp.GetRequiredService<IRepositorioDeLeads>()));
 builder.Services.AddHostedService<ProcessadorDeMensagens>();
 
+builder.Services.AddScoped<Saude>();
+
 var app = builder.Build();
 
-app.MapGet("/saude", () => Results.Ok(new { ok = true }));
+// Cada dependencia separada, e nao um "ok" agregado: health check que responde
+// so verde ou vermelho manda o plantonista procurar do zero (#72).
+app.MapGet("/saude", async (Saude saude, CancellationToken ct) =>
+{
+    var relatorio = await saude.Agora(ct);
+
+    // 503 so quando o ESSENCIAL cai. Estado compartilhado fora degrada, e tirar
+    // do ar um sistema que ainda atende seria transformar perda de garantia em
+    // perda de atendimento.
+    return relatorio.Apta
+        ? Results.Ok(new { ok = true, degradada = relatorio.Degradada, relatorio.Dependencias })
+        : Results.Json(
+            new { ok = false, degradada = true, relatorio.Dependencias },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+});
 
 // As rotas que a tela chama (#161).
 app.MapearLeitura();

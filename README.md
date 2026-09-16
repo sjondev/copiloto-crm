@@ -185,7 +185,8 @@ docker compose up -d        # sobe só o Postgres
 
 dotnet build
 dotnet test
-dotnet run --project src/Copiloto.Api
+dotnet run --project src/Copiloto.Api     # API em :5000
+cd web && npm install && npm run dev      # front em :5173, com proxy para a API
 ```
 
 A solution tem três projetos, e a divisão é mecânica antes de ser estética:
@@ -194,7 +195,12 @@ A solution tem três projetos, e a divisão é mecânica antes de ser estética:
 src/Copiloto.Dominio     POCO puro — ZERO PackageReference, e há teste que confere
 src/Copiloto.Api         Minimal API: EF, SignalR, adaptadores, orquestração
 testes/Copiloto.Testes   xUnit
+web/                     React 19 + Vite + TypeScript — fora da solution .NET
 ```
+
+`web/` fica de fora de `src/` porque não é projeto MSBuild: `dotnet build` não o
+enxerga, e ele tem esteira própria no CI. São dois artefatos independentes, e
+encadeá-los faria um erro de CSS segurar o merge de uma correção de domínio.
 
 `Copiloto.Dominio` não tem pacote nenhum de propósito: sem `PackageReference` o
 projeto **não consegue** compilar um `[Table]` ou um `DbContext`. Numa pasta dentro

@@ -25,7 +25,6 @@ namespace Copiloto.Api.Persistencia.Migrations
             modelBuilder.Entity("Copiloto.Dominio.Conversas.Conversa", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("LeadId")
@@ -39,7 +38,6 @@ namespace Copiloto.Api.Persistencia.Migrations
             modelBuilder.Entity("Copiloto.Dominio.Conversas.Mensagem", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Autor")
@@ -50,12 +48,19 @@ namespace Copiloto.Api.Persistencia.Migrations
                     b.Property<Guid?>("ConversaId")
                         .HasColumnType("uuid");
 
+                    b.Property<TimeSpan?>("DuracaoDaMidia")
+                        .HasColumnType("interval");
+
                     b.Property<DateTimeOffset>("EnviadaEm")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Texto")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("TipoDeMidia")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -67,10 +72,40 @@ namespace Copiloto.Api.Persistencia.Migrations
                     b.ToTable("mensagens", (string)null);
                 });
 
+            modelBuilder.Entity("Copiloto.Dominio.Dossies.Dossie", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DealId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DirecaoLida")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("GeradoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.PrimitiveCollection<string[]>("Lacunas")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("TemperaturaLida")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DealId", "GeradoEm")
+                        .HasDatabaseName("ix_dossies_deal_gerado");
+
+                    b.ToTable("dossies", (string)null);
+                });
+
             modelBuilder.Entity("Copiloto.Dominio.Fichas.FichaCliente", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("AtualizadaEm")
@@ -99,7 +134,6 @@ namespace Copiloto.Api.Persistencia.Migrations
             modelBuilder.Entity("Copiloto.Dominio.Ia.AiInvocation", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("CustoEmReais")
@@ -127,7 +161,6 @@ namespace Copiloto.Api.Persistencia.Migrations
             modelBuilder.Entity("Copiloto.Dominio.Vendas.Deal", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("AbertoEm")
@@ -155,7 +188,6 @@ namespace Copiloto.Api.Persistencia.Migrations
             modelBuilder.Entity("Copiloto.Dominio.Vendas.Lead", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CriadoEm")
@@ -185,6 +217,88 @@ namespace Copiloto.Api.Persistencia.Migrations
                         .WithMany("Mensagens")
                         .HasForeignKey("ConversaId")
                         .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Copiloto.Dominio.Dossies.Dossie", b =>
+                {
+                    b.OwnsMany("Copiloto.Dominio.Dossies.Objecao", "Objecoes", b1 =>
+                        {
+                            b1.Property<Guid>("DossieId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("Descricao")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<Guid>("MensagemId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<bool>("PorComportamento")
+                                .HasColumnType("boolean");
+
+                            b1.Property<string>("Tipo")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<string>("TrechoCitado")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.HasKey("DossieId", "__synthesizedOrdinal");
+
+                            b1.ToTable("dossies");
+
+                            b1
+                                .ToJson("objecoes")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("DossieId");
+                        });
+
+                    b.OwnsMany("Copiloto.Dominio.Dossies.Sinal", "Sinais", b1 =>
+                        {
+                            b1.Property<Guid>("DossieId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("Descricao")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<Guid>("MensagemId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Tipo")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<string>("TrechoCitado")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.HasKey("DossieId", "__synthesizedOrdinal");
+
+                            b1.ToTable("dossies");
+
+                            b1
+                                .ToJson("sinais")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("DossieId");
+                        });
+
+                    b.Navigation("Objecoes");
+
+                    b.Navigation("Sinais");
                 });
 
             modelBuilder.Entity("Copiloto.Dominio.Fichas.FichaCliente", b =>

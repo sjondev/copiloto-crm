@@ -1,0 +1,91 @@
+import { useState } from "react";
+import { PainelDaConversa } from "./Conversa";
+import { PainelDoDossie } from "./Dossie";
+import { usarLeitura } from "./usarLeitura";
+
+/**
+ * A tela dividida (#164): a conversa a esquerda, o que lemos dela a direita.
+ *
+ * O layout carrega a tese do produto. O robo nao fala com o cliente — a esquerda
+ * e do vendedor e do cliente, e a direita e contexto para ele decidir. Nao ha
+ * caixa de "enviar sugestao" nesta tela, e isso e decisao, nao falta de tempo.
+ */
+export function App() {
+  // Sem router e sem tela de lista ainda: o lead vem da URL, e a #12 e a #50
+  // trazem navegacao. Campo na tela porque digitar um Guid na barra de
+  // enderecos e pior que cola-lo num input.
+  const [leadId, setLeadId] = useState(() =>
+    new URLSearchParams(window.location.search).get("lead") ?? ""
+  );
+
+  const { conversa, dossie, carregando, analisando, canal, erro } = usarLeitura(leadId);
+
+  return (
+    <div className="tela">
+      <header className="cabecalho">
+        <h1 className="cabecalho__marca">Copiloto</h1>
+
+        <label className="cabecalho__lead">
+          <span>lead</span>
+          <input
+            value={leadId}
+            onChange={(e) => setLeadId(e.target.value.trim())}
+            placeholder="cole o id do lead"
+            spellCheck={false}
+          />
+        </label>
+
+        {/*
+          O canal aparece SEMPRE, e nao so quando quebra. "verificando" nao e
+          aviso de erro: e o estado honesto de quem esta buscando de tempos em
+          tempos em vez de receber na hora — e o vendedor merece saber a
+          diferenca antes de confiar que a tela esta em dia.
+        */}
+        {leadId && (
+          <span className={`canal canal--${canal}`} title={
+            canal === "ao-vivo"
+              ? "recebendo a leitura assim que ela fica pronta"
+              : "sem tempo real: verificando a cada poucos segundos"
+          }>
+            {canal === "ao-vivo" ? "ao vivo" : "verificando"}
+          </span>
+        )}
+
+        {/*
+          O erro aparece como aviso e a tela CONTINUA mostrando o que ja tinha.
+          Trocar o conteudo por uma tela de erro apagaria a conversa que o
+          vendedor esta lendo por causa de uma requisicao que falhou — e ele
+          esta no meio de uma venda.
+        */}
+        {erro && <span className="cabecalho__erro" role="status">sem conexao com a API — {erro}</span>}
+      </header>
+
+      {!leadId ? (
+        <p className="aviso">Informe um lead para ver a conversa e a leitura.</p>
+      ) : carregando ? (
+        <p className="aviso">Carregando…</p>
+      ) : (
+        <main className="painel">
+          <section className="painel__lado painel__lado--conversa">
+            <h2 className="painel__titulo">Conversa</h2>
+            <PainelDaConversa falas={conversa} />
+          </section>
+
+          <section className="painel__lado painel__lado--dossie">
+            <h2 className="painel__titulo">
+              O que lemos
+              {/*
+                O intervalo entre a fala chegar e o dossie ficar pronto e visivel
+                a olho nu. Tela parada nesse intervalo parece tela quebrada: o
+                vendedor recarrega, nada acontece, e ele conclui que a ferramenta
+                nao funciona.
+              */}
+              {analisando && <span className="analisando" role="status">analisando…</span>}
+            </h2>
+            <PainelDoDossie dossie={dossie} />
+          </section>
+        </main>
+      )}
+    </div>
+  );
+}

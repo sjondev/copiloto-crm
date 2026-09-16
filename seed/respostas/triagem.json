@@ -1,0 +1,11 @@
+{
+  "_comentario": "A0, o triador (#37). Decide se a fala merece o modelo caro. A resposta e curta de proposito: triagem que devolve analise ja gastou o que devia economizar.",
+  "tarefa": "Triagem",
+  "tokensEntrada": 180,
+  "tokensSaida": 24,
+  "resposta": {
+    "vale_analisar": true,
+    "motivo": "pergunta de preco depois de duas trocas sobre o produto",
+    "confianca": 0.86
+  }
+}

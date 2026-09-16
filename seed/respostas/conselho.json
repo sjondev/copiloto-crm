@@ -1,0 +1,29 @@
+{
+  "_comentario": "A5, o plano de abordagem. Repare no bloco de escassez: nao existe dado de estoque no CRM, entao a tecnica NAO vira fala pronta — vira pergunta ao vendedor. Este arquivo e o exemplo de referencia da regra de ancoragem (#15, #16): sugerir 'restam 2 unidades' sem dado e publicidade enganosa.",
+  "tarefa": "Conselho",
+  "tokensEntrada": 2100,
+  "tokensSaida": 380,
+  "resposta": {
+    "blocos": [
+      {
+        "titulo": "Reconhecer o adiamento sem cobrar",
+        "tecnica": "ReducaoDeAtrito",
+        "ancorado_em": "vou pensar melhor e te falo",
+        "conselho": "Ele adiou depois do preco, nao antes. Vale confirmar o que ficou em aberto em vez de repetir a oferta."
+      },
+      {
+        "titulo": "Fechar a lacuna do consumo",
+        "tecnica": "PerguntaAberta",
+        "ancorado_em": "qual o valor do kg?",
+        "conselho": "Ele pergunta por kg sem dizer quanto consome. Saber isso muda a recomendacao de moagem e de tamanho."
+      },
+      {
+        "titulo": "Escassez",
+        "tecnica": "Escassez",
+        "ancorado_em": null,
+        "conselho": null,
+        "pergunta_ao_vendedor": "Esse lote esta mesmo acabando? Nao ha dado de estoque no CRM que sustente, e escassez inventada vira passivo para a empresa e queima voce com o cliente."
+      }
+    ]
+  }
+}

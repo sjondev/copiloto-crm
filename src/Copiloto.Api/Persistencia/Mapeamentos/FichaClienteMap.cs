@@ -14,6 +14,8 @@ public class FichaClienteMap : IEntityTypeConfiguration<FichaCliente>
     public void Configure(EntityTypeBuilder<FichaCliente> e)
     {
         e.ToTable("fichas_cliente");
+        // O id nasce no dominio, nunca no banco (#158). Ver ConversaMap.
+        e.Property(f => f.Id).ValueGeneratedNever();
         e.HasKey(f => f.Id);
         e.Property(f => f.LeadId).IsRequired();
         e.Property(f => f.CriadaEm).IsRequired();

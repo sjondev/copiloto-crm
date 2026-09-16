@@ -9,6 +9,8 @@ public class AiInvocationMap : IEntityTypeConfiguration<AiInvocation>
     public void Configure(EntityTypeBuilder<AiInvocation> e)
     {
         e.ToTable("ai_invocations");
+        // O id nasce no dominio, nunca no banco (#158). Ver ConversaMap.
+        e.Property(i => i.Id).ValueGeneratedNever();
         e.HasKey(i => i.Id);
         e.Property(i => i.Modelo).HasMaxLength(100).IsRequired();
         e.Property(i => i.CustoEmReais).HasColumnType("decimal(18,6)").IsRequired();

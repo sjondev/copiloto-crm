@@ -187,6 +187,7 @@ dotnet build
 dotnet test
 dotnet run --project src/Copiloto.Api     # API em :5000
 cd web && npm install && npm run dev      # front em :5173, com proxy para a API
+cd web && npm run storybook               # os estados da tela em :6006, sem backend
 ```
 
 A solution tem três projetos, e a divisão é mecânica antes de ser estética:
@@ -196,6 +197,7 @@ src/Copiloto.Dominio     POCO puro — ZERO PackageReference, e há teste que co
 src/Copiloto.Api         Minimal API: EF, SignalR, adaptadores, orquestração
 testes/Copiloto.Testes   xUnit
 web/                     React 19 + Vite + TypeScript — fora da solution .NET
+web/src/*.stories.tsx    Storybook: um story por ESTADO da tela, não por componente
 ```
 
 `web/` fica de fora de `src/` porque não é projeto MSBuild: `dotnet build` não o

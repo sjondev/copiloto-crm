@@ -75,6 +75,40 @@ Isto não é um wrapper de LLM. As peças que importam:
 | **PII Shield** | CPF, telefone e e-mail são mascarados antes de sair da rede. Teste falha se vazar. É **pseudonimização, não anonimização**: o texto mascarado continua sendo dado pessoal ([LGPD.md](docs/LGPD.md)). |
 | **Ledger + ROI** | Custo por invocação, ligado ao Deal. Responde quanto gastou **e quanto rendeu**. |
 
+### Carga: o número, e não "ficou rápido"
+
+Medido em 04/09/2026, 30s por cenário, com `./scripts/stress.sh`. **Sem provedor de IA
+configurado** — o teste mede esta aplicação, não a latência da API de um fornecedor.
+
+| Cenário | Conexões | RPS | p50 | p90 | p99 | máx | Erros |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `GET /saude` | 10 | 38.056 | 0 ms | 0 ms | 0 ms | 3 ms | 0 |
+| `GET /saude` | 100 | 12.016 | 8 ms | 10 ms | 17 ms | 71 ms | 0 |
+| `POST /webhook/whatsapp` | 10 | 17.237 | 0 ms | 1 ms | 2 ms | 49 ms | 0 |
+| `POST /webhook/whatsapp` | 100 | 22.465 | 4 ms | 6 ms | 9 ms | 75 ms | 0 |
+
+Máquina: i7-1355U (12 threads), 16 GB, .NET 9.0.203, Linux. **RPS sem máquina não compara
+com nada**, e é por isso que ela está aqui.
+
+> **Os números de `/saude` são de antes da #72.** Naquela medição o endpoint devolvia
+> `{"ok":true}`; hoje ele consulta cada dependência e devolve um relatório, então não dá
+> para comparar as duas coisas. Os números do webhook seguem válidos — é ele que recebe
+> tráfego, e o caminho dele não mudou.
+
+O webhook sustenta **p99 de 9 ms com 100 conexões**, bem abaixo do limite de 100 ms que a
+issue pedia. Nenhum erro, nenhum timeout e nenhum não-2xx em 1,19 milhão de requisições: a
+fila absorveu tudo sem precisar recusar.
+
+Dois números que só aparecem medindo:
+
+- **O webhook rende mais com 100 conexões do que com 10** (22 mil RPS contra 17 mil). Com
+  poucas conexões o gargalo é o ida-e-volta, não o servidor.
+- **`/saude` com 100 conexões rendeu menos que o webhook**, o que parece absurdo para um
+  endpoint que devolve `{"ok":true}`. A explicação está no processo: o worker de ingestão
+  ainda drenava as 673 mil mensagens do cenário anterior, **e escreve uma linha de log por
+  mensagem**. O que a medição pegou foi o custo do log competindo por CPU com o servidor
+  HTTP — resultado sobre a aplicação, não sobre o endpoint.
+
 ### A parte que quase ninguém faz: a conta fechada
 
 Quase todo projeto de IA sabe dizer o que **gastou**. Praticamente nenhum sabe dizer o
@@ -185,7 +219,9 @@ docker compose up -d        # sobe só o Postgres
 
 dotnet build
 dotnet test
-dotnet run --project src/Copiloto.Api
+dotnet run --project src/Copiloto.Api     # API em :5000
+cd web && npm install && npm run dev      # front em :5173, com proxy para a API
+cd web && npm run storybook               # os estados da tela em :6006, sem backend
 ```
 
 A solution tem três projetos, e a divisão é mecânica antes de ser estética:
@@ -194,7 +230,13 @@ A solution tem três projetos, e a divisão é mecânica antes de ser estética:
 src/Copiloto.Dominio     POCO puro — ZERO PackageReference, e há teste que confere
 src/Copiloto.Api         Minimal API: EF, SignalR, adaptadores, orquestração
 testes/Copiloto.Testes   xUnit
+web/                     React 19 + Vite + TypeScript — fora da solution .NET
+web/src/*.stories.tsx    Storybook: um story por ESTADO da tela, não por componente
 ```
+
+`web/` fica de fora de `src/` porque não é projeto MSBuild: `dotnet build` não o
+enxerga, e ele tem esteira própria no CI. São dois artefatos independentes, e
+encadeá-los faria um erro de CSS segurar o merge de uma correção de domínio.
 
 `Copiloto.Dominio` não tem pacote nenhum de propósito: sem `PackageReference` o
 projeto **não consegue** compilar um `[Table]` ou um `DbContext`. Numa pasta dentro
@@ -205,15 +247,21 @@ com todos os testes verdes.
 
 ## Fontes de conversa
 
-Tudo entra por `IConversationSource`, com três implementações trocáveis por configuração:
+Tudo entra por `IConversationSource`, com três implementações trocáveis pela
+variável `CONVERSATION_SOURCE`, sem recompilar:
 
-| Implementação | Uso | Observação |
-|---|---|---|
-| **FakeSource** | padrão | Replay de conversas gravadas em JSON. Roda offline e de graça. A demo não depende de rede. |
-| **WahaSource** | desenvolvimento | Bridge não-oficial do WhatsApp Web. **Contraria os termos da Meta e o risco concreto é banimento do número** — usar apenas com chip dedicado, nunca o número principal da empresa. |
-| **CloudApiSource** | produção | WhatsApp Cloud API oficial. |
+| Implementação | Uso | Estado | Observação |
+|---|---|---|---|
+| **FakeSource** | padrão | **de pé** | Replay de conversas gravadas em JSON. Roda offline e de graça. A demo não depende de rede. |
+| **WahaSource** | desenvolvimento | contrato definido, adaptador pendente ([#149](https://github.com/sjondev/copiloto-crm/issues/149)) | Bridge não-oficial do WhatsApp Web. **Contraria os termos da Meta e o risco concreto é banimento do número** — usar apenas com chip dedicado, nunca o número principal da empresa. |
+| **CloudApiSource** | produção | contrato definido, adaptador pendente ([#150](https://github.com/sjondev/copiloto-crm/issues/150)) | WhatsApp Cloud API oficial. O formato do payload e da assinatura precisa ser confirmado na doc da Meta antes de virar código. |
 
-O núcleo não sabe nem se importa de onde a mensagem veio.
+O núcleo não sabe nem se importa de onde a mensagem veio: o webhook recebe o corpo
+**cru**, a fonte traduz, e dali para dentro tudo é `MensagemRecebida`.
+
+Fonte configurada que ainda não tem adaptador **derruba a subida**, e nome que não
+existe também. Nenhuma das duas cai no `FakeSource` em silêncio — uma API que sobe
+saudável e nunca recebe conversa é o pior desfecho possível.
 
 ---
 

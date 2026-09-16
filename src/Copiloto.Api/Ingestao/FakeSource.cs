@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Copiloto.Api.Ingestao;
 
 /// <summary>
@@ -8,11 +10,39 @@ namespace Copiloto.Api.Ingestao;
 /// da sala nem de cota de provedor. Fonte que exige credencial para o `dotnet
 /// test` passar e fonte que quebra no primeiro clone.
 /// </summary>
-public class FakeSource
+public class FakeSource : IConversationSource
 {
+    private static readonly JsonSerializerOptions Opcoes = new() { PropertyNameCaseInsensitive = true };
+
     private readonly IReadOnlyList<ConversaGravada> _conversas;
 
-    public FakeSource(IReadOnlyList<ConversaGravada> conversas) => _conversas = conversas;
+    /// <summary>
+    /// Sem conversa gravada a fonte ainda serve: o replay precisa do seed, a
+    /// traducao do webhook nao. Exigir a pasta aqui faria a API morrer na
+    /// subida por causa de um recurso que ela talvez nem use.
+    /// </summary>
+    public FakeSource(IReadOnlyList<ConversaGravada>? conversas = null) => _conversas = conversas ?? [];
+
+    public string Nome => FonteDeConversa.Padrao;
+
+    /// <summary>
+    /// O "provedor" do fake ja fala o formato de casa, entao traduzir e ler o
+    /// JSON — uma fala ou um lote delas.
+    ///
+    /// Que o fake aceite lote nao e luxo: e o que permite provar, offline, que
+    /// o nucleo aguenta o payload multiplo que Cloud API e WAHA entregam de
+    /// verdade, sem esperar o adaptador real existir.
+    /// </summary>
+    public IReadOnlyList<MensagemRecebida> Traduzir(string corpo)
+    {
+        if (string.IsNullOrWhiteSpace(corpo)) return [];
+
+        using var lido = JsonDocument.Parse(corpo);
+
+        return lido.RootElement.ValueKind == JsonValueKind.Array
+            ? lido.RootElement.Deserialize<List<MensagemRecebida>>(Opcoes) ?? []
+            : [lido.RootElement.Deserialize<MensagemRecebida>(Opcoes)!];
+    }
 
     /// <summary>Carrega o que estiver em `seed/conversas/*.json`.</summary>
     public static FakeSource DaPasta(string pasta)
@@ -52,7 +82,7 @@ public class FakeSource
 
             yield return new MensagemRecebida(
                 $"seed.{conversa.Id}.{i}", de, para, m.Texto,
-                inicio.AddSeconds(m.OffsetSegundos));
+                inicio.AddSeconds(m.OffsetSegundos), m.Midia);
         }
     }
 

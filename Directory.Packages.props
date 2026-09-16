@@ -22,6 +22,13 @@
          mapeamento sem exigir Postgres de pe. -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.19" />
 
+    <!-- Fila duravel (#69). Conferidos em 04/09/2026 via `dotnet package search`:
+         RabbitMQ.Client 7.2.2 e Xunit.SkippableFact 1.5.85. O segundo existe
+         para o teste que exige broker PULAR em vez de passar quando nao ha um:
+         teste que passa por nao ter rodado e pior que teste vermelho. -->
+    <PackageVersion Include="RabbitMQ.Client" Version="7.2.2" />
+    <PackageVersion Include="Xunit.SkippableFact" Version="1.5.85" />
+
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="xunit" Version="2.9.2" />

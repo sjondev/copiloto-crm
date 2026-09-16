@@ -9,6 +9,8 @@ public class DealMap : IEntityTypeConfiguration<Deal>
     public void Configure(EntityTypeBuilder<Deal> e)
     {
         e.ToTable("deals");
+        // O id nasce no dominio, nunca no banco (#158). Ver ConversaMap.
+        e.Property(d => d.Id).ValueGeneratedNever();
         e.HasKey(d => d.Id);
         e.Property(d => d.LeadId).IsRequired();
         e.Property(d => d.AbertoEm).IsRequired();

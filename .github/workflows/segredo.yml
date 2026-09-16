@@ -31,6 +31,16 @@ jobs:
           # deixa de ver para sempre.
           fetch-depth: 0
 
+      # Conferido a mao em 04/09/2026 que este gate REPROVA de verdade: com
+      # segredos plantados (chave AWS e token do GitHub) o gitleaks v8.30.1 sai
+      # com codigo 1 e reporta os achados; neste repositorio sai com 0, e o
+      # `.env.example` nao vira falso positivo. Reproduza com
+      # `./scripts/verificar-gate-de-segredo.sh` quando a versao mudar.
+      #
+      # Um detalhe que engana quem for conferir: `AKIAIOSFODNN7EXAMPLE`, a chave
+      # de exemplo da documentacao da AWS, e IGNORADA de proposito pelo gitleaks.
+      # Testar com ela da a impressao de que o gate esta quebrado.
+      #
       # Versao fixada, e nao :latest. As regras do gitleaks mudam entre versoes:
       # com :latest, o gate pode passar a reprovar (ou a deixar passar) sem que
       # ninguem tenha mudado uma linha deste repositorio.

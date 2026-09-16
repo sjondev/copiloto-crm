@@ -5,6 +5,7 @@ using Copiloto.Api.Ingestao;
 using Copiloto.Api.Leitura;
 using Copiloto.Api.Persistencia;
 using Copiloto.Dominio.Dossies;
+using Copiloto.Dominio.Fichas;
 using Copiloto.Dominio.Ia;
 using Copiloto.Dominio.Vendas;
 using Microsoft.AspNetCore.Http;
@@ -164,7 +165,11 @@ public class LeituraNaTelaTeste : IDisposable
         Assert.Equal(Temperatura.Morna, doBanco.Termometro!.Valor);
         Assert.Equal(Direcao.Esfriando, doBanco.Termometro.Para);
         Assert.Equal(2, doBanco.Sinais.Count);
-        Assert.Equal(3, doBanco.Lacunas.Count);
+        // Cinco, e nao as tres do agente: as lacunas da FICHA (#8) completam ate o
+        // teto. Sao duas fontes — o agente aponta o que so aparece lendo a
+        // conversa, a ficha cobra os slots vazios —, e o teto existe porque oito
+        // perguntas de uma vez empurram as lacunas para fora da tela (#170).
+        Assert.Equal(Lacunas.Maximo, doBanco.Lacunas.Count);
         Assert.Contains(doBanco.Sinais, s => s.Tipo == TipoDeSinal.Fuga);
 
         // Guid preservado, que e o que liga o sinal a fala na tela.

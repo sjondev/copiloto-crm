@@ -4,6 +4,7 @@ using Copiloto.Api.Leitura;
 using Copiloto.Api.Persistencia;
 using Copiloto.Api.TempoReal;
 using Copiloto.Dominio.Conversas;
+using Copiloto.Dominio.Fichas;
 using Copiloto.Dominio.Vendas;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -252,6 +253,24 @@ public class ProcessadorDeMensagens : BackgroundService
                 if (grupo is not null)
                     await grupo.SendAsync(DossieHub.DossieAtualizado, null, CancellationToken.None);
                 return;
+            }
+
+            // As lacunas da FICHA entram depois das que o agente escreveu (#8).
+            // Sao duas fontes diferentes e complementares: o agente aponta o que
+            // so aparece lendo a conversa, e a ficha cobra os slots que ela sabe
+            // cobrar — e essa metade nao depende de modelo, entao nao alucina.
+            //
+            // Entram ATE o teto, e nao todas. Somar as duas fontes sem limite
+            // produz oito perguntas de uma vez — que e o estado `CheioDemais` do
+            // Storybook (#170), onde as lacunas caem abaixo da dobra e a parte
+            // mais util do dossie deixa de ser vista. As da conversa ja estao
+            // dentro; a ficha completa o que sobrar de espaco.
+            var ficha = await ctx.Fichas.FirstOrDefaultAsync(f => f.LeadId == leadId);
+
+            foreach (var lacuna in Lacunas.De(ficha, dossie.Lacunas))
+            {
+                if (dossie.Lacunas.Count >= Lacunas.Maximo) break;
+                dossie.RegistrarLacuna(lacuna.Pergunta);
             }
 
             ctx.Dossies.Add(dossie);

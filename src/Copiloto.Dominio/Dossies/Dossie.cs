@@ -102,7 +102,17 @@ public class Dossie
     public void RegistrarLacuna(string pergunta)
     {
         if (string.IsNullOrWhiteSpace(pergunta)) return;
-        _lacunas.Add(pergunta.Trim());
+
+        var limpa = pergunta.Trim();
+
+        // A mesma pergunta duas vezes e ruido, e ruido no dossie e o que faz o
+        // vendedor parar de ler as linhas de baixo — a mesma razao ja escrita em
+        // `Registrar(Objecao)`. Agora que as lacunas vem de DUAS fontes (o
+        // agente, lendo a conversa, e a ficha, pelos slots vazios da #8), a
+        // repeticao deixou de ser hipotetica.
+        if (_lacunas.Contains(limpa, StringComparer.OrdinalIgnoreCase)) return;
+
+        _lacunas.Add(limpa);
     }
 
     /// <summary>

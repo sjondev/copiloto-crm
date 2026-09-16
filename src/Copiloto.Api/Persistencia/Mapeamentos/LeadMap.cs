@@ -9,10 +9,18 @@ public class LeadMap : IEntityTypeConfiguration<Lead>
     public void Configure(EntityTypeBuilder<Lead> e)
     {
         e.ToTable("leads");
+        // O id nasce no dominio, nunca no banco (#158). Ver ConversaMap.
+        e.Property(l => l.Id).ValueGeneratedNever();
         e.HasKey(l => l.Id);
         e.Property(l => l.Telefone).HasMaxLength(20).IsRequired();
         e.Property(l => l.Nome).HasMaxLength(200);
         e.Property(l => l.CriadoEm).IsRequired();
+
+        // A oposicao a analise (#81) e' estado do titular, nao configuracao de
+        // uso: ela precisa sobreviver a restart, a deploy e a troca de
+        // instancia — senao o "parem de me analisar" vale ate a proxima subida.
+        e.Property(l => l.AnaliseDeIaSuspensa).IsRequired();
+        e.Property(l => l.OpostoEm);
 
         // O indice UNICO e o ponto que nao da para deixar so no codigo.
         //

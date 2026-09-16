@@ -1,4 +1,5 @@
 using Copiloto.Dominio.Conversas;
+using Copiloto.Dominio.Dossies;
 using Copiloto.Dominio.Fichas;
 using Copiloto.Dominio.Ia;
 using Copiloto.Dominio.Vendas;
@@ -28,6 +29,7 @@ public class CopilotoDbContext : DbContext
     public DbSet<Conversa> Conversas => Set<Conversa>();
     public DbSet<Mensagem> Mensagens => Set<Mensagem>();
     public DbSet<FichaCliente> Fichas => Set<FichaCliente>();
+    public DbSet<Dossie> Dossies => Set<Dossie>();
 
     protected override void OnModelCreating(ModelBuilder b) =>
         b.ApplyConfigurationsFromAssembly(typeof(CopilotoDbContext).Assembly);

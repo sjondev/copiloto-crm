@@ -1,0 +1,273 @@
+/*
+  CSS a mao, sem framework. Mesma regra do backend: nada entra "porque o livro
+  mandou". Uma tela de duas colunas nao justifica trazer um sistema de design
+  inteiro — e o CLAUDE.md pune abstracao prematura dos dois lados da rede.
+*/
+
+:root {
+  --fundo: #0f1115;
+  --superficie: #171a21;
+  --superficie-alta: #1f232c;
+  --borda: #2a2f3a;
+  --texto: #e6e8ec;
+  --texto-fraco: #9aa3b2;
+  --compra: #3fb950;
+  --fuga: #d29922;
+  --lacuna: #58a6ff;
+  --erro: #f85149;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.tela { display: flex; flex-direction: column; height: 100vh; }
+
+.cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--borda);
+  background: var(--superficie);
+}
+
+.cabecalho__marca { margin: 0; font-size: 16px; letter-spacing: 0.04em; }
+
+.cabecalho__lead { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--texto-fraco); }
+
+.cabecalho__lead input {
+  width: 320px;
+  padding: 6px 10px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+
+/*
+  O canal fica sempre visivel. "verificando" e estado honesto, nao alarme: usa
+  cor neutra, porque pintar de vermelho o funcionamento normal com polling
+  ensinaria o vendedor a ignorar a cor quando ela importar.
+*/
+.canal {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--texto-fraco);
+}
+
+.canal::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--texto-fraco);
+}
+
+.canal--ao-vivo::before { background: var(--compra); }
+.canal--verificando::before { background: var(--fuga); }
+
+.cabecalho__erro { margin-left: 16px; color: var(--erro); font-size: 13px; }
+
+.analisando {
+  margin-left: 10px;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--lacuna);
+  animation: pulsar 1.4s ease-in-out infinite;
+}
+
+@keyframes pulsar {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+/* Quem prefere menos movimento nao precisa de um texto piscando na tela. */
+@media (prefers-reduced-motion: reduce) {
+  .analisando { animation: none; opacity: 1; }
+}
+
+.aviso { padding: 32px 20px; color: var(--texto-fraco); }
+
+/* A divisao da tela E a tese: a conversa de um lado, o que lemos dela do outro. */
+.painel { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; flex: 1; min-height: 0; background: var(--borda); }
+
+.painel__lado { display: flex; flex-direction: column; min-height: 0; background: var(--fundo); }
+
+.painel__titulo {
+  margin: 0;
+  padding: 10px 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
+  border-bottom: 1px solid var(--borda);
+}
+
+.conversa, .dossie { flex: 1; overflow-y: auto; padding: 16px 20px; margin: 0; }
+
+.conversa { list-style: none; }
+.conversa--vazia, .dossie--vazio { color: var(--texto-fraco); }
+
+.conversa__dia {
+  margin: 16px 0 8px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--texto-fraco);
+  text-transform: uppercase;
+}
+
+.fala { display: flex; margin-bottom: 8px; }
+.fala--vendedor { justify-content: flex-end; }
+
+.fala__balao {
+  max-width: 78%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+}
+
+.fala--vendedor .fala__balao { background: var(--superficie-alta); }
+
+.fala__texto { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.fala__midia {
+  display: inline-block;
+  margin-bottom: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--borda);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
+}
+
+.fala__hora { display: block; margin-top: 4px; font-size: 11px; color: var(--texto-fraco); }
+
+/* --- dossie --- */
+
+.termometro {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--superficie);
+  border-left: 3px solid var(--texto-fraco);
+}
+
+.termometro--esquentando { border-left-color: var(--compra); }
+.termometro--esfriando { border-left-color: var(--fuga); }
+
+.termometro__rotulo { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--texto-fraco); }
+.termometro__valor { font-size: 15px; }
+
+.dossie__secao { margin-bottom: 24px; }
+
+.dossie__titulo {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
+}
+
+.dossie__contagem {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--borda);
+  text-align: center;
+  font-size: 11px;
+  color: var(--texto);
+}
+
+.dossie__lista { list-style: none; margin: 0; padding: 0; }
+
+.sinal {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--superficie);
+  border-left: 3px solid var(--borda);
+}
+
+.sinal--compra { border-left-color: var(--compra); }
+.sinal--fuga { border-left-color: var(--fuga); }
+
+.sinal__descricao { margin: 0 0 6px; }
+
+/* A citacao e a prova. Monospace para o vendedor reconhecer a frase literal. */
+.sinal__citacao {
+  margin: 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--borda);
+  color: var(--texto-fraco);
+  font-family: ui-monospace, monospace;
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+.objecao {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--superficie);
+  border-left: 3px solid var(--fuga);
+}
+
+.objecao__topo { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+
+.objecao__tipo {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fuga);
+}
+
+.objecao__origem {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--borda);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
+}
+
+.objecao__descricao { margin: 0 0 6px; }
+
+.dossie__secao--lacunas .dossie__titulo { color: var(--lacuna); }
+
+.lacuna {
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--superficie);
+  border-left: 3px solid var(--lacuna);
+}
+
+.dossie__silencio, .dossie--vazio__nota { color: var(--texto-fraco); font-size: 13px; }
+
+@media (max-width: 900px) {
+  .painel { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+}

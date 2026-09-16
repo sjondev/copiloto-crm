@@ -1,0 +1,35 @@
+{
+  "_comentario": "A1/A3/A4, a leitura da conversa. Cada sinal CITA a fala que o originou, e o trecho e conferido contra a conversa de verdade antes de virar Sinal — sem citacao real o bloco nao existe, e e isso que torna 'a IA ta ruim' um defeito verificavel em vez de reclamacao. A temperatura tem DIRECAO: morno subindo e morno caindo pedem coisas opostas do vendedor.",
+  "tarefa": "Leitura",
+  "tokensEntrada": 1240,
+  "tokensSaida": 260,
+  "resposta": {
+    "estagio": "consideracao",
+    "temperatura": "morna",
+    "sinais": [
+      {
+        "descricao": "preco perguntado duas vezes em tres dias",
+        "trecho_citado": "qual o valor do kg?",
+        "tipo": "compra"
+      },
+      {
+        "descricao": "objecao velada: adiou sem dizer nao",
+        "trecho_citado": "vou pensar melhor e te falo",
+        "tipo": "fuga"
+      }
+    ],
+    "lacunas": [
+      "Para quantas pessoas ele compra por mes? Sem isso nao da para dizer se o kg cabe no uso dele.",
+      "Ele ja torra em casa ou compra moido? Muda o produto inteiro da conversa.",
+      "Quem decide a compra e ele mesmo?"
+    ],
+    "direcao": "esfriando",
+    "objecoes": [
+      {
+        "tipo": "timing",
+        "descricao": "adiou a decisao sem dizer nao, e sem prazo para voltar",
+        "trecho_citado": "vou pensar melhor e te falo"
+      }
+    ]
+  }
+}

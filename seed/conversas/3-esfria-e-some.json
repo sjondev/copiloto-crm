@@ -16,7 +16,7 @@
     { "de": "cliente",  "offsetSegundos": 420,    "texto": "manda a proposta pfv" },
     { "de": "cliente",  "offsetSegundos": 430,    "texto": "no meu emial mesmo" },
     { "de": "vendedor", "offsetSegundos": 3600,   "texto": "Enviado! Qualquer duvida me chama" },
-    { "de": "cliente",  "offsetSegundos": 7200,   "tipo": "audio", "texto": "[audio de 14s]" },
+    { "de": "cliente",  "offsetSegundos": 7200,   "tipo": "audio", "duracaoSegundos": 14, "texto": "[audio de 14s]" },
     { "de": "vendedor", "offsetSegundos": 10800,  "texto": "Consegue me mandar por escrito? To sem ouvir agora" },
     { "de": "cliente",  "offsetSegundos": 14400,  "texto": "vou pensar e te falo" },
     { "de": "cliente",  "offsetSegundos": 14405,  "texto": "obrigado" }

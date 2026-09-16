@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Copiloto.Api.Auth;
+using Copiloto.Api.Ia;
 using Copiloto.Api.Persistencia;
+using Copiloto.Dominio.Ia;
 using Copiloto.Dominio.Planos;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,6 +30,9 @@ public static class EndpointsDoPlano
     {
         app.MapGet("/leads/{id:guid}/plano", PlanoDoLead).RequireAuthorization();
         app.MapPut("/leads/{id:guid}/plano/{bloco}", EscreverBloco).RequireAuthorization();
+        app.MapPost("/leads/{id:guid}/plano/{bloco}/sugerir", Sugerir).RequireAuthorization();
+        app.MapPost("/leads/{id:guid}/plano/{bloco}/aceitar", Aceitar).RequireAuthorization();
+        app.MapDelete("/leads/{id:guid}/plano/{bloco}/sugestao", Descartar).RequireAuthorization();
     }
 
     /// <summary>
@@ -95,6 +100,147 @@ public static class EndpointsDoPlano
         await ctx.SaveChangesAsync(ct);
 
         return Results.Ok(ParaTela(plano));
+    }
+
+    /// <summary>
+    /// Pede uma sugestao para UM bloco (#189).
+    ///
+    /// A sugestao que nao vem devolve 200 com o plano intacto, e nao erro: o
+    /// vendedor clicou num botao opcional, e transformar isso em tela vermelha
+    /// ensinaria que a ferramenta esta quebrada quando so o modelo nao respondeu.
+    /// Quem diz que nao veio e o campo `sugestao` continuar vazio.
+    /// </summary>
+    public static async Task<IResult> Sugerir(
+        Guid id, string bloco, CopilotoDbContext ctx, AgenteDePlano agente,
+        PrecoDoModelo preco, ClaimsPrincipal? quem = null, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(ctx);
+        ArgumentNullException.ThrowIfNull(agente);
+        ArgumentNullException.ThrowIfNull(preco);
+
+        var (erro, plano, qual) = await Abrir(id, bloco, ctx, quem, ct);
+        if (erro is not null) return erro;
+
+        var sugestao = await agente.Sugerir(qual, await Contexto(ctx, id, ct), ct);
+
+        if (sugestao is not null)
+        {
+            plano!.Sugerir(qual, sugestao.Texto, DateTimeOffset.UtcNow);
+
+            // O custo entra no ledger AMARRADO ao negocio (#1, #2). Sem o Deal,
+            // a invocacao existe e nao responde a unica pergunta que o ledger
+            // existe para responder: quanto custou ESTA venda.
+            var deal = await ctx.Deals.FirstOrDefaultAsync(d => d.Id == plano.DealId, ct);
+            deal?.RegistrarInvocacao(new AiInvocation(
+                Guid.NewGuid(),
+                sugestao.Modelo,
+                preco.De(sugestao.Modelo, sugestao.TokensTotais),
+                DateTimeOffset.UtcNow,
+                plano.DealId));
+        }
+
+        await ctx.SaveChangesAsync(ct);
+
+        return Results.Ok(ParaTela(plano!));
+    }
+
+    public static async Task<IResult> Aceitar(
+        Guid id, string bloco, CopilotoDbContext ctx,
+        ClaimsPrincipal? quem = null, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(ctx);
+
+        var (erro, plano, qual) = await Abrir(id, bloco, ctx, quem, ct);
+        if (erro is not null) return erro;
+
+        plano!.Aceitar(qual, DateTimeOffset.UtcNow);
+        await ctx.SaveChangesAsync(ct);
+
+        return Results.Ok(ParaTela(plano));
+    }
+
+    public static async Task<IResult> Descartar(
+        Guid id, string bloco, CopilotoDbContext ctx,
+        ClaimsPrincipal? quem = null, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(ctx);
+
+        var (erro, plano, qual) = await Abrir(id, bloco, ctx, quem, ct);
+        if (erro is not null) return erro;
+
+        plano!.Descartar(qual, DateTimeOffset.UtcNow);
+        await ctx.SaveChangesAsync(ct);
+
+        return Results.Ok(ParaTela(plano));
+    }
+
+    /// <summary>
+    /// O caminho comum das tres rotas de bloco: valida o nome, passa pelo
+    /// porteiro e traz o plano — criando se for a primeira vez.
+    /// </summary>
+    private static async Task<(IResult? Erro, PlanoDeAbordagem? Plano, BlocoDoPlano Qual)> Abrir(
+        Guid id, string bloco, CopilotoDbContext ctx, ClaimsPrincipal? quem, CancellationToken ct)
+    {
+        if (!Enum.TryParse<BlocoDoPlano>(bloco, ignoreCase: true, out var qual))
+        {
+            return (Results.BadRequest(new
+            {
+                erro = $"'{bloco}' nao e um bloco do plano",
+                blocos = Enum.GetNames<BlocoDoPlano>(),
+            }), null, default);
+        }
+
+        var barrado = await Porteiro.Barrar(id, await UsuarioAtual.De(quem, ctx, ct), ctx, ct);
+        if (barrado is not null) return (barrado, null, qual);
+
+        var deal = await DealDoLead(ctx, id, ct);
+        if (deal is null)
+            return (Results.NotFound(new { erro = "este lead ainda nao tem negocio aberto" }), null, qual);
+
+        var plano = await ctx.Planos.FirstOrDefaultAsync(p => p.DealId == deal.Value, ct);
+        if (plano is null)
+        {
+            plano = new PlanoDeAbordagem(Guid.NewGuid(), deal.Value, DateTimeOffset.UtcNow);
+            ctx.Planos.Add(plano);
+        }
+
+        return (null, plano, qual);
+    }
+
+    /// <summary>
+    /// O que o agente recebe sobre o cliente.
+    ///
+    /// Sai do DOSSIE, e nao da conversa crua: o dossie ja passou pelo escudo de
+    /// PII e ja e' o resumo do que se leu. Mandar a conversa inteira aqui
+    /// dobraria o custo e reabriria a porta que a #43 fechou.
+    /// </summary>
+    private static async Task<string> Contexto(
+        CopilotoDbContext ctx, Guid leadId, CancellationToken ct)
+    {
+        var deal = await DealDoLead(ctx, leadId, ct);
+        if (deal is null) return "Ainda nao ha leitura deste cliente.";
+
+        var dossies = await ctx.Dossies.AsNoTracking()
+            .Include(d => d.Objecoes)
+            .Where(d => d.DealId == deal.Value).ToListAsync(ct);
+
+        var dossie = dossies.MaxBy(d => d.GeradoEm);
+        if (dossie is null) return "Ainda nao ha leitura deste cliente.";
+
+        var partes = new List<string>();
+
+        if (dossie.Termometro is { } t) partes.Add($"Temperatura: {t.Valor}, {t.Para}.");
+
+        if (dossie.Objecoes.Count > 0)
+        {
+            partes.Add("Resistencias lidas: " + string.Join("; ",
+                dossie.Objecoes.Select(o => $"{o.Tipo} — \"{o.TrechoCitado}\"")));
+        }
+
+        if (dossie.Lacunas.Count > 0)
+            partes.Add("Ainda nao sabemos: " + string.Join("; ", dossie.Lacunas));
+
+        return partes.Count == 0 ? "Ainda nao ha leitura deste cliente." : string.Join("\n", partes);
     }
 
     public static PlanoNaTela ParaTela(PlanoDeAbordagem plano)

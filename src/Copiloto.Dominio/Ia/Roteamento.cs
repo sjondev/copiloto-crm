@@ -13,6 +13,17 @@ public enum Tarefa
 
     /// <summary>A5: montar conselho de plano. Pode gastar segundos.</summary>
     Conselho = 2,
+
+    /// <summary>
+    /// A5 por BLOCO do plano de abordagem (#189).
+    ///
+    /// Separada de <see cref="Conselho"/> porque a resposta tem outra forma:
+    /// Conselho devolve blocos por TATICA, com ancoragem obrigatoria (#15);
+    /// aqui a resposta e' uma frase para UM campo que o vendedor pode reescrever.
+    /// Reaproveitar a mesma tarefa faria o validador de contrato de uma aceitar
+    /// o formato da outra.
+    /// </summary>
+    Plano = 3,
 }
 
 /// <summary>

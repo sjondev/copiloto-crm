@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { buscarPlano, escreverBloco } from "./api";
+import { aceitarSugestao, buscarPlano, descartarSugestao, escreverBloco, sugerirBloco } from "./api";
 import type { PlanoDoLead } from "./tipos";
 
 /**
@@ -23,6 +23,7 @@ export function Plano({ leadId }: { leadId: string }) {
   const [plano, setPlano] = useState<PlanoDoLead | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState<string | null>(null);
+  const [pensando, setPensando] = useState<string | null>(null);
 
   useEffect(() => {
     const controle = new AbortController();
@@ -64,6 +65,30 @@ export function Plano({ leadId }: { leadId: string }) {
     }
   }
 
+  /**
+   * O botao opcional (#189). Falha do modelo NAO apaga o que ele escreveu e
+   * nao vira tela de erro: vira um aviso de que a sugestao nao veio.
+   */
+  async function agir(
+    bloco: string,
+    acao: (leadId: string, bloco: string) => Promise<typeof plano>,
+    aviso: string,
+  ) {
+    setPensando(bloco);
+
+    try {
+      const novo = await acao(leadId, bloco);
+      setPlano(novo);
+
+      const doBloco = novo?.blocos.find((b) => b.bloco === bloco);
+      setErro(doBloco?.sugestao ? null : aviso);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "não foi possível falar com a API");
+    } finally {
+      setPensando(null);
+    }
+  }
+
   if (erro !== null && plano === null) return <p className="aviso">{erro}</p>;
   if (plano === null) return <p className="aviso">Carregando…</p>;
 
@@ -82,15 +107,56 @@ export function Plano({ leadId }: { leadId: string }) {
             spellCheck
           />
 
-          {salvando === bloco.bloco && <span className="plano__salvando">salvando…</span>}
+          <span className="plano__acoes">
+            {salvando === bloco.bloco && <span className="plano__salvando">salvando…</span>}
+
+            {/*
+              O botao e OPCIONAL, e a tela nao insiste nele: ele fica discreto,
+              ao lado, e o plano inteiro funciona sem clicar nunca (#12).
+            */}
+            <button
+              type="button"
+              className="plano__sugerir"
+              disabled={pensando !== null}
+              onClick={() => agir(
+                bloco.bloco,
+                sugerirBloco,
+                "a sugestão não veio desta vez — o que você escreveu está intacto",
+              )}
+            >
+              {pensando === bloco.bloco ? "pensando…" : "sugerir"}
+            </button>
+          </span>
 
           {/*
             A sugestão da IA vem em campo SEPARADO quando existir (#12).
             Hoje nunca vem, e o bloco abaixo é o lugar preparado para ela —
             aceitar, editar ou ignorar, nunca sobrescrever.
           */}
+          {/*
+            Aceitar, editar ou ignorar — nunca sobrescrever. "Editar" nao tem
+            botao de proposito: aceitar traz o texto para o campo dele, e dali
+            em diante e so escrever.
+          */}
           {bloco.sugestao && (
-            <span className="plano__sugestao">sugestão: {bloco.sugestao}</span>
+            <span className="plano__sugestao">
+              {bloco.sugestao}
+
+              <span className="plano__acoes">
+                <button
+                  type="button"
+                  onClick={() => agir(bloco.bloco, aceitarSugestao, "")}
+                >
+                  usar esta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => agir(bloco.bloco, descartarSugestao, "")}
+                >
+                  ignorar
+                </button>
+              </span>
+            </span>
           )}
         </label>
       ))}

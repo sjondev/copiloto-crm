@@ -16,6 +16,9 @@
     <!-- Os atributos do servidor MCP sao lidos por reflexao no teste de
          contrato das ferramentas (#56). -->
     <PackageReference Include="ModelContextProtocol.AspNetCore" />
+    <!-- O teste de auth confere hash e token de verdade (#49). -->
+    <PackageReference Include="BCrypt.Net-Next" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>

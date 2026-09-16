@@ -18,6 +18,7 @@ namespace Copiloto.Testes;
 ///     -e POSTGRES_USER=copiloto -e POSTGRES_DB=copiloto pgvector/pgvector:pg16
 ///   POSTGRES_URL="Host=localhost;Port=5443;Database=copiloto;Username=copiloto;Password=teste" dotnet test
 /// </summary>
+[Collection(BancoPostgres.Nome)]
 public class PgvectorTeste : IAsyncLifetime
 {
     private static readonly DateTimeOffset T0 = new(2026, 9, 4, 10, 0, 0, TimeSpan.Zero);

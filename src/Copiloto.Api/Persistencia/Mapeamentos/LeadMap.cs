@@ -13,6 +13,21 @@ public class LeadMap : IEntityTypeConfiguration<Lead>
         builder.Property(l => l.Id).ValueGeneratedNever();
         builder.HasKey(l => l.Id);
         builder.Property(l => l.Telefone).HasMaxLength(20).IsRequired();
+
+        // Os OUTROS numeros da mesma pessoa (#177) viram JSON numa coluna, e nao
+        // tabela — mesma razao das lacunas do dossie: numero adicional nao tem
+        // identidade propria nem e consultado sozinho.
+        //
+        // O preco esta declarado: o indice unico continua valendo so para o
+        // numero PRINCIPAL. Dois leads podem, em tese, listar o mesmo numero
+        // adicional, e quem impede isso hoje e a busca — que so adiciona o numero
+        // depois de nao achar dono. Vira tabela no dia em que houver tela de
+        // fundir lead, que e quando duas pessoas passam a mexer nisso ao mesmo
+        // tempo.
+        builder.PrimitiveCollection<List<string>>("_outrosNumeros")
+            .HasColumnName("outros_numeros");
+
+        builder.Property(l => l.NomeFonte).HasMaxLength(60);
         builder.Property(l => l.Nome).HasMaxLength(200);
         builder.Property(l => l.CriadoEm).IsRequired();
 

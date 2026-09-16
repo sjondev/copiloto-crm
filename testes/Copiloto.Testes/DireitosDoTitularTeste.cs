@@ -178,7 +178,9 @@ public class DireitosDoTitularTeste : BancoEmMemoria
         Assert.True(lead.AnaliseDeIaSuspensa);
         Assert.Equal(T0, lead.OpostoEm);
         Assert.Equal("Marina", lead.Nome);
-        Assert.Equal("+55 11 98888-1111", lead.Telefone);
+        // Normalizado, e nao como veio: o Lead passou a canonizar o telefone no
+        // construtor (#177), porque a identidade da pessoa e ele.
+        Assert.Equal("+5511988881111", lead.Telefone);
     }
 
     [Fact]

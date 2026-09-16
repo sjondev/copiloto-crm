@@ -25,6 +25,7 @@ public class ProcessadorDeMensagens : BackgroundService
 {
     private readonly IQueue<MensagemRecebida> _fila;
     private readonly IServiceScopeFactory _escopos;
+    private readonly GuardaDeReentrega _guarda;
     private readonly ILogger<ProcessadorDeMensagens> _log;
 
     /// <param name="escopos">
@@ -34,10 +35,12 @@ public class ProcessadorDeMensagens : BackgroundService
     /// deixa entidade suja para a proxima.
     /// </param>
     public ProcessadorDeMensagens(
-        IQueue<MensagemRecebida> fila, IServiceScopeFactory escopos, ILogger<ProcessadorDeMensagens> log)
+        IQueue<MensagemRecebida> fila, IServiceScopeFactory escopos,
+        GuardaDeReentrega guarda, ILogger<ProcessadorDeMensagens> log)
     {
         _fila = fila;
         _escopos = escopos;
+        _guarda = guarda;
         _log = log;
     }
 
@@ -63,6 +66,17 @@ public class ProcessadorDeMensagens : BackgroundService
 
     private async Task Processar(MensagemRecebida bruta)
     {
+        // A dedupe fica AQUI, e nao no webhook, de proposito: marcar antes de
+        // enfileirar descartaria a reentrega de uma mensagem que se perdeu na
+        // fila quando o processo caiu — trocaria custo duplicado por fala do
+        // cliente sumida, que e' o desfecho pior.
+        if (!await _guarda.EhAPrimeiraVez(bruta.ProviderMessageId, CancellationToken.None))
+        {
+            _log.LogInformation(
+                "Mensagem {Id} ja processada: reentrega ignorada", bruta.ProviderMessageId);
+            return;
+        }
+
         using var escopo = _escopos.CreateScope();
         var resolvedor = escopo.ServiceProvider.GetRequiredService<ResolvedorDeLead>();
         var ctx = escopo.ServiceProvider.GetRequiredService<CopilotoDbContext>();

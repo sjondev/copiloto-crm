@@ -86,6 +86,7 @@ public class LeituraNaTelaTeste : IDisposable
         var processador = new ProcessadorDeMensagens(
             fila,
             _servicos.GetRequiredService<IServiceScopeFactory>(),
+            new GuardaDeReentrega(new InMemoryState()),
             NullLogger<ProcessadorDeMensagens>.Instance);
 
         await processador.StartAsync(CancellationToken.None);

@@ -2,7 +2,6 @@ using Copiloto.Dominio.Rag;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Pgvector;
-using Pgvector.EntityFrameworkCore;
 
 namespace Copiloto.Api.Persistencia.Mapeamentos;
 

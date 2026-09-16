@@ -4,7 +4,6 @@ using Copiloto.Api.Infra;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Leitura;
 using Copiloto.Api.Persistencia;
-using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Dossies;
 using Copiloto.Dominio.Ia;
 using Copiloto.Dominio.Vendas;

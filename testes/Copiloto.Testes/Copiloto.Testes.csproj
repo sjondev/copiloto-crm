@@ -10,8 +10,9 @@
          suite continua rodando offline como o CLAUDE.md manda. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <!-- SkippableFact: o teste da fila duravel PULA sem broker, em vez de
-         passar sem ter rodado (#69). -->
+    <!-- SkippableFact: os testes que exigem servico PULAM sem ele, em vez de
+         passar sem ter rodado — fila duravel sem broker (#69) e similaridade
+         sem Postgres com pgvector (#60). -->
     <PackageReference Include="Xunit.SkippableFact" />
     <!-- Os atributos do servidor MCP sao lidos por reflexao no teste de
          contrato das ferramentas (#56). -->
@@ -19,8 +20,6 @@
     <!-- O teste de auth confere hash e token de verdade (#49). -->
     <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
-    <!-- Os testes de pgvector pulam sem banco, em vez de passar (#60). -->
-    <PackageReference Include="Xunit.SkippableFact" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>

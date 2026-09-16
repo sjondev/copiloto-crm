@@ -5,7 +5,6 @@ using Copiloto.Api.Infra;
 using Copiloto.Api.Ingestao;
 using Copiloto.Api.Leitura;
 using Copiloto.Api.TempoReal;
-using Copiloto.Api.Mcp;
 using Copiloto.Api.Persistencia;
 using Copiloto.Api.Rag;
 using Copiloto.Api.Vigia;

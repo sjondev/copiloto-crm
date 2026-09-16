@@ -1,5 +1,4 @@
 using Copiloto.Dominio.Vendas;
-using Microsoft.EntityFrameworkCore;
 
 namespace Copiloto.Api.Persistencia;
 

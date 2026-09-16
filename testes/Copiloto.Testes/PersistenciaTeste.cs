@@ -1,4 +1,3 @@
-using Copiloto.Api.Ingestao;
 using Copiloto.Api.Persistencia;
 using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Ia;

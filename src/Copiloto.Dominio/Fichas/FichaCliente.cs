@@ -100,7 +100,7 @@ public class FichaCliente
     /// Recebe a data da perda em vez de consultar o Deal porque a ficha nao
     /// conhece o funil — e quem chama e' quem sabe se ainda ha negocio de pe.
     /// </summary>
-    public bool DeveExpurgar(DateTimeOffset? negocioPerdidoEm, DateTimeOffset agora) =>
+    public static bool DeveExpurgar(DateTimeOffset? negocioPerdidoEm, DateTimeOffset agora) =>
         negocioPerdidoEm is not null && agora - negocioPerdidoEm >= RetencaoAposPerder;
 
     /// <summary>

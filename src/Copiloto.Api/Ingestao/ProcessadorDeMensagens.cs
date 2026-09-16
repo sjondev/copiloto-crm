@@ -2,7 +2,6 @@ using Copiloto.Api.Ia;
 using Copiloto.Api.Leitura;
 using Copiloto.Api.Persistencia;
 using Copiloto.Api.TempoReal;
-using Copiloto.Dominio.Dossies;
 using Copiloto.Dominio.Conversas;
 using Copiloto.Dominio.Vendas;
 using Copiloto.Api.Infra;

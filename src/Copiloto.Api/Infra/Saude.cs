@@ -1,5 +1,4 @@
 using Copiloto.Api.Persistencia;
-using Microsoft.EntityFrameworkCore;
 
 namespace Copiloto.Api.Infra;
 

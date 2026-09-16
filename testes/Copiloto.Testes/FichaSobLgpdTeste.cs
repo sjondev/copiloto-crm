@@ -108,7 +108,7 @@ public class FichaSobLgpdTeste
         // Enquanto ha negociacao, a finalidade esta viva.
         var ficha = Nova();
 
-        Assert.False(ficha.DeveExpurgar(negocioPerdidoEm: null, T0.AddYears(5)));
+        Assert.False(FichaCliente.DeveExpurgar(negocioPerdidoEm: null, T0.AddYears(5)));
     }
 
     [Fact]
@@ -116,8 +116,8 @@ public class FichaSobLgpdTeste
     {
         var ficha = Nova();
 
-        Assert.False(ficha.DeveExpurgar(T0, T0.AddDays(364)));
-        Assert.True(ficha.DeveExpurgar(T0, T0.AddDays(365)));
+        Assert.False(FichaCliente.DeveExpurgar(T0, T0.AddDays(364)));
+        Assert.True(FichaCliente.DeveExpurgar(T0, T0.AddDays(365)));
     }
 
     [Fact]

@@ -52,6 +52,8 @@ public class Lead
     public bool AnaliseDeIaSuspensa { get; private set; }
 
     public DateTimeOffset? OpostoEm { get; private set; }
+
+    /// <summary>
     /// Marca quem esta do outro lado como fornecedor, transportadora,
     /// representante — quem vende PARA a empresa, e nao compra dela.
     /// </summary>

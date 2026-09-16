@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Copiloto.Dominio.Vendas;
@@ -43,7 +44,7 @@ public sealed class Telefone : IEquatable<Telefone>
 
         // DDI opcional. `550` nao e DDI seguido de DDD: nao existe DDD com zero
         // na frente, entao ali o 55 e o proprio DDD (Rio Grande do Sul).
-        if (digitos.Length is 12 or 13 && digitos.StartsWith(Ddi) && digitos[2] != '0')
+        if (digitos.Length is 12 or 13 && digitos.StartsWith(Ddi, StringComparison.Ordinal) && digitos[2] != '0')
             digitos = digitos[2..];
 
         if (digitos.Length is not (10 or 11)) return null;
@@ -53,7 +54,7 @@ public sealed class Telefone : IEquatable<Telefone>
 
         // DDD brasileiro vai de 11 a 99, e nenhum comeca com 0 ou 1 no segundo
         // digito abaixo de 11.
-        if (int.Parse(ddd) < 11) return null;
+        if (int.Parse(ddd, CultureInfo.InvariantCulture) < 11) return null;
 
         if (assinante.Length == 8)
         {

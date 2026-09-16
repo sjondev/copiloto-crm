@@ -52,6 +52,56 @@ pedir exclusão.
 
 ---
 
+## 2.5 Quem responde pelo quê
+
+Quando uma empresa usa o Copiloto, os papéis não são negociáveis — eles decorrem de
+quem decide **finalidade e meios**:
+
+| Papel | Quem | Por quê |
+|---|---|---|
+| **Controlador** | A empresa cliente | É ela quem decide vender café por WhatsApp, quem contata, com que finalidade, e que dado pede ao cliente |
+| **Operador** | O Copiloto | Trata em nome dela, seguindo as instruções dela, e não para finalidade própria |
+| **Titulares** | Clientes da empresa, vendedores, e terceiros citados na conversa | Os três grupos, não só o primeiro |
+
+Isso decide **quem responde pelo quê** perante o titular e a ANPD, e é o que precisa
+estar no contrato antes do primeiro dado real entrar.
+
+### Obrigações do operador, que são nossas
+
+- **Seguir as instruções do controlador**, e só elas. Tratar para finalidade própria — por
+  exemplo, usar conversa de um cliente para melhorar o produto — nos tornaria controlador
+  *daquele* tratamento, com todas as obrigações que vêm junto.
+- **Segurança**, incluindo o que já é código: PII Shield, controle de acesso, isolamento
+  entre titulares no que for indexado.
+- **Apoiar o controlador nos pedidos de titular** — acesso, correção, portabilidade,
+  oposição e exclusão. O operador não responde direto ao titular; ele dá ao controlador o
+  meio de responder. É por isso que a exportação (#81) é ferramenta, e não um canal
+  público.
+- **Avisar incidente** ao controlador, sem demora. O prazo e o rito são a #84.
+- **Não subcontratar sem autorização** — o item abaixo, que é o que costuma ser
+  descoberto tarde.
+
+### A cadeia de suboperadores
+
+**Mandar a conversa para um provedor de IA é subcontratar tratamento.** O controlador
+precisa saber que esse terceiro existe e autorizá-lo; sem isso, a empresa cliente está
+compartilhando dado dos clientes dela com alguém que ela não sabe que existe.
+
+| Suboperador | O que trata | Estado hoje |
+|---|---|---|
+| Provedor de modelo | Conversa pseudonimizada, para análise | **Nenhum**: `MODEL_PROVIDER=fake` é o padrão, e nada sai da máquina. Ao trocar, entra aqui com nome e país |
+| Hospedagem / banco | Todo o dado do CRM | A definir com o controlador; hoje roda em Postgres local |
+| Servidor MCP | Depende de quem é o servidor | O nosso (#56) **não** é subcontratação — é o próprio operador. Ferramenta MCP de terceiro (ERP, tabela de frete) seria, e entra nesta tabela quando existir |
+
+A coluna de estado não é enfeite: hoje, com os padrões do repositório, **não há
+transferência a terceiro nenhum**. É o que torna a demo honesta — e é também o que muda no
+dia em que uma chave de provedor real for configurada, que é o momento de o controlador
+autorizar, não depois.
+
+Onde o provedor processa fisicamente é transferência internacional, e isso é a #79.
+
+---
+
 ## 3. O que decorre, na prática
 
 - **Retenção tem prazo, e prazo tem finalidade.** "Pseudonimizado, então guardo para
@@ -81,7 +131,6 @@ vocabulário jurídico. Convenção que depende de alguém lembrar tem prazo de 
 
 | Assunto | Issue |
 |---|---|
-| Papéis de controlador e operador, e subcontratação | #78 |
 | Base legal por finalidade, e legítimo interesse | #77 |
 | Registro das operações de tratamento | #76 |
 | Onde o provedor de IA processa (transferência internacional) | #79 |

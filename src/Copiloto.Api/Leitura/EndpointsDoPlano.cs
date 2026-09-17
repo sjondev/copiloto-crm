@@ -182,7 +182,11 @@ public static class EndpointsDoPlano
         var (erro, plano, qual) = await Abrir(id, bloco, ctx, quem, ct);
         if (erro is not null) return erro;
 
-        plano!.Aceitar(qual, DateTimeOffset.UtcNow);
+        // O aceite volta para a invocacao ANTES de o vinculo sumir (#3): e ele
+        // que responde "qual modelo acerta mais".
+        await RegistrarDecisao(ctx, plano![qual].InvocacaoId, aceita: true, ct);
+
+        plano.Aceitar(qual, DateTimeOffset.UtcNow);
         await ctx.SaveChangesAsync(ct);
 
         return Results.Ok(ParaTela(plano));
@@ -197,10 +201,28 @@ public static class EndpointsDoPlano
         var (erro, plano, qual) = await Abrir(id, bloco, ctx, quem, ct);
         if (erro is not null) return erro;
 
-        plano!.Descartar(qual, DateTimeOffset.UtcNow);
+        await RegistrarDecisao(ctx, plano![qual].InvocacaoId, aceita: false, ct);
+
+        plano.Descartar(qual, DateTimeOffset.UtcNow);
         await ctx.SaveChangesAsync(ct);
 
         return Results.Ok(ParaTela(plano));
+    }
+
+    /// <summary>
+    /// Marca na invocacao o que o vendedor decidiu sobre a sugestao dela.
+    ///
+    /// Silencioso quando nao ha vinculo: sugestao antiga, de antes da #51, nao
+    /// tem invocacao para marcar — e recusar a acao por isso impediria o
+    /// vendedor de descartar uma sugestao que esta na tela dele.
+    /// </summary>
+    private static async Task RegistrarDecisao(
+        CopilotoDbContext ctx, Guid? invocacaoId, bool aceita, CancellationToken ct)
+    {
+        if (invocacaoId is null) return;
+
+        var invocacao = await ctx.Invocacoes.FirstOrDefaultAsync(i => i.Id == invocacaoId.Value, ct);
+        invocacao?.RegistrarAceite(aceita);
     }
 
     /// <summary>

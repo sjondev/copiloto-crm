@@ -57,7 +57,11 @@ public record ProcedenciaDaChamada(string? ContextoEnviado, string? VersaoDoProm
 /// provedores depois — sem ele, o total responde "gastamos X" e nao "gastamos X
 /// com este e Y com aquele", que e a pergunta que decide a troca.
 ///
-/// Imutavel: e um registro do que ja aconteceu.
+/// Imutavel no que foi MEDIDO — e um registro do que ja aconteceu. A unica
+/// coisa que muda depois e o aceite: a sugestao sai, o vendedor decide minutos
+/// depois, e essa decisao tambem faz parte do que aconteceu com esta chamada.
+/// Guarda-la em outro lugar obrigaria um join para responder "qual modelo
+/// acerta mais", que e a pergunta que ela existe para responder (#3, #11).
 /// </summary>
 public class AiInvocation
 {
@@ -163,6 +167,22 @@ public class AiInvocation
 
     /// <summary>Hash curto do prompt que gerou a resposta.</summary>
     public string? VersaoDoPrompt { get; }
+
+    /// <summary>
+    /// Se a sugestao desta chamada foi usada pelo vendedor.
+    ///
+    /// Nulo quando ele ainda nao decidiu — e nulo tambem nas chamadas que nao
+    /// produzem sugestao, como a leitura da conversa. Nulo NAO e "ignorou": a
+    /// taxa de aceite que contasse indecisao como recusa mediria a velocidade do
+    /// vendedor, e nao a qualidade do modelo.
+    /// </summary>
+    public bool? SugestaoAceita { get; private set; }
+
+    /// <summary>O vendedor decidiu. Primeira decisao vale; ele nao desfaz para refazer a estatistica.</summary>
+    public void RegistrarAceite(bool aceita)
+    {
+        SugestaoAceita ??= aceita;
+    }
 
     public DateTimeOffset Quando { get; }
 }

@@ -65,7 +65,7 @@ public class DealTeste
     public void Deal_fechado_nao_volta_ao_funil()
     {
         var deal = NovoDeal();
-        deal.MoverPara(Estagio.Ganho, Agora);
+        deal.MoverPara(Estagio.Ganho, Agora, valorEmReais: 2500m);
 
         var motivo = deal.MoverPara(Estagio.Negociacao, Agora);
 

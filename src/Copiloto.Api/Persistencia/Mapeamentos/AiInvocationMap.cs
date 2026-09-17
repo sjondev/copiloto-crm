@@ -50,6 +50,11 @@ public class AiInvocationMap : IEntityTypeConfiguration<AiInvocation>
 
         builder.Property(i => i.VersaoDoPrompt).HasMaxLength(20);
 
+        // Nulavel de proposito (#3): nulo e "ainda nao decidiu" ou "nao produz
+        // sugestao", e nao "ignorou". Taxa de aceite que conta indecisao como
+        // recusa mede a velocidade do vendedor, e nao a qualidade do modelo.
+        builder.Property(i => i.SugestaoAceita);
+
         // O indice de quem PAGOU sem receber: relatorio de custo perdido comeca
         // por aqui, e sem indice ele varre a tabela inteira (#3).
         builder.HasIndex(i => i.Sucesso).HasDatabaseName("ix_ai_invocations_sucesso");

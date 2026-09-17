@@ -1,4 +1,4 @@
-import type { Dossie, Fala, LinhaDaFila, PlanoDoLead, PorQue } from "./tipos";
+import type { Dossie, Fala, LinhaDaFila, Metricas, PlanoDoLead, PorQue } from "./tipos";
 import { tokenGuardado } from "./sessao";
 
 /**
@@ -124,3 +124,10 @@ export const descartarSugestao = (leadId: string, bloco: string) =>
  */
 export const buscarPorQue = (leadId: string, bloco: string, sinal: AbortSignal) =>
   buscar<PorQue>(`/leads/${leadId}/plano/${bloco}/porque`, sinal);
+
+/**
+ * O painel de ROI (#3). So o gestor alcanca — vendedor recebe 403, e a tela
+ * mostra isso em vez de fingir que nao ha dado.
+ */
+export const buscarMetricas = (sinal: AbortSignal) =>
+  buscar<Metricas>("/metricas", sinal);

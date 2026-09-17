@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Entrar } from "./Entrar";
 import { Fila } from "./Fila";
+import { Metricas } from "./Metricas";
 import { Plano } from "./Plano";
 import { esquecer, tokenGuardado } from "./sessao";
 import { PainelDaConversa } from "./Conversa";
@@ -29,6 +30,11 @@ function Copiloto({ aoSair }: { aoSair: () => void }) {
   // Aba, e nao terceira coluna: a leitura e o plano competem pela mesma
   // atencao, e tres colunas numa tela de notebook deixam as tres ilegiveis.
   const [aba, setAba] = useState<"leitura" | "plano">("leitura");
+
+  // O painel (#3) vive fora do lead: ele e sobre o produto, e nao sobre um
+  // cliente. Por isso e um estado do cabecalho, e nao mais uma aba do painel
+  // direito.
+  const [noPainel, setNoPainel] = useState(false);
   // Sem router e sem tela de lista ainda: o lead vem da URL, e a #12 e a #50
   // trazem navegacao. Campo na tela porque digitar um Guid na barra de
   // enderecos e pior que cola-lo num input.
@@ -83,10 +89,20 @@ function Copiloto({ aoSair }: { aoSair: () => void }) {
           <span className="cabecalho__erro" role="status">sem conexao com a API — {erro}</span>
         ) : null}
 
+        <button
+          type="button"
+          className="cabecalho__sair"
+          onClick={() => setNoPainel((antes) => !antes)}
+        >
+          {noPainel ? "voltar" : "a IA se paga?"}
+        </button>
+
         <button type="button" className="cabecalho__sair" onClick={aoSair}>sair</button>
       </header>
 
-      {!leadId ? (
+      {noPainel ? (
+        <Metricas />
+      ) : !leadId ? (
         // Sem lead escolhido, a porta e a FILA — e nao um campo pedindo Guid
         // (#174). O campo continua no cabecalho para quem ja tem o id na mao.
         <Fila aoEscolher={setLeadId} />

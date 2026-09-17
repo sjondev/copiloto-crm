@@ -486,3 +486,50 @@ body {
   border: 1px solid var(--borda, #2a2a2a);
   opacity: 0.85;
 }
+
+/* O painel de ROI (#3). A ordem da tela é a ordem do argumento. */
+.metricas { padding: 1.2rem 1.5rem 3rem; max-width: 52rem; }
+
+.metricas__periodo { margin: 0 0 1rem; font-size: 0.75rem; opacity: 0.5; }
+
+.metricas__destaque { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 1rem; }
+.metricas__destaque strong { font-size: 1.5rem; }
+.metricas__destaque span { font-size: 0.8rem; opacity: 0.6; }
+
+/* A ressalva fica ao lado do número, e não em rodapé (#6). */
+.metricas__ressalva {
+  margin: 0 0 1.6rem;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  opacity: 0.8;
+  border-left: 3px solid var(--realce, #2b5cff);
+  background: var(--fundo-campo, #161616);
+}
+
+.metricas__grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.9rem 1.5rem;
+  margin: 0 0 2rem;
+}
+
+.metricas__grade dt { font-size: 0.72rem; opacity: 0.55; }
+.metricas__grade dd { margin: 0.1rem 0 0; font-size: 1.05rem; }
+
+.metricas__titulo { font-size: 0.78rem; text-transform: uppercase; opacity: 0.55; margin: 1.5rem 0 0.5rem; }
+
+.metricas__lista { list-style: none; margin: 0 0 1rem; padding: 0; }
+
+.metricas__lista li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--borda, #232323);
+  font-size: 0.82rem;
+}
+
+.metricas__lista li span:last-child { opacity: 0.6; font-size: 0.75rem; }
+
+.metricas__vazio { font-size: 0.8rem; opacity: 0.6; margin: 0; }

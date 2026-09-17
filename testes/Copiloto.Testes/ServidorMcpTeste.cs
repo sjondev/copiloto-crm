@@ -152,7 +152,7 @@ public class ServidorMcpTeste : IDisposable
         using (var ctx = new CopilotoDbContext(_opcoes))
         {
             var deal = ctx.Deals.Single(d => d.LeadId == leadId);
-            deal.MoverPara(Estagio.Ganho, T0.AddDays(-1));
+            deal.MoverPara(Estagio.Ganho, T0.AddDays(-1), valorEmReais: 2500m);
             ctx.SaveChanges();
         }
 

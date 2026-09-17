@@ -107,7 +107,7 @@ public class VigiaTeste
         var deal = DealNovo();
         deal.MoverPara(Estagio.Qualificacao, T0);
         deal.MoverPara(Estagio.Proposta, T0);
-        deal.MoverPara(Estagio.Ganho, T0);
+        deal.MoverPara(Estagio.Ganho, T0, valorEmReais: 2500m);
 
         Assert.Empty(Vigia.Varrer(deal, ComFalaDoCliente("fechado!", T0), T0.AddDays(30)));
     }

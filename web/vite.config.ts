@@ -14,6 +14,7 @@ export default defineConfig({
       // aparece rodando — teste nenhum passa pelo proxy.
       "/auth": "http://localhost:5000",
       "/leads": "http://localhost:5000",
+      "/metricas": "http://localhost:5000",
       "/saude": "http://localhost:5000",
       // `ws: true` e obrigatorio: o SignalR negocia e sobe para WebSocket, e um
       // proxy so de HTTP deixaria a conexao cair de volta para long polling sem

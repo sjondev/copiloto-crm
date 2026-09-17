@@ -100,3 +100,38 @@ export interface PorQue {
   quando: string;
   contextoEnviado: string | null;
 }
+
+/** Quanto se gastou com um agente, ou com um modelo (#3). */
+export interface GastoPor {
+  nome: string;
+  custoEmReais: number;
+  invocacoes: number;
+}
+
+/** Quantas sugestoes daquele modelo o vendedor usou (#3). */
+export interface AceitePor {
+  nome: string;
+  aceitas: number;
+  ignoradas: number;
+  /** Nulo quando ninguem decidiu: indecisao nao e recusa. */
+  taxa: number | null;
+}
+
+export interface Metricas {
+  de: string;
+  ate: string;
+  custoIaEmReais: number;
+  invocacoes: number;
+  invocacoesQueFalharam: number;
+  porAgente: GastoPor[];
+  porModelo: GastoPor[];
+  negociosGanhos: number;
+  receitaGanha: number;
+  ganhosComIa: number;
+  receitaInfluenciada: number;
+  receitaPorRealGasto: number | null;
+  custoPorNegocioGanho: number | null;
+  aceitePorModelo: AceitePor[];
+  /** A ressalva de vies, que viaja junto do numero (#6). */
+  ressalva: string;
+}

@@ -18,6 +18,12 @@ public class DealMap : IEntityTypeConfiguration<Deal>
         builder.Property(d => d.EstagioDesde).IsRequired();
         builder.Property(d => d.FechadoEm);
 
+        // O que o negocio rendeu (#3). Nulavel: so o GANHO tem valor, e zero no
+        // perdido diria "rendeu zero reais" em vez de "nao ha valor a falar".
+        // `decimal` e nao `double` pelo mesmo motivo do custo — dinheiro nao
+        // aceita erro de representacao binaria.
+        builder.Property(d => d.ValorEmReais).HasColumnType("decimal(18,2)");
+
         // Dinheiro em `decimal(18,6)`, nunca em ponto flutuante: seis casas
         // porque uma invocacao de IA custa fracao de centavo, e arredondar cada
         // uma para dois faria o acumulado divergir da soma — que e justamente o

@@ -42,13 +42,19 @@ public class AgenteDePlano
     /// pelo token gasto antes de falhar, e ledger que so conta acerto esconde
     /// justamente o custo que ninguem esperava ter (#1).
     /// </summary>
-    public record Sugestao(string? Texto, MedicaoDaChamada Medicao);
+    public record Sugestao(
+        string? Texto, MedicaoDaChamada Medicao, ProcedenciaDaChamada Procedencia);
 
     public async Task<Sugestao> Sugerir(
         BlocoDoPlano bloco, string contextoDoLead, CancellationToken ct)
     {
         var pedido = $"{_instrucoes}\n\n## Bloco pedido\n\n{bloco}\n\n"
                      + $"## O que sabemos deste cliente\n\n{contextoDoLead}";
+
+        // O que REALMENTE vai ao modelo, guardado para o "por que essa
+        // sugestao?" (#51). O contexto do lead ja vem do dossie, que passou pelo
+        // escudo de PII — o que se guarda aqui e o mesmo texto que saiu daqui.
+        var procedencia = new ProcedenciaDaChamada(pedido, VersaoDoPrompt.De(_instrucoes));
 
         ResultadoDaCascata resultado;
         long latenciaMs;
@@ -75,7 +81,7 @@ public class AgenteDePlano
             // Sem resultado nao ha o que medir com honestidade: nao se sabe qual
             // modelo foi chamado nem se ele chegou a gastar token. Uma linha
             // inventada aqui seria pior que linha nenhuma.
-            return new Sugestao(null, null!);
+            return new Sugestao(null, null!, procedencia);
         }
 
         var medicao = Ledger.Medir(resultado, latenciaMs, _preco);
@@ -85,7 +91,7 @@ public class AgenteDePlano
             _log.LogWarning(
                 "Sugestao do bloco {Bloco} degradou apos {Falhas} degrau(s)",
                 bloco, resultado.Falhas.Count);
-            return new Sugestao(null, medicao);
+            return new Sugestao(null, medicao, procedencia);
         }
 
         var texto = Extrair(resultado.Resposta!.Conteudo, bloco);
@@ -95,10 +101,10 @@ public class AgenteDePlano
             // resposta ilegivel. Esconder isso faria o contrato quebrado sair de
             // graca no relatorio.
             _log.LogWarning("Sugestao do bloco {Bloco} veio em formato ilegivel", bloco);
-            return new Sugestao(null, medicao);
+            return new Sugestao(null, medicao, procedencia);
         }
 
-        return new Sugestao(texto, medicao);
+        return new Sugestao(texto, medicao, procedencia);
     }
 
     /// <summary>

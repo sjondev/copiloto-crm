@@ -58,7 +58,8 @@ public class AgenteDeLeitura
     /// o custo que ninguem esperava ter. Nula so quando o modelo nem chegou a
     /// ser chamado — conversa vazia nao gasta nada.
     /// </summary>
-    public record Leitura(Dossie? Dossie, MedicaoDaChamada? Medicao);
+    public record Leitura(
+        Dossie? Dossie, MedicaoDaChamada? Medicao, ProcedenciaDaChamada? Procedencia);
 
     public async Task<Leitura> Ler(
         Conversa conversa, Guid dealId, string playbook, string ficha, CancellationToken ct)
@@ -70,7 +71,7 @@ public class AgenteDeLeitura
             // Conversa vazia nao tem o que ler, e um dossie vazio na tela
             // pareceria leitura feita. O modo abordagem inicial e a #87.
             _log.LogInformation("Conversa {Conversa} sem falas: nada a ler", conversa.Id);
-            return new Leitura(null, null);
+            return new Leitura(null, null, null);
         }
 
         var falas = AgrupadorDeFalas.Agrupar(conversa.Mensagens);
@@ -81,15 +82,21 @@ public class AgenteDeLeitura
 
         var medicao = Ledger.Medir(resultado, latenciaMs, _preco);
 
+        // O contexto ja saiu do MontadorDeContexto mascarado (#43): e o mesmo
+        // texto que foi ao modelo, e e ele que o "por que" precisa mostrar.
+        var procedencia = new ProcedenciaDaChamada(
+            contexto.Texto, VersaoDoPrompt.De(_identidade));
+
         if (resultado.Degradou)
         {
             _log.LogWarning(
                 "Leitura da conversa {Conversa} degradou apos {Falhas} degrau(s)",
                 conversa.Id, resultado.Falhas.Count);
-            return new Leitura(null, medicao);
+            return new Leitura(null, medicao, procedencia);
         }
 
-        return new Leitura(Montar(resultado.Resposta!.Conteudo, conversa, dealId), medicao);
+        return new Leitura(
+            Montar(resultado.Resposta!.Conteudo, conversa, dealId), medicao, procedencia);
     }
 
     private Dossie? Montar(string json, Conversa conversa, Guid dealId)

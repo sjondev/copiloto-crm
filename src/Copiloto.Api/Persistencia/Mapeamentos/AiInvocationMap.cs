@@ -39,6 +39,17 @@ public class AiInvocationMap : IEntityTypeConfiguration<AiInvocation>
 
         builder.Property(i => i.CorrelationId).HasMaxLength(64);
 
+        // O contexto enviado, para o "por que essa sugestao?" (#51). SEM limite
+        // de tamanho: cortar aqui produziria uma auditoria que mostra meio
+        // contexto, e meia auditoria responde "confie em mim" — que e o
+        // contrario do que o botao existe para fazer.
+        //
+        // Ele E dado pessoal, mesmo mascarado (#83), e a retencao segue a da
+        // conversa (#45). Quando a #45 entrar, este e um dos campos a expurgar.
+        builder.Property(i => i.ContextoEnviado);
+
+        builder.Property(i => i.VersaoDoPrompt).HasMaxLength(20);
+
         // O indice de quem PAGOU sem receber: relatorio de custo perdido comeca
         // por aqui, e sem indice ele varre a tabela inteira (#3).
         builder.HasIndex(i => i.Sucesso).HasDatabaseName("ix_ai_invocations_sucesso");

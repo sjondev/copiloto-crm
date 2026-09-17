@@ -1,4 +1,4 @@
-import type { Dossie, Fala, LinhaDaFila, PlanoDoLead } from "./tipos";
+import type { Dossie, Fala, LinhaDaFila, PlanoDoLead, PorQue } from "./tipos";
 import { tokenGuardado } from "./sessao";
 
 /**
@@ -114,3 +114,13 @@ export const aceitarSugestao = (leadId: string, bloco: string) =>
 
 export const descartarSugestao = (leadId: string, bloco: string) =>
   acaoNoBloco(leadId, bloco, "sugestao", "DELETE");
+
+/**
+ * De onde saiu a sugestao (#51).
+ *
+ * `null` quando ela nao tem procedencia registrada — o que acontece com as
+ * geradas antes da issue. A tela nao mostra o botao nesse caso, entao isto e
+ * rede embaixo do trapezio.
+ */
+export const buscarPorQue = (leadId: string, bloco: string, sinal: AbortSignal) =>
+  buscar<PorQue>(`/leads/${leadId}/plano/${bloco}/porque`, sinal);

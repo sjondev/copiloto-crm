@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { aceitarSugestao, buscarPlano, descartarSugestao, escreverBloco, sugerirBloco } from "./api";
-import type { PlanoDoLead } from "./tipos";
+import { aceitarSugestao, buscarPlano, buscarPorQue, descartarSugestao, escreverBloco, sugerirBloco } from "./api";
+import type { PlanoDoLead, PorQue } from "./tipos";
 
 /**
  * O plano de abordagem (#12).
@@ -24,6 +24,7 @@ export function Plano({ leadId }: { leadId: string }) {
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState<string | null>(null);
   const [pensando, setPensando] = useState<string | null>(null);
+  const [porque, setPorque] = useState<{ bloco: string; dados: PorQue } | null>(null);
 
   useEffect(() => {
     const controle = new AbortController();
@@ -87,6 +88,19 @@ export function Plano({ leadId }: { leadId: string }) {
     } finally {
       setPensando(null);
     }
+  }
+
+  /** Abre — ou fecha — a procedencia daquele bloco (#51). */
+  async function verPorQue(bloco: string) {
+    if (porque?.bloco === bloco) {
+      setPorque(null);
+      return;
+    }
+
+    const controle = new AbortController();
+    const dados = await buscarPorQue(leadId, bloco, controle.signal);
+
+    setPorque(dados ? { bloco, dados } : null);
   }
 
   if (erro !== null && plano === null) return <p className="aviso">{erro}</p>;
@@ -155,7 +169,38 @@ export function Plano({ leadId }: { leadId: string }) {
                 >
                   ignorar
                 </button>
+
+                {/*
+                  A resposta para "como eu sei que isso não foi inventado?"
+                  (#51). Só aparece quando há procedência registrada — botão que
+                  responderia 404 ensina a não clicar.
+                */}
+                {bloco.temProcedencia && (
+                  <button type="button" onClick={() => verPorQue(bloco.bloco)}>
+                    {porque?.bloco === bloco.bloco ? "fechar" : "por quê?"}
+                  </button>
+                )}
               </span>
+
+              {porque?.bloco === bloco.bloco && (
+                <span className="porque">
+                  <span className="porque__numeros">
+                    {porque.dados.modelo}
+                    {" · "}prompt {porque.dados.versaoDoPrompt ?? "?"}
+                    {" · "}R$ {porque.dados.custoEmReais.toFixed(6)}
+                    {" · "}{porque.dados.latenciaMs} ms
+                    {" · "}{porque.dados.tokensEntrada}+{porque.dados.tokensSaida} tokens
+                    {porque.dados.tentativas > 1 && ` · ${porque.dados.tentativas} tentativas`}
+                  </span>
+
+                  {/*
+                    O contexto EXATO que foi ao modelo, já mascarado pelo escudo
+                    (#43). É a parte que responde de verdade: o vendedor lê o que
+                    a IA leu.
+                  */}
+                  <pre className="porque__contexto">{porque.dados.contextoEnviado}</pre>
+                </span>
+              )}
             </span>
           )}
         </label>

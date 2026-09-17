@@ -95,7 +95,7 @@ public class VigiaNoBancoTeste : IDisposable
         {
             var leadId = Guid.NewGuid();
             var deal = new Deal(Guid.NewGuid(), leadId, abertoEm);
-            deal.MoverPara(Estagio.Ganho, abertoEm);
+            deal.MoverPara(Estagio.Ganho, abertoEm, valorEmReais: 2500m);
 
             ctx.Leads.Add(new Lead(leadId, "+55 11 98888-2222", abertoEm, "Marina"));
             ctx.Deals.Add(deal);

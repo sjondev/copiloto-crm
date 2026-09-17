@@ -45,6 +45,19 @@ public class Deal
     public DateTimeOffset? FechadoEm { get; private set; }
 
     /// <summary>
+    /// Quanto o negocio rendeu, preenchido ao GANHAR (#3).
+    ///
+    /// Nulo enquanto ele nao fechou, e nulo tambem no perdido — negocio perdido
+    /// nao rendeu nada, e zero diria "rendeu zero reais", que e outra coisa de
+    /// "nao ha valor a falar".
+    ///
+    /// Sem este campo o painel de ROI responde so "quanto gastamos", que e
+    /// exatamente o que a issue diz que todo projeto de IA ja sabe dizer. O que
+    /// quase nenhum sabe e o que RENDEU, e a conta precisa dos dois lados.
+    /// </summary>
+    public decimal? ValorEmReais { get; private set; }
+
+    /// <summary>
     /// O vinculo custo-negocio, e ele nasce com o Deal por decisao (#48).
     ///
     /// Enxertar depois obrigaria a reprocessar historico para responder "quanto
@@ -65,7 +78,7 @@ public class Deal
     /// negocio realmente reabre. Excecao para fluxo esperado obriga o chamador a
     /// usar try/catch como if, e o motivo em texto e o que a tela mostra.
     /// </summary>
-    public string? MoverPara(Estagio destino, DateTimeOffset quando)
+    public string? MoverPara(Estagio destino, DateTimeOffset quando, decimal? valorEmReais = null)
     {
         if (EstaFechado)
             return $"Deal ja esta {Estagio} e nao volta ao funil. Abra um novo.";
@@ -80,6 +93,15 @@ public class Deal
             && destino > Estagio + 1)
             return $"Nao da para pular de {Estagio} para {destino}: o funil anda "
                  + "de um em um, e estagio pulado e negocio sem qualificacao.";
+
+        if (destino == Estagio.Ganho)
+        {
+            if (valorEmReais is null or <= 0)
+                return "Negocio ganho sem valor nao entra na conta de ROI, e a conta e o "
+                     + "produto: sem ele o painel responde quanto gastamos e nunca quanto rendeu.";
+
+            ValorEmReais = valorEmReais;
+        }
 
         Estagio = destino;
         EstagioDesde = quando;
